@@ -61,6 +61,18 @@ class C3dFileParser(FileParser):
     def get_data(self):
         return BioMechanicData(points=self._labeled_points, emg=self._labeled_analogs)
 
+    @property
+    def frame_no(self):
+        return self.frame_no
+
+    @property
+    def points(self):
+        return self._labeled_points
+
+    @property
+    def analogs(self):
+        return self._labeled_analogs
+
 
 class BioMechanicData:
     def __init__(self, frame_no=np.array([]), points={}, emg={}, force_plate={}, imus={}):
