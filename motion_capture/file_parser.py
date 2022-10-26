@@ -55,7 +55,7 @@ class C3dFileParser(FileParser):
         i = 0
         for analog in analogs:
             label = list(self._labeled_analogs.keys())[i]
-            self._labeled_analogs[label].append(analog)
+            self._labeled_analogs[label].extend(analog)
             i += 1
 
     def get_data(self):
