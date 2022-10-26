@@ -14,29 +14,47 @@ class C3dFileParser(FileParser):
     def __init__(self, path):
         input_stream = open(path, 'rb')
         self._labeled_points = {}
+        self._labeled_analog = {}
         try:
             c3d_reader = c3d.Reader(input_stream)
-            self._extract_points(c3d_reader)
+            self._extract_data(c3d_reader)
         finally:
             input_stream.close()
 
-    def _extract_points(self, c3d_reader):
+    def _extract_data(self, c3d_reader):
+        # prepare datastructure for storing imu, force plat, emg ,points
         point_labels = c3d_reader.point_labels
         for label in point_labels:
             self._labeled_points[label.strip()] = {'x': [], 'y': [], 'z': [], 'err': [], 'cam': []}
+
+        analog_labels = c3d_reader.analog_labels
+        for label in analog_labels:
+            self._labeled_analog[label.strip()] = []
+
         for frame_no, points, analog in c3d_reader.read_frames(copy=False):
-            i = 0
-            for x, y, z, err, cam in points:
-                label = list(self._labeled_points.keys())[i]
-                self._labeled_points[label]['x'].append(x)
-                self._labeled_points[label]['y'].append(y)
-                self._labeled_points[label]['z'].append(z)
-                self._labeled_points[label]['err'].append(err)
-                self._labeled_points[label]['cam'].append(cam)
-                i += 1
+            self._extract_points(points)
+            self._extract_analog(analog)
+
+    def _extract_points(self, points):
+        i = 0
+        for x, y, z, err, cam in points:
+            label = list(self._labeled_points.keys())[i]
+            self._labeled_points[label]['x'].append(x)
+            self._labeled_points[label]['y'].append(y)
+            self._labeled_points[label]['z'].append(z)
+            self._labeled_points[label]['err'].append(err)
+            self._labeled_points[label]['cam'].append(cam)
+            i += 1
+
+    def _extract_analog(self, analogs):
+        i = 0
+        for analog in analogs:
+            label = list(self._labeled_analog.keys())[i]
+            self._labeled_analog[label].append(analog)
+            i += 1
 
     def get_data(self):
-        return BioMechanicData(points=self._labeled_points)
+        return BioMechanicData(points=self._labeled_points, emg=self._labeled_analog)
 
 
 class BioMechanicData:
@@ -54,7 +72,7 @@ class BioMechanicData:
     def _check_synchronisation(self):
         n_frames = []
         if self._points:
-            n_frames.append(self._calc_n_frames(self._points))
+            n_frames.append(self._calc_n_frames(self._points[list(self._points.keys())[0]]))
         if self._imus:
             n_frames.append(self._calc_n_frames(self._imus))
         if self._force_plate:
@@ -68,7 +86,7 @@ class BioMechanicData:
         return n_frames[0]
 
     @property
-    def c3d_data(self):
+    def point_data(self):
         return self._points
 
     @property
