@@ -1,3 +1,5 @@
+from abc import ABCMeta, abstractmethod
+
 import c3d
 
 
@@ -41,7 +43,7 @@ class C3dFileParser:
             self._labeled_points[label]['cam'].append(cam)
             i += 1
 
-    def _extract_analog(self, analogs):
+    def _extract_analog(self, *analogs):
         i = 0
         for analog in analogs:
             label = list(self._labeled_analogs.keys())[i]
@@ -115,12 +117,26 @@ class BioMechanicData:
         self._emg = emg_data
 
 
-class AnalogsMapper:
+class AbstractAnalogsMapper(ABCMeta):
+    @abstractmethod
+    def get_emg_data(self, analogs):
+        pass
 
-    def __init__(self, emg_prefix, force_prefix, momentum_prefix):
-        self._EMG_PREFIX = emg_prefix
-        self._FORCE_PREFIX = force_prefix
-        self._MOMENTUM_PREFIX = momentum_prefix
+    @abstractmethod
+    def get_momentum_data(self, analogs):
+        pass
+
+    @abstractmethod
+    def get_force_data(self, analogs):
+        pass
+
+
+class AnalogsMapper(AbstractAnalogsMapper):
+
+    def __init__(cls, emg_prefix, force_prefix, momentum_prefix):
+        cls._EMG_PREFIX = emg_prefix
+        cls._FORCE_PREFIX = force_prefix
+        cls._MOMENTUM_PREFIX = momentum_prefix
 
     @staticmethod
     def _find_analogs_with_prefix(analogs, prefix):
