@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 import c3d
+import numpy as np
 
 
 class FileParser(ABC):
@@ -11,10 +12,12 @@ class FileParser(ABC):
 
 
 class C3dFileParser(FileParser):
+
     def __init__(self, path):
         input_stream = open(path, 'rb')
         self._labeled_points = {}
-        self._labeled_analog = {}
+        self._labeled_analogs = {}
+        self._frame_no = []
         try:
             c3d_reader = c3d.Reader(input_stream)
             self._extract_data(c3d_reader)
@@ -25,15 +28,17 @@ class C3dFileParser(FileParser):
         # prepare datastructure for storing imu, force plat, emg ,points
         point_labels = c3d_reader.point_labels
         for label in point_labels:
-            self._labeled_points[label.strip()] = {'x': [], 'y': [], 'z': [], 'err': [], 'cam': []}
+            self._labeled_points[label.strip()] = {'x': [], 'y': [], 'z': [],
+                                                   'err': [], 'cam': []}
 
         analog_labels = c3d_reader.analog_labels
         for label in analog_labels:
-            self._labeled_analog[label.strip()] = []
+            self._labeled_analogs[label.strip()] = []
 
         for frame_no, points, analog in c3d_reader.read_frames(copy=False):
             self._extract_points(points)
             self._extract_analog(analog)
+            self._frame_no.append(frame_no)
 
     def _extract_points(self, points):
         i = 0
@@ -49,16 +54,17 @@ class C3dFileParser(FileParser):
     def _extract_analog(self, analogs):
         i = 0
         for analog in analogs:
-            label = list(self._labeled_analog.keys())[i]
-            self._labeled_analog[label].append(analog)
+            label = list(self._labeled_analogs.keys())[i]
+            self._labeled_analogs[label].append(analog)
             i += 1
 
     def get_data(self):
-        return BioMechanicData(points=self._labeled_points, emg=self._labeled_analog)
+        return BioMechanicData(points=self._labeled_points, emg=self._labeled_analogs)
 
 
 class BioMechanicData:
-    def __init__(self, points={}, emg={}, force_plate={}, imus={}):
+    def __init__(self, frame_no=np.array([]), points={}, emg={}, force_plate={}, imus={}):
+        self._frame_no = frame_no
         self._points = points
         self._emg = emg
         self._force_plate = force_plate
