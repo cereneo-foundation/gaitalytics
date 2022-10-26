@@ -1,17 +1,7 @@
-from abc import ABC, abstractmethod
-
 import c3d
-import numpy as np
 
 
-class FileParser(ABC):
-
-    @abstractmethod
-    def get_data(self):
-        pass
-
-
-class C3dFileParser(FileParser):
+class C3dFileParser:
 
     def __init__(self, path):
         input_stream = open(path, 'rb')
@@ -25,7 +15,7 @@ class C3dFileParser(FileParser):
             input_stream.close()
 
     def _extract_data(self, c3d_reader):
-        # prepare datastructure for storing imu, force plat, emg ,points
+
         point_labels = c3d_reader.point_labels
         for label in point_labels:
             self._labeled_points[label.strip()] = {'x': [], 'y': [], 'z': [],
@@ -55,15 +45,13 @@ class C3dFileParser(FileParser):
         i = 0
         for analog in analogs:
             label = list(self._labeled_analogs.keys())[i]
-            self._labeled_analogs[label].extend(analog)
+            # We should adress this -> 10 measurement per frame
+            self._labeled_analogs[label].append(analog)
             i += 1
-
-    def get_data(self):
-        return BioMechanicData(points=self._labeled_points, emg=self._labeled_analogs)
 
     @property
     def frame_no(self):
-        return self.frame_no
+        return self._frame_no
 
     @property
     def points(self):
@@ -75,50 +63,91 @@ class C3dFileParser(FileParser):
 
 
 class BioMechanicData:
-    def __init__(self, frame_no=np.array([]), points={}, emg={}, force_plate={}, imus={}):
+    def __init__(self, analogs_mapper, frame_no=[], points={}, analogs={}, ):
         self._frame_no = frame_no
         self._points = points
-        self._emg = emg
-        self._force_plate = force_plate
-        self._imus = imus
-        self._frame_count = self._check_synchronisation()
-
-    @staticmethod
-    def _calc_n_frames(data):
-        return len(data[list(data.keys())[0]])
+        self._emg = analogs_mapper.get_emg_data(analogs)
+        self._momentum = analogs_mapper.get_momentum_data(analogs)
+        self._force = analogs_mapper.get_force_data(analogs)
+        self._check_synchronisation()
 
     def _check_synchronisation(self):
         n_frames = []
         if self._points:
-            n_frames.append(self._calc_n_frames(self._points[list(self._points.keys())[0]]))
-        if self._imus:
-            n_frames.append(self._calc_n_frames(self._imus))
-        if self._force_plate:
-            n_frames.append(self._calc_n_frames(self._force_plate))
-        if self._emg:
-            n_frames.append(self._calc_n_frames(self._emg))
+            n_frames.append(len(self._points[list(self._points.keys())[0]]['x']))
+        if self._frame_no:
+            n_frames.append(len(self._frame_no))
 
         for i in range(len(n_frames) - 2):
             if n_frames[i] != n_frames[i + 1]:
                 raise Exception("Data is not synced")
-        return n_frames[0]
 
     @property
     def point_data(self):
         return self._points
 
-    @property
-    def imu_data(self):
-        return self._imus
+    @point_data.setter
+    def point_data(self, point_data):
+        self._points = point_data
 
     @property
-    def force_plate_data(self):
-        return self._force_plate
+    def momentum_data(self):
+        return self._momentum
+
+    @momentum_data.setter
+    def momentum_data(self, momentum_data):
+        self._momentum = momentum_data
+
+    @property
+    def force_data(self):
+        return self._force
+
+    @force_data.setter
+    def force_data(self, force_data):
+        self._force = force_data
 
     @property
     def emg_data(self):
         return self._emg
 
-    @property
-    def frame_count(self):
-        return self._frame_count
+    @emg_data.setter
+    def emg_data(self, emg_data):
+        self._emg = emg_data
+
+
+class AnalogsMapper:
+
+    def __init__(self, emg_prefix, force_prefix, momentum_prefix):
+        self._EMG_PREFIX = emg_prefix
+        self._FORCE_PREFIX = force_prefix
+        self._MOMENTUM_PREFIX = momentum_prefix
+
+    @staticmethod
+    def _find_analogs_with_prefix(analogs, prefix):
+        data = {}
+        for analog_label in analogs.keys():
+            if analog_label.startswith(prefix):
+                data[analog_label.split('.', 1)[1]] = analogs[analog_label]
+        return data
+
+    @staticmethod
+    def extract_data_with_axes(data):
+        moments_struct = {}
+        for moment_label in data.keys():
+            if len(moment_label) == 3:
+                moments_struct[moment_label[2:3]] = {}
+        for moment_label in data.keys():
+            if len(moment_label) == 3:
+                moments_struct[moment_label[2:3]][moment_label[1:2]] = data[moment_label]
+        return moments_struct
+
+    def get_emg_data(self, analogs):
+        return self._find_analogs_with_prefix(analogs, self._EMG_PREFIX)
+
+    def get_momentum_data(self, analogs):
+        moments = self._find_analogs_with_prefix(analogs, self._MOMENTUM_PREFIX)
+        return self.extract_data_with_axes(moments)
+
+    def get_force_data(self, analogs):
+        forces = self._find_analogs_with_prefix(analogs, self._FORCE_PREFIX)
+        return self.extract_data_with_axes(forces)
