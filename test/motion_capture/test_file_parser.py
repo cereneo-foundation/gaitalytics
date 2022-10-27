@@ -10,11 +10,9 @@ class TestParseC3DFile(unittest.TestCase):
 
     def test_load_file(self):
         parser = file_parser.C3dFileParser(self.testFilePath)
-        test = parser.get_data()
-        size_lasis_x = len(test.point_data['LASIS']['x'])
-        size_force = len(test.emg_data['Force.Fx1'])
+        points = parser.points
 
-        self.assertTrue(test.c3d_data, "Empty Point")
+        self.assertTrue(points, "Empty Point")
 
 
 if __name__ == '__main__':
