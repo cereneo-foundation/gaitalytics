@@ -130,4 +130,4 @@ dmypy.json
 
 # Pycharm projects
 .idea/
-/playground.py
+/playground*.py
