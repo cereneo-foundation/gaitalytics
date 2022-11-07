@@ -4,6 +4,7 @@ channels:
   - anaconda
 dependencies:
   - ezc3d
+  - python=3.10.6
   - pip
   - pip:
       - pandas>=1.4.4
