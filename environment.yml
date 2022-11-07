@@ -6,6 +6,6 @@ dependencies:
   - ezc3d
   - pip
   - pip:
-      - -r file:./requirements.txt
+      - pandas>=1.4.4
 
 prefix: .envs
