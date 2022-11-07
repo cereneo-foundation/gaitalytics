@@ -4,7 +4,8 @@ channels:
   - anaconda
 dependencies:
   - ezc3d
+  - pip
   - pip:
-      - -r file:requirements.txt
+      - -r file:./requirements.txt
 
 prefix: .envs
