@@ -3,7 +3,7 @@ from unittest import TestCase
 
 from ezc3d import c3d
 
-import file_utils
+from gait_analysis import file_utils
 
 
 class TestC3dFileWrapper(TestCase):
@@ -29,14 +29,14 @@ class TestC3dFileWrapper(TestCase):
         c3d_file = copy.deepcopy(self.c3d_file)
 
         # Adapt  c3d file copy with new point labels
-        test_points = {"TestPoint1": 0, "TestPoint2": 1, "TestPoint3": 2}
+        test_points = ["TestPoint1", "TestPoint2", "TestPoint3"]
         c3d_file[file_utils.C3D_FIELD_PARAMETER][
             file_utils.C3D_FIELD_PARAMETER_POINT][file_utils.C3D_FIELD_PARAMETER_LABELS][
-            file_utils.C3D_FIELD_VALUE] = list(test_points.keys())
+            file_utils.C3D_FIELD_VALUE] = test_points
 
         self.c3d_wrapper.c3d_file = c3d_file
         self.assertEqual(c3d_file, self.c3d_wrapper.c3d_file, "c3d file not allocated in C3dFileWrapper")
-        self.assertEqual(self.c3d_wrapper.get_point_labels, test_points,
+        self.assertEqual(self.c3d_wrapper.get_point_labels(), test_points,
                          "point_labels not newly allocated in C3dFileWrapper")
 
     def test_get_points_good_case(self):
@@ -76,24 +76,24 @@ class TestC3dFileWrapper(TestCase):
 
     def test_get_platform_forces(self):
         platform1_label = "Motekforce Link Force Plate [1]"
-        platform_labels = self.c3d_wrapper.get_platform_labels
+        platform_labels = self.c3d_wrapper.get_platform_labels()
         forces = self.c3d_wrapper.get_platform_forces(platform_labels)
-        self.assertEqual(len(forces), 2, "More than two platforms!")
-        self.assertEqual(len(forces[platform1_label]), 3, "More than three directions!")
+        self.assertEqual(len(forces.keys()), 2, "More than two platforms!")
+        self.assertEqual(len(forces[platform1_label].keys()), 3, "More than three directions!")
         self.assertEqual(len(forces[platform1_label]['x']), 180020, "More expected frames!")
 
     def test_get_platform_forces(self):
         platform1_label = "Motekforce Link Force Plate [1]"
-        platform_labels = self.c3d_wrapper.get_platform_labels
+        platform_labels = self.c3d_wrapper.get_platform_labels()
         moments = self.c3d_wrapper.get_platform_moments(platform_labels)
-        self.assertEqual(len(moments), 2, "More than two platforms!")
-        self.assertEqual(len(moments[platform1_label]), 3, "More than three directions!")
+        self.assertEqual(len(moments.keys()), 2, "More than two platforms!")
+        self.assertEqual(len(moments[platform1_label].keys()), 3, "More than three directions!")
         self.assertEqual(len(moments[platform1_label]['x']), 180020, "More expected frames!")
 
     def test_get_platform_cop(self):
         platform1_label = "Motekforce Link Force Plate [1]"
-        platform_labels = self.c3d_wrapper.get_platform_labels
+        platform_labels = self.c3d_wrapper.get_platform_labels()
         cops = self.c3d_wrapper.get_platform_cop(platform_labels)
-        self.assertEqual(len(cops), 2, "More than two platforms!")
-        self.assertEqual(len(cops[platform1_label]), 3, "More than three directions!")
+        self.assertEqual(len(cops.keys()), 2, "More than two platforms!")
+        self.assertEqual(len(cops[platform1_label].keys()), 3, "More than three directions!")
         self.assertEqual(len(cops[platform1_label]['x']), 180020, "More expected frames!")
