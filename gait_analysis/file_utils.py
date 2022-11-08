@@ -75,10 +75,7 @@ class C3dFileWrapper:
         """
         return list(self._platform_labels.keys())
 
-    def get_points(self, labels: list[str],
-                   directions: list[str] = (DIRECTION_X,
-                                            DIRECTION_Y,
-                                            DIRECTION_Z)) -> pd.DataFrame:
+    def get_points(self, labels: list[str], directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
         """
         Returns data of requested point labels in columns and directions in row
 
@@ -90,18 +87,13 @@ class C3dFileWrapper:
         for label_key in labels:
             dir_dict = {}
             for dir_key in directions:
-                dir_dict[dir_key] = self._c3d_file[C3D_FIELD_DATA][
-                    C3D_FIELD_DATA_POINTS][
-                    self._directions[dir_key]][
+                dir_dict[dir_key] = self._c3d_file[C3D_FIELD_DATA][C3D_FIELD_DATA_POINTS][self._directions[dir_key]][
                     self._point_labels[label_key]]
             points_dict[label_key] = dir_dict
         return pd.DataFrame(points_dict)
 
     def get_platform_forces(self, platform_labels: list[str],
-                            directions: list[str] = (DIRECTION_X,
-                                                     DIRECTION_Y,
-                                                     DIRECTION_Z
-                                                     )) -> pd.DataFrame:
+                            directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
         """
         Returns data of requested platforms in columns and directions
         in row
@@ -110,15 +102,10 @@ class C3dFileWrapper:
         :param directions: direction names of which the data is needed
         :return: two-dimensional table of numpy arrays data
         """
-        return self._get_platform_data(directions,
-                                       platform_labels,
-                                       C3D_FIELD_DATA_FORCE)
+        return self._get_platform_data(directions, platform_labels, C3D_FIELD_DATA_FORCE)
 
     def get_platform_moments(self, platform_labels: list[str],
-                             directions: list[str] = (DIRECTION_X,
-                                                      DIRECTION_Y,
-                                                      DIRECTION_Z
-                                                      )) -> pd.DataFrame:
+                             directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
         """
         Returns data of requested platforms in columns and directions
         in row
@@ -131,10 +118,7 @@ class C3dFileWrapper:
                                        C3D_FIELD_DATA_MOMENT)
 
     def get_platform_cop(self, platform_labels: list[str],
-                         directions: list[str] = (DIRECTION_X,
-                                                  DIRECTION_Y,
-                                                  DIRECTION_Z
-                                                  )) -> pd.DataFrame:
+                         directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
         """
         Returns data of requested platforms in columns and directions
         in row
