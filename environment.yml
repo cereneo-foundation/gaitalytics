@@ -3,7 +3,7 @@ channels:
   - conda-forge
   - anaconda
 dependencies:
-  - ezc3d
+  - ezc3d=1.4.9
   - python=3.10.6
   - pandas=1.4.4
 
