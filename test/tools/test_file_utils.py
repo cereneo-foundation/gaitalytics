@@ -82,7 +82,7 @@ class TestC3dFileWrapper(TestCase):
         self.assertEqual(len(forces[platform1_label].keys()), 3, "More than three directions!")
         self.assertEqual(len(forces[platform1_label]['x']), 180020, "More expected frames!")
 
-    def test_get_platform_forces(self):
+    def test_get_platform_moments(self):
         platform1_label = "Motekforce Link Force Plate [1]"
         platform_labels = self.c3d_wrapper.get_platform_labels()
         moments = self.c3d_wrapper.get_platform_moments(platform_labels)
