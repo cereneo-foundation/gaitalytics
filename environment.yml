@@ -5,8 +5,6 @@ channels:
 dependencies:
   - ezc3d
   - python=3.10.6
-  - pip
-  - pip:
-      - pandas>=1.4.4
+  - pandas=1.4.4
 
 prefix: .envs
