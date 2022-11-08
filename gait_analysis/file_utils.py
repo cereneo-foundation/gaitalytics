@@ -1,4 +1,5 @@
 import ezc3d
+import numpy
 import pandas as pd
 
 C3D_FIELD_DATA: str = 'data'
@@ -11,6 +12,12 @@ C3D_FIELD_DATA_COP: str = 'center_of_pressure'
 C3D_FIELD_PARAMETER: str = 'parameters'
 C3D_FIELD_PARAMETER_POINT: str = 'POINT'
 C3D_FIELD_PARAMETER_ANALOG: str = 'ANALOG'
+C3D_FIELD_PARAMETER_TRIAL: str = 'TRIAL'
+C3D_FIELD_PARAMETER_SUBJECTS: str = 'SUBJECTS'
+C3D_FIELD_PARAMETER_NAMES: str = 'NAMES'
+C3D_FIELD_PARAMETER_CAMERA_RATE: str = 'CAMERA_RATE'
+C3D_FIELD_PARAMETER_ANALOG_RATE: str = 'RATE'
+
 C3D_FIELD_PARAMETER_LABELS: str = 'LABELS'
 C3D_FIELD_PARAMETER_DESCRIPTIONS: str = 'DESCRIPTIONS'
 
@@ -29,13 +36,14 @@ class C3dFileWrapper:
     of the c3d-file structure and integrates nicely with the gait library
     """
 
-    def __init__(self, c3d_file: ezc3d.c3d):
+    def __init__(self, path: str, extract_force_plate_data: bool = True):
         """
         Initialises caches and stores c3d object
 
-        :param c3d_file: c3d object loaded from 3D-motion-capture system file
+        :param path: path to c3d file
+        :param extract_force_plate_data: if force plate data should be extracted
         """
-        self.c3d_file = c3d_file
+        self.c3d_file = ezc3d.c3d(path, extract_force_plate_data)
         self._directions = {DIRECTION_X: 0, DIRECTION_Y: 1, DIRECTION_Z: 2}
 
     @property
@@ -59,6 +67,14 @@ class C3dFileWrapper:
         self._init_point_labels()
         self._init_platform_labels()
 
+    def get_subject(self) -> str:
+        """
+        Returns subject name
+
+        :return: subject name
+        """
+        return self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_SUBJECTS][C3D_FIELD_PARAMETER_NAMES][C3D_FIELD_VALUE][0]
+
     def get_point_labels(self) -> list[str]:
         """
         Returns list of available point labels from c3d file
@@ -67,13 +83,14 @@ class C3dFileWrapper:
         """
         return list(self._point_labels.keys())
 
-    def get_platform_labels(self) -> list[str]:
+    def get_camera_frame_rate(self) -> numpy.float64:
         """
-        Returns list of available platform labels from c3d file
+        Returns frame rate of camera system
 
-        :return: list of platform labels
+        :return: frame rate
         """
-        return list(self._platform_labels.keys())
+        return self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_TRIAL][C3D_FIELD_PARAMETER_CAMERA_RATE][
+            C3D_FIELD_VALUE][0]
 
     def get_points(self, labels: list[str], directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
         """
@@ -91,6 +108,23 @@ class C3dFileWrapper:
                     self._point_labels[label_key]]
             points_dict[label_key] = dir_dict
         return pd.DataFrame(points_dict)
+
+    def get_platform_labels(self) -> list[str]:
+        """
+        Returns list of available platform labels from c3d file
+
+        :return: list of platform labels
+        """
+        return list(self._platform_labels.keys())
+
+    def get_platform_frame_rate(self) -> numpy.float64:
+        """
+        Returns frame rate of force plate
+
+        :return: frame rate
+        """
+        return self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_ANALOG][C3D_FIELD_PARAMETER_ANALOG_RATE][
+            C3D_FIELD_VALUE][0]
 
     def get_platform_forces(self, platform_labels: list[str],
                             directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
