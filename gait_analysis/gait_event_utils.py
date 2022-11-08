@@ -1,4 +1,5 @@
-# Code a function which is able to detect gait events (Zeni et al., 2008) Heel Strike, Toe off
+# Code a function which is able to detect gait events (Zeni et al., 2008)
+# Heel Strike, Toe off
 # As input you will probably need 3 nparray's (numpy) of the same length
 # hip points, heel point and frame number
 # As output i want lists of the events with the frame number in it
