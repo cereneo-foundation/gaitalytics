@@ -131,3 +131,5 @@ dmypy.json
 # Pycharm projects
 .idea/
 /playground*.py
+
+*.c3d
