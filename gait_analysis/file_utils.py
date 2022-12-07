@@ -1,5 +1,5 @@
 import ezc3d
-import numpy
+import numpy as np
 import pandas as pd
 
 C3D_FIELD_DATA: str = 'data'
@@ -13,12 +13,15 @@ C3D_FIELD_PARAMETER: str = 'parameters'
 C3D_FIELD_PARAMETER_POINT: str = 'POINT'
 C3D_FIELD_PARAMETER_ANALOG: str = 'ANALOG'
 C3D_FIELD_PARAMETER_TRIAL: str = 'TRIAL'
+C3D_FIELD_PARAMETER_EVENT: str = 'EVENT'
 C3D_FIELD_PARAMETER_SUBJECTS: str = 'SUBJECTS'
 C3D_FIELD_PARAMETER_NAMES: str = 'NAMES'
 C3D_FIELD_PARAMETER_CAMERA_RATE: str = 'CAMERA_RATE'
 C3D_FIELD_PARAMETER_ANALOG_RATE: str = 'RATE'
 
 C3D_FIELD_PARAMETER_LABELS: str = 'LABELS'
+C3D_FIELD_PARAMETER_TIMES: str = 'TIMES'
+C3D_FIELD_PARAMETER_CONTEXTS: str = 'CONTEXTS'
 C3D_FIELD_PARAMETER_DESCRIPTIONS: str = 'DESCRIPTIONS'
 
 C3D_FIELD_VALUE: str = 'value'
@@ -67,6 +70,32 @@ class C3dFileWrapper:
         self._init_point_labels()
         self._init_platform_labels()
 
+    def get_events(self) -> pd.DataFrame:
+        """
+        Returns Events stored in file
+        """
+        labels = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_LABELS][C3D_FIELD_VALUE]
+        times = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][1]
+        times_1 = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][0]
+        context = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_CONTEXTS][C3D_FIELD_VALUE]
+        return pd.DataFrame({"label": labels, "context": context, "time": times, "flag": times_1})
+
+    def set_events(self, events: pd.DataFrame) -> pd.DataFrame:
+        """
+        Returns Events stored in file
+        """
+        self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_LABELS][
+            C3D_FIELD_VALUE] = events['label']
+        flags = events.loc[:, "flag"].to_numpy()
+        times = events.loc[:, "time"].to_numpy()
+        self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][
+            C3D_FIELD_VALUE] = np.array([flags, times])
+        self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_CONTEXTS][
+            C3D_FIELD_VALUE] = events["context"]
+
+    def save_file(self, path: str):
+        self._c3d_file.write(path)
+
     def get_subject(self) -> str:
         """
         Returns subject name
@@ -83,7 +112,7 @@ class C3dFileWrapper:
         """
         return list(self._point_labels.keys())
 
-    def get_camera_frame_rate(self) -> numpy.float64:
+    def get_camera_frame_rate(self) -> np.float64:
         """
         Returns frame rate of camera system
 
@@ -117,7 +146,7 @@ class C3dFileWrapper:
         """
         return list(self._platform_labels.keys())
 
-    def get_platform_frame_rate(self) -> numpy.float64:
+    def get_platform_frame_rate(self) -> np.float64:
         """
         Returns frame rate of force plate
 

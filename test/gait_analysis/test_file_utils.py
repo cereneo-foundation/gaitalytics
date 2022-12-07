@@ -100,4 +100,7 @@ class TestC3dFileWrapper(TestCase):
         self.assertEqual(1000, self.c3d_wrapper.get_platform_frame_rate(),)
         self.assertEqual(numpy.float64, type(self.c3d_wrapper.get_platform_frame_rate()))
 
+    def test_get_events(self):
+        events = self.c3d_wrapper.get_events()
+
 
