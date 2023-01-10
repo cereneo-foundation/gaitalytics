@@ -8,18 +8,23 @@ FILENAME_SAVE = "./data/191023_S08_TM_PGV0.17_BH_NS_MoCgapfilled_EventsAdded_tes
 def main():
     c3d_wrapper = file_utils.C3dFileWrapper(FILENAME)
     events_table = c3d_wrapper.get_events()
-    events_table = events_table.sort_values('time')
-    counter = {'Left': 1, 'Right': 1}
+    # events_table = events_table.sort_values('time')
     for idx, event in events_table.iterrows():
         if event['label'] == "Foot_Strike":
-            events_table.loc[idx, 'label'] = event['context'] + "_stance" + str(counter[event['context']])
-            counter[event['context']] += 1
-            print(counter)
-
-    events = events_table.sort_index()
-    c3d_wrapper.set_events(events)
+            if event['context'] == 'Left':
+                events_table.loc[idx, 'label'] = "LHS"
+            else:
+                events_table.loc[idx, 'label'] = "RHS"
+        elif event['label'] == "Foot_Off":
+            if event['context'] == 'Left':
+                events_table.loc[idx, 'label'] = "LTO"
+            else:
+                events_table.loc[idx, 'label'] = "RTO"
+        events_table.loc[idx, 'context'] = ""
+    #events_table = events_table.sort_values('time')
+    c3d_wrapper.set_events(events_table)
     c3d_wrapper.save_file(FILENAME_SAVE)
-    print(events)
+    print(events_table)
 
 
 # Using the special variable

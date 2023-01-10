@@ -77,8 +77,14 @@ class C3dFileWrapper:
         labels = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_LABELS][C3D_FIELD_VALUE]
         times = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][1]
         times_1 = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][0]
-        context = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_CONTEXTS][C3D_FIELD_VALUE]
-        return pd.DataFrame({"label": labels, "context": context, "time": times, "flag": times_1})
+        if C3D_FIELD_PARAMETER_CONTEXTS in self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT].keys():
+            context = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][
+                C3D_FIELD_PARAMETER_CONTEXTS][C3D_FIELD_VALUE]
+            return pd.DataFrame({"label": labels, "context": context, "time": times, "flag": times_1})
+        else:
+            return pd.DataFrame({"label": labels, "time": times, "flag": times_1})
+
+
 
     def set_events(self, events: pd.DataFrame) -> pd.DataFrame:
         """
@@ -90,8 +96,9 @@ class C3dFileWrapper:
         times = events.loc[:, "time"].to_numpy()
         self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][
             C3D_FIELD_VALUE] = np.array([flags, times])
-        self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_CONTEXTS][
-            C3D_FIELD_VALUE] = events["context"]
+        if C3D_FIELD_PARAMETER_CONTEXTS in self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT].keys():
+            self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_CONTEXTS][
+                C3D_FIELD_VALUE] = events["context"]
 
     def save_file(self, path: str):
         self._c3d_file.write(path)

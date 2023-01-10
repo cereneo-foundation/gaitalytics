@@ -6,6 +6,10 @@
 import pandas as pd
 
 
+def get_gait_events(data: pd.DataFrame, method: str) -> pd.DataFrame:
+    pass
+
+
 def zenis_gait_event_detection(heel_point_array: pd.DataFrame, hip_point_array: pd.DataFrame) -> pd.DataFrame:
     HS = [1, 23, 56]
     TO = [12, 45, 65]
