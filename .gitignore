@@ -133,3 +133,4 @@ dmypy.json
 /playground*.py
 
 /data
+/idea/*
