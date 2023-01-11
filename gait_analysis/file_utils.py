@@ -1,6 +1,7 @@
 import ezc3d
 import numpy as np
 import pandas as pd
+from abc import ABC, abstractmethod
 
 C3D_FIELD_DATA: str = 'data'
 C3D_FIELD_DATA_POINTS: str = 'points'
@@ -31,7 +32,142 @@ DIRECTION_Y: str = 'y'
 DIRECTION_X: str = 'x'
 
 
-class C3dFileWrapper:
+class FileHandler(ABC):
+    @property
+    @abstractmethod
+    def file(self):
+        pass
+
+
+    @file.setter
+    @abstractmethod
+    def file(self, file):
+        """
+        Stores object in memory
+
+        :param file: object loaded from file
+        """
+        pass
+
+    @abstractmethod
+    def get_events(self) -> pd.DataFrame:
+        """
+        Returns Events stored in file
+        """
+        pass
+
+    @abstractmethod
+    def set_events(self, events: pd.DataFrame) -> pd.DataFrame:
+        """
+        Returns Events stored in file
+        """
+        pass
+
+    @abstractmethod
+    def save_file(self, path: str):
+        """
+        Returns Events stored in file
+        """
+        pass
+
+    @abstractmethod
+    def get_subject(self) -> str:
+        """
+        Returns subject name
+
+        :return: subject name
+        """
+        pass
+
+    @abstractmethod
+    def get_point_labels(self) -> list[str]:
+        """
+        Returns list of available point labels from c3d file
+
+        :return: list of point labels
+        """
+        pass
+
+    @abstractmethod
+    def get_camera_frame_rate(self) -> np.float64:
+        """
+        Returns frame rate of camera system
+
+        :return: frame rate
+        """
+        pass
+
+    @abstractmethod
+    def get_points(self, labels: list[str], directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
+        """
+        Returns data of requested point labels in columns and directions in row
+
+        :param labels: point labels for which the data is needed
+        :param directions: direction names of which the data is needed
+        :return: two-dimensional table of numpy arrays data
+        """
+        pass
+
+    @abstractmethod
+    def get_platform_labels(self) -> list[str]:
+        """
+        Returns list of available platform labels from c3d file
+
+        :return: list of platform labels
+        """
+        pass
+
+    @abstractmethod
+    def get_platform_frame_rate(self) -> np.float64:
+        """
+        Returns frame rate of force plate
+
+        :return: frame rate
+        """
+        pass
+
+    @abstractmethod
+    def get_platform_forces(self, platform_labels: list[str],
+                            directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
+        """
+        Returns data of requested platforms in columns and directions
+        in row
+
+        :param platform_labels: platform labels for which the data is needed
+        :param directions: direction names of which the data is needed
+        :return: two-dimensional table of numpy arrays data
+        """
+        pass
+
+    @abstractmethod
+    def get_platform_moments(self, platform_labels: list[str],
+                             directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
+        """
+        Returns data of requested platforms in columns and directions
+        in row
+
+        :param platform_labels: platform labels for which the data is needed
+        :param directions: direction names of which the data is needed,
+        :return: two-dimensional table of numpy arrays data
+        """
+        pass
+
+    @abstractmethod
+    def get_platform_cop(self, platform_labels: list[str],
+                         directions: list[str] = (DIRECTION_X, DIRECTION_Y, DIRECTION_Z)) -> pd.DataFrame:
+        """
+        Returns data of requested platforms in columns and directions
+        in row
+
+        :param platform_labels: platform labels for which the data is needed
+        :type platform_labels: list[str]
+        :param directions: direction names of which the data is needed
+        :return: two-dimensional table of numpy arrays data
+        """
+        pass
+
+
+class _C3dFileWrapper(FileHandler):
     """
     This wrapper class simplifies the usage of ezc3d.
 
@@ -46,11 +182,12 @@ class C3dFileWrapper:
         :param path: path to c3d file
         :param extract_force_plate_data: if force plate data should be extracted
         """
-        self.c3d_file = ezc3d.c3d(path, extract_force_plate_data)
+        self._c3d_file = None
+        self.file = ezc3d.c3d(path, extract_force_plate_data)
         self._directions = {DIRECTION_X: 0, DIRECTION_Y: 1, DIRECTION_Z: 2}
 
     @property
-    def c3d_file(self) -> ezc3d.c3d:
+    def file(self) -> ezc3d.c3d:
         """
         Returns stored c3d object
 
@@ -59,8 +196,8 @@ class C3dFileWrapper:
         """
         return self._c3d_file
 
-    @c3d_file.setter
-    def c3d_file(self, c3d_file: ezc3d.c3d):
+    @file.setter
+    def file(self, c3d_file: ezc3d.c3d):
         """
         Stores c3d object and re-initialized cache
 
@@ -71,9 +208,7 @@ class C3dFileWrapper:
         self._init_platform_labels()
 
     def get_events(self) -> pd.DataFrame:
-        """
-        Returns Events stored in file
-        """
+
         labels = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_LABELS][C3D_FIELD_VALUE]
         times = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][1]
         times_1 = self._c3d_file[C3D_FIELD_PARAMETER][C3D_FIELD_PARAMETER_EVENT][C3D_FIELD_PARAMETER_TIMES][C3D_FIELD_VALUE][0]
@@ -84,9 +219,7 @@ class C3dFileWrapper:
         else:
             return pd.DataFrame({"label": labels, "time": times, "flag": times_1})
 
-
-
-    def set_events(self, events: pd.DataFrame) -> pd.DataFrame:
+    def set_events(self, events: pd.DataFrame):
         """
         Returns Events stored in file
         """
@@ -101,6 +234,9 @@ class C3dFileWrapper:
                 C3D_FIELD_VALUE] = events["context"]
 
     def save_file(self, path: str):
+        """
+        Stores file in path
+        """
         self._c3d_file.write(path)
 
     def get_subject(self) -> str:
@@ -251,3 +387,26 @@ class C3dFileWrapper:
                         self._directions[dir_key]]
             data_dict[label_key] = dir_dict
         return pd.DataFrame(data_dict)
+
+
+class FileHandlerFactory:
+    """
+    Singleton factory to create and manage instances of FileHandlers
+    """
+
+    def __new__(cls):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(FileHandlerFactory, cls).__new__(cls)
+        return cls.instance
+
+    def __init__(self):
+        self.c3d_file_handler = None
+
+    def get_c3d_file_handler(self, path: str, extract_force_plate_data: bool = True) -> FileHandler:
+        """
+        Return c3d Filehandler
+        """
+        if self.c3d_file_handler is None:
+            self.c3d_file_handler = _C3dFileWrapper(path, extract_force_plate_data)
+
+        return self.c3d_file_handler

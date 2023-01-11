@@ -1,6 +1,5 @@
 import copy
 import numpy
-from ezc3d import c3d
 from unittest import TestCase
 from gait_analysis import file_utils
 
@@ -11,12 +10,12 @@ class TestC3dFileWrapper(TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
-        cls.c3d_wrapper = file_utils.C3dFileWrapper(cls.path)
+        cls.factory = file_utils.FileHandlerFactory()
+        cls.c3d_wrapper = cls.factory.get_c3d_file_handler(cls.path)
 
     def test_set_c3d_file(self):
-        c3d_wrapper = file_utils.C3dFileWrapper(self.path)
         # Create new c3d file copy to alternate for test
-        c3d_file = copy.deepcopy(c3d_wrapper.c3d_file)
+        c3d_file = copy.deepcopy(self.c3d_wrapper.file)
 
         # Adapt  c3d file copy with new point labels
         test_points = ["TestPoint1", "TestPoint2", "TestPoint3"]
@@ -24,9 +23,9 @@ class TestC3dFileWrapper(TestCase):
             file_utils.C3D_FIELD_PARAMETER_POINT][file_utils.C3D_FIELD_PARAMETER_LABELS][
             file_utils.C3D_FIELD_VALUE] = test_points
 
-        c3d_wrapper.c3d_file = c3d_file
-        self.assertEqual(c3d_file, c3d_wrapper.c3d_file, "c3d file not allocated in C3dFileWrapper")
-        self.assertEqual(test_points, c3d_wrapper.get_point_labels(),
+        self.c3d_wrapper.file = c3d_file
+        self.assertEqual(c3d_file, self.c3d_wrapper.c3d_file, "c3d file not allocated in C3dFileWrapper")
+        self.assertEqual(test_points, self.c3d_wrapper.get_point_labels(),
                          "point_labels not newly allocated in C3dFileWrapper")
 
     def test_get_points_good_case(self):
