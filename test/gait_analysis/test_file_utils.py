@@ -24,7 +24,7 @@ class TestC3dFileWrapper(TestCase):
             file_utils.C3D_FIELD_VALUE] = test_points
 
         self.c3d_wrapper.file = c3d_file
-        self.assertEqual(c3d_file, self.c3d_wrapper.c3d_file, "c3d file not allocated in C3dFileWrapper")
+        self.assertEqual(c3d_file, self.c3d_wrapper.file, "c3d file not allocated in C3dFileWrapper")
         self.assertEqual(test_points, self.c3d_wrapper.get_point_labels(),
                          "point_labels not newly allocated in C3dFileWrapper")
 
