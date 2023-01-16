@@ -12,10 +12,6 @@ jobs:
         python-version: ["3.8"]
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
     - name: Setup Mambaforge
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -25,17 +21,17 @@ jobs:
         use-mamba: true
     - name: Install dependencies
       run: |
-        conda env update --file environment.yml --name Gait_Analysis
+        mamba env update --file environment.yml --name Gait_Analysis
     - name: Lint with flake8
       run: |
-        conda install flake8
+        mamba install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        conda install pytest pytest-cov
+        mama install pytest pytest-cov
         pytest --cache-clear --cov=test/ > pytest-coverage.txt
     - name: Comment coverage
       uses: coroo/pytest-coverage-commentator@v1.0.2
