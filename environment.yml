@@ -1,8 +1,11 @@
 name: Gait_Analysis
 channels:
   - conda-forge
-  - anaconda
+  - defaults
 dependencies:
-  - ezc3d=1.4.9
-  - python=3.10.6
-  - pandas=1.4.4
+  - ezc3d=1.5.0
+  - pip=22.3.1
+  - python=3.8.15
+  - pandas
+  - pip:
+      - pycgm2==4.2
