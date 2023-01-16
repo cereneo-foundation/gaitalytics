@@ -19,17 +19,16 @@ jobs:
       - name: Setup Mambaforge
         uses: conda-incubator/setup-miniconda@v2
         with:
-          miniforge-variant: Mambaforge
-          miniforge-version: latest
           activate-environment: Gait_Analysis
+          python-version: 3.8
           use-mamba: false
 
       - name: Set cache date
         run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         with:
-          path: C:\Miniconda3\envs\Gait_Analysis
+          path: Gait_Analysis
           key: window-conda-${{ hashFiles('environment.yml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
         id: cache
 
