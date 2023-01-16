@@ -1,6 +1,9 @@
 name: Python Package using Conda
 
-on: [push]
+on: [ push ]
+
+env:
+  CACHE_NUMBER: 0
 
 jobs:
   build-windows:
@@ -9,29 +12,42 @@ jobs:
       max-parallel: 5
       fail-fast: false
       matrix:
-        python-version: ["3.8"]
+        python-version: [ "3.8" ]
     steps:
-    - uses: actions/checkout@v3
-    - name: Setup Mambaforge
-      uses: conda-incubator/setup-miniconda@v2
-      with:
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-        activate-environment: Gait_Analysis
-        use-mamba: true
-    - name: Install dependencies
-      run: |
-        mamba env update --file environment.yml --name Gait_Analysis
-    - name: Lint with flake8
-      run: |
-        mamba install flake8
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Test with pytest
-      run: |
-        mamba install pytest pytest-cov py
-        pytest --cache-clear --cov=test/ > pytest-coverage.txt
-    - name: Comment coverage
-      uses: coroo/pytest-coverage-commentator@v1.0.2
+      - uses: actions/checkout@v3
+
+      - name: Setup Mambaforge
+        uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-variant: Mambaforge
+          miniforge-version: latest
+          activate-environment: Gait_Analysis
+          use-mamba: true
+
+      - name: Set cache date
+        run: echo "DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - uses: actions/cache@v2
+        with:
+          path: C:\Miniconda3\envs\Gait_Analysis
+          key: window-conda-${{ hashFiles('environment.yml') }}-${{ env.DATE }}-${{ env.CACHE_NUMBER }}
+        id: cache
+
+      - name: Install dependencies
+        run: |
+          mamba env update --file environment.yml --name Gait_Analysis
+        if: steps.cache.outputs.cache-hit != 'true'
+
+      - name: Lint with flake8
+        run: |
+          mamba install flake8
+          # stop the build if there are Python syntax errors or undefined names
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      - name: Test with pytest
+        run: |
+          mamba install pytest pytest-cov py
+          pytest --cache-clear --cov=test/ > pytest-coverage.txt
+      - name: Comment coverage
+        uses: coroo/pytest-coverage-commentator@v1.0.2
