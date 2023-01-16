@@ -31,7 +31,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        mama install pytest pytest-cov
+        mamba install pytest pytest-cov
         pytest --cache-clear --cov=test/ > pytest-coverage.txt
     - name: Comment coverage
       uses: coroo/pytest-coverage-commentator@v1.0.2
