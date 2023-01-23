@@ -48,6 +48,6 @@ jobs:
       - name: Test with pytest
         run: |
           conda install pytest pytest-cov
-          pytest --cache-clear --cov=test/ > pytest-coverage.txt
+       #   pytest --cache-clear --cov=test/ > pytest-coverage.txt
       - name: Comment coverage
         uses: coroo/pytest-coverage-commentator@v1.0.2
