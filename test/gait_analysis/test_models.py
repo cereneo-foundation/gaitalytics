@@ -20,7 +20,7 @@ class TestHBMToCGM2Mapper(unittest.TestCase):
                               "LTIB",
                               "LANK",
                               "LMED",
-                              "LFMH",  # TODO: not same
+                              "LFMH",
                               "LVMH",
                               "LHEE",
                               "LTOE",
@@ -30,22 +30,23 @@ class TestHBMToCGM2Mapper(unittest.TestCase):
                               "RTIB",
                               "RANK",
                               "RMED",
-                              "RFMH",  # TODO: not same
+                              "RFMH",
                               "RVMH",
                               "RHEE",
                               "RTOE",
                               "CLAV",
-                              "T2") # TODO: not same
+                              "T2")
 
     def test_good_case(self):
-        acq = btkTools.smartReader(self.path)
         mapper = HBMToCGM2Mapper()
-        mapper.map_to_cgm2(acq)
+        acq = btkTools.smartReader(self.path, mapper.get_translator())
+        mapper.calculate_missing_markers(acq)
         for marker_name in self._NAME_MAPPINGS:
             try:
                 acq.GetPoint(marker_name)
             except RuntimeError:
                 self.assertTrue(False, f"{marker_name} not found")
+
 
 
 

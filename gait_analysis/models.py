@@ -10,67 +10,55 @@ class AbstractToCGM2Mapper(abc.ABC):
     Abstract clas do define different biomechanical model mappers
     """
 
+    @classmethod
     @abc.abstractmethod
-    def map_to_cgm2(self, acq: btkAcquisition):
+    def calculate_missing_markers(cls, acq: btkAcquisition):
         pass
 
     @staticmethod
-    def _map_marker_names(marker_name_from: str, name_mappings: tuple) -> str:
-        """ Maps marker names
-        Loops through tuples of marker name mappings and returns cgm2 marker name
-        Args:
-            acq: acquisition read from btk c3d
-        """
-        for mapping in name_mappings:
-            if mapping[0] == marker_name_from:
-                return mapping[1]
-        return ""
+    @abc.abstractmethod
+    def get_translator() -> dict:
+        pass
 
 
 class HBMToCGM2Mapper(AbstractToCGM2Mapper):
-    def __init__(self):
-        self._NAME_MAPPINGS = (("RASIS", "RASI"),
-                               ("LASIS", "LASI"),
-                               ("RPSIS", "RPSI"),
-                               ("LPSIS", "LPSI"),
-                               ("LLTHI", "LTHI"),
-                               ("LLEK", "LKNE"),
-                               ("LMEK", "LKNM"),
-                               ("LLSHA", "LTIB"),
-                               ("LLM", "LANK"),
-                               ("LMM", "LMED"),
-                               ("LMT2", "LFMH"),  # TODO: not same
-                               ("LMT5", "LVMH"),
-                               ("RLTHI", "RTHI"),
-                               ("RLEK", "RKNE"),
-                               ("RMEK", "RKNM"),
-                               ("RLSHA", "RTIB"),
-                               ("RLM", "RANK"),
-                               ("RMM", "RMED"),
-                               ("RMT2", "RFMH"),  # TODO: not same
-                               ("RMT5", "RVMH"),
-                               ("JN", "CLAV"),
-                               ("C7", "T2")  # TODO: not same
-                               )
+    @staticmethod
+    def get_translator() -> dict:
+        return {"RASI": "RASIS",
+                "LASI": "LASIS",
+                "RPSI": "RPSIS",
+                "LPSI": "LPSIS",
+                "LTHI": "LLTHI",
+                "LKNE": "LLEK",
+                "LKNM": "LMEK",
+                "LTIB": "LLSHA",
+                "LANK": "LLM",
+                "LMED": "LMM",
+                "LFMH": "LMT2",  # TODO: not same
+                "LVMH": "LMT5",
+                "RTHI": "RLTHI",
+                "RKNE": "RLEK",
+                "RKNM": "RMEK",
+                "RTIB": "RLSHA",
+                "RANK": "RLM",
+                "RMED": "RMM",
+                "RFMH": "RMT2",  # TODO: not same
+                "RVMH": "RMT5",
+                "CLAV": "JN",
+                "T2": "C7"}  # cf Armand et al.2013 https://doi.org/10.1016/j.gaitpost.2013.06.016}
 
-    def map_to_cgm2(self, acq: btkAcquisition):
+    @classmethod
+    def calculate_missing_markers(cls, acq: btkAcquisition):
         """ Maps hmb trunk model to cgm2
         Iterates through point names and maps hbm trunk to cgm2 names. Further calculates missing points from existing
         Args:
             acq: acquisition read from btk c3d
         """
-        # map names
-        for i in range(0, acq.GetPointNumber()):
-            point = acq.GetPoint(i)
-            from_marker_name = point.GetLabel()
-            cmg2_marker_name = self._map_marker_names(from_marker_name, self._NAME_MAPPINGS)
-            if cmg2_marker_name:
-                point.SetLabel(cmg2_marker_name)
+        cls._calc_toe(acq, "L")
+        cls._calc_toe(acq, "R")
 
-        self._calc_toe(acq, "L")
-        self._calc_toe(acq, "R")
-
-    def _calc_toe(self, acq: btkAcquisition, side: str = "L"):
+    @classmethod
+    def _calc_toe(cls, acq: btkAcquisition, side: str = "L"):
         """ creates LTOE or RTOE marker for cmg2.
         calculates the mean values for LHEE, LFMH and LVMH resp. RHEE, RFMH and RVMH.
         Args:
