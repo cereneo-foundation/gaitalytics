@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from btk import btkAcquisition
 from pyCGM2.Events import eventFilters, eventProcedures
-
+from pyCGM2.ForcePlates import forceplates
 
 class AbstractGaitEventDetector(ABC):
 
@@ -36,6 +36,26 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         evf = eventFilters.EventFilter(evp, acq)
         evf.detect()
 
+
+class ForcePlateEventDetection(AbstractGaitEventDetector):
+    """
+    This class detects gait events from Force Plate signal
+    """
+
+    def __init__(self, mappedFP : string ='LRX'):
+        """ Initializes Object
+        Args:
+             mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LRX)
+        """
+        self._mappedFP = mappedFP
+
+    def detect_events(self, acq: btkAcquisition):
+        """
+        detects gait events and stores it in to the acquisition
+        Args:
+            acq: acquisition read from btk c3d
+        """
+        forceplates.addForcePlateGeneralEvents(acq,self._mappedFP)
 
 class GaitEventDetectorFactory(object):
 
