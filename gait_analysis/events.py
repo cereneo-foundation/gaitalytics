@@ -43,10 +43,10 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
     This class detects gait events from Force Plate signal
     """
 
-    def __init__(self, mappedFP: str = 'LRX'):
+    def __init__(self, mappedFP: str = 'LR'):
         """ Initializes Object
         Args:
-             mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LRX)
+             mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LR)
         """
         self._mappedFP = mappedFP
 

@@ -139,3 +139,4 @@ dmypy.json
 /Playground/
 /test/data/out.c3d
 /test/data/Baseline.1.c3d
+/test/data/markers.c3d
