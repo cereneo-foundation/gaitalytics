@@ -3,6 +3,7 @@ from btk import btkAcquisition
 from pyCGM2.Events import eventFilters, eventProcedures
 from pyCGM2.ForcePlates import forceplates
 
+
 class AbstractGaitEventDetector(ABC):
 
     @abstractmethod
@@ -42,7 +43,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
     This class detects gait events from Force Plate signal
     """
 
-    def __init__(self, mappedFP : string ='LRX'):
+    def __init__(self, mappedFP: str = 'LRX'):
         """ Initializes Object
         Args:
              mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LRX)
@@ -55,12 +56,14 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         Args:
             acq: acquisition read from btk c3d
         """
-        forceplates.addForcePlateGeneralEvents(acq,self._mappedFP)
+        forceplates.addForcePlateGeneralEvents(acq, self._mappedFP)
+
 
 class GaitEventDetectorFactory(object):
 
     def __init__(self):
         self._zenis = None
+        self._force_plate = None
 
     def __new__(cls):
         if not hasattr(cls, 'instance'):
@@ -71,3 +74,8 @@ class GaitEventDetectorFactory(object):
         if self._zenis is None:
             self._zenis = ZenisGaitEventDetector()
         return self._zenis
+
+    def get_force_plate_detector(self) -> AbstractGaitEventDetector:
+        if self._force_plate is None:
+            self._force_plate = ForcePlateEventDetection()
+        return self._force_plate
