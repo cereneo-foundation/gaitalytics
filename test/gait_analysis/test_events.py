@@ -32,7 +32,7 @@ class TestForcePlateEvents(unittest.TestCase):
         acq = btkTools.smartReader(self.path)
         GaitEventDetectorFactory().get_force_plate_detector().detect_events(acq)
         btkTools.smartWriter(acq, r"../data/out.c3d")
-        self.assertEqual(acq.GetEvents().GetItemNumber(), 2, "ForcePlate event detector does not work")
+        self.assertEqual(acq.GetEvents().GetItemNumber(), 593, "ForcePlate event detector does not work")
 
 
 if __name__ == '__main__':
