@@ -1,15 +1,22 @@
 import abc
 
 from pandas import DataFrame
+from btk import btkAcquisition
 
 
 class AbstractToCGM2Mapper(abc.ABC):
+    """
+    Abstract clas do define different biomechanical model mappers
+    """
     @abc.abstractmethod
-    def map_to_cgm2(self, points: DataFrame) -> DataFrame:
+    def map_to_cgm2(self, points: btkAcquisition) -> btkAcquisition:
         pass
 
     @staticmethod
-    def static_map_marker_names(marker_name_from: str, name_mappings: tuple) -> str:
+    def _map_marker_names(marker_name_from: str, name_mappings: tuple) -> str:
+        """
+        Loops through tuples of marker name mappings and returns cgm2 marker name
+        """
         for mapping in name_mappings:
             if mapping[0] == marker_name_from:
                 return mapping[1]
@@ -22,7 +29,7 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
                                ("LASIS", "LASI"),
                                ("RPSIS", "RPSI"),
                                ("LPSIS", "LPSI"),
-                               ("LLHTI", "LHTI"),
+                               ("LLTHI", "LTHI"),
                                ("LLEK", "LKNE"),
                                ("LMEK", "LKNM"),
                                ("LLSHA", "LTIB"),
@@ -30,7 +37,7 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
                                ("LMM", "LMED"),
                                ("LMT2", "LFMH"),  # TODO: not same
                                ("LMT5", "LVMH"),
-                               ("RLHTI", "RHTI"),
+                               ("RLTHI", "RTHI"),
                                ("RLEK", "RKNE"),
                                ("RMEK", "RKNM"),
                                ("RLSHA", "RTIB"),
@@ -42,13 +49,25 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
                                ("C7", "T2")  # TODO: not same
                                )
 
-    def map_to_cgm2(self, points: DataFrame) -> DataFrame:
+    def map_to_cgm2(self, acq: btkAcquisition) -> btkAcquisition:
+        """
+        Iterates through point names and maps hbm trunk to cgm2 names. Further calculates missing points from existing
+        """
         # map names
-        from_marker_names = points.columns
-        for i in range(0, len(from_marker_names)):
-            cmg2_marker_name = self.static_map_marker_names(from_marker_names[i], self._NAME_MAPPINGS)
+        for i in range(0, acq.GetPointNumber()):
+            point = acq.GetPoint(i)
+            from_marker_name = point.GetLabel()
+            cmg2_marker_name = self._map_marker_names(from_marker_name, self._NAME_MAPPINGS)
             if cmg2_marker_name:
-                points.rename(columns={from_marker_names[i]: cmg2_marker_name}, inplace=True)
-        # TODO: calc missing markers
+                point.SetLabel(cmg2_marker_name)
 
-        return points
+        # TODO: calc missing markers
+        self._calc_ltoe(acq, "L")
+        return acq
+
+    def _calc_ltoe(self, acq: btkAcquisition, side: str = "L") -> btkAcquisition:
+        hee = acq.GetPoint(f"{side}HEE")
+        fmh = acq.GetPoint(f"{side}FMH")
+        vmh = acq.GetPoint(f"{side}VMH")
+        return acq
+
