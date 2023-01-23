@@ -17,5 +17,5 @@ please follow the instructions on their site to install the dependency
 ```python
 from pyCGM2.Tools import btkTools
 path = "test/data/test.c3d"
-acq = btkTools.smartReader(cls.path)
+acq = btkTools.smartReader(path)
 ```
