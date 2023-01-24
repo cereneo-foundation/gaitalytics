@@ -1,5 +1,6 @@
 name: Gait_Analysis
 channels:
+  - opensim-org
   - conda-forge
   - defaults
 dependencies:
@@ -7,5 +8,6 @@ dependencies:
   - pip=22.3.1
   - python=3.8.15
   - btk
+  - opensim
   - pip:
       - pycgm2

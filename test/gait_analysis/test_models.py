@@ -16,7 +16,7 @@ class TestHBMToCGM2Mapper(unittest.TestCase):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
         cls.settings_path = "settings/"
-        cls.settings_file = "HBM_Trunk.settings"
+        cls.settings_file = "HBM_Trunk_cgm2.5.settings"
 
         cls._NAME_MAPPINGS = ("RASI",
                               "LASI",

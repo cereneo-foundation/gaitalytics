@@ -18,7 +18,7 @@ class TestZenisEvents(unittest.TestCase):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
         cls.settings_path = "settings/"
-        cls.settings_file = "HBM_Trunk.settings"
+        cls.settings_file = "HBM_Trunk_cgm2.5.settings"
 
     def test_good_case(self):
         GaitEventDetectorFactory().get_zenis_detector().detect_events(self.acq)
@@ -38,7 +38,7 @@ class TestForcePlateEvents(unittest.TestCase):
         cls.path = "test/data/test.c3d"
         cls.path = "test/data/test.c3d"
         cls.settings_path = "settings/"
-        cls.settings_file = "HBM_Trunk.settings"
+        cls.settings_file = "HBM_Trunk_cgm2.5.settings"
 
     def test_good_case(self):
         GaitEventDetectorFactory().get_force_plate_detector().detect_events(self.acq)
