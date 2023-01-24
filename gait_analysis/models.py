@@ -15,37 +15,8 @@ class AbstractToCGM2Mapper(abc.ABC):
     def calculate_missing_markers(cls, acq: btkAcquisition):
         pass
 
-    @staticmethod
-    @abc.abstractmethod
-    def get_translator() -> dict:
-        pass
-
 
 class HBMToCGM2Mapper(AbstractToCGM2Mapper):
-    @staticmethod
-    def get_translator() -> dict:
-        return {"RASI": "RASIS",
-                "LASI": "LASIS",
-                "RPSI": "RPSIS",
-                "LPSI": "LPSIS",
-                "LTHI": "LLTHI",
-                "LKNE": "LLEK",
-                "LKNM": "LMEK",
-                "LTIB": "LLSHA",
-                "LANK": "LLM",
-                "LMED": "LMM",
-                "LFMH": "LMT2",  # TODO: not same
-                "LVMH": "LMT5",
-                "RTHI": "RLTHI",
-                "RKNE": "RLEK",
-                "RKNM": "RMEK",
-                "RTIB": "RLSHA",
-                "RANK": "RLM",
-                "RMED": "RMM",
-                "RFMH": "RMT2",  # TODO: not same
-                "RVMH": "RMT5",
-                "CLAV": "JN",
-                "T2": "C7"}  # cf Armand et al.2013 https://doi.org/10.1016/j.gaitpost.2013.06.016}
 
     @classmethod
     def calculate_missing_markers(cls, acq: btkAcquisition):

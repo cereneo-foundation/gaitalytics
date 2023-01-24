@@ -1,0 +1,114 @@
+Global:
+  Marker diameter: 14 #[double]
+  Point suffix:  None #[string]
+  EnableIK: 1 #[integer](choice: 0 or 1):  enable  the Inverse Kinematics solver
+  IkAccuracy: 1e-8
+
+Translators: # Translators adapt your current marker set
+    LASI: LASIS #[string]
+    RASI: RASIS
+    LPSI: LPSIS
+    RPSI: RPSIS
+    RTHI: RLTHI
+    RKNE: RLEK
+    RTIAP: None
+    RTIAD: None
+    RTIB: RLSHA
+    RANK: RLM
+    RTIAP: None
+    RTIAD: None
+    RHEE: None
+    RSMH: None
+    RTOE: None
+    RFMH: RMT2
+    RVMH: RMT5
+    LTHI: LLTHI
+    LKNE: LLEK
+    LTHAP: None
+    LTHAD: None
+    LTIB: LLSHA
+    LANK: LLM
+    LTIAP: None
+    LTIAD: None
+    LHEE: None
+    LSMH: None
+    LTOE: None
+    LFMH: LMT2
+    LVMH: LMT5
+    RKNM: RMEK
+    LKNM: LMEK
+    RMED: RMM
+    LMED: LMM
+    C7: None
+   # C7: T2 # cf Armand et al.2013 https://doi.org/10.1016/j.gaitpost.2013.06.016
+    T10: None
+    CLAV: JN
+    STRN: CLAV
+    LFHD: GLAB #Eames et al.1999 10.1016/S0167-9457(99)00022-6
+    LBHD: LMAS
+    RFHD: GLAB
+    RBHD: RMAS
+    LSHO: None
+    LELB: None
+    LWRB: None
+    LWRA: None
+    LFIN: None
+    RSHO: None
+    RELB: None
+    RWRB: None
+    RWRA: None
+    RFIN: None
+
+Calibration:
+    HJC:
+        Left: Hara #[string](choice: Hara only)
+        Right: Hara
+    Left flat foot: 1 [integer]
+    Right flat foot: 1
+    Head flat : 1
+
+Fitting:
+    Moment Projection: JCS #[string](choice: Proximal, Global, Distal, JCS)
+    Weight:
+        LASI: 100 #[double]: marker weight used by the Inverse Kinematics solver
+        RASI: 100
+        LPSI: 100
+        RPSI: 100
+        RTHI: 100
+        RKNE: 100
+        RTHAP: 100
+        RTHAD: 100
+        RTIB: 100
+        RANK: 100
+        RTIAP: 100
+        RTIAD: 100
+        RHEE: 100
+        RSMH: 0
+        RTOE: 100
+        RFMH: 100
+        RVMH: 100
+        LTHI: 100
+        LKNE: 100
+        LTHAP: 100
+        LTHAD: 100
+        LTIB: 100
+        LANK: 100
+        LTIAP: 100
+        LTIAD: 100
+        LHEE: 100
+        LSMH: 0
+        LTOE: 100
+        LFMH: 100
+        LVMH: 100
+        RTHLD: 0
+        RPAT: 0
+        LTHLD: 0
+        LPAT: 0
+
+
+
+################
+# DO NOT TOUCH #
+################
+
+ModelVersion: CGM2.5

@@ -1,38 +1,48 @@
 import unittest
 from pyCGM2.Tools import btkTools
-from pyCGM2.Events import eventProcedures, eventFilters
+from pyCGM2.Utils import files
 from gait_analysis.models import HBMToCGM2Mapper
 from gait_analysis.events import GaitEventDetectorFactory
 
 
 class TestZenisEvents(unittest.TestCase):
 
+    def setUp(self) -> None:
+        super().setUp()
+        settings = files.loadModelSettings(self.settings_path, self.settings_file)
+        self.acq = btkTools.smartReader(self.path, settings["Translators"])
+        HBMToCGM2Mapper().calculate_missing_markers(self.acq)
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
+        cls.settings_path = "settings/"
+        cls.settings_file = "HBM_Trunk.settings"
 
     def test_good_case(self):
-        mapper = HBMToCGM2Mapper()
-        acq = btkTools.smartReader(self.path, mapper.get_translator())
-        btkTools.smartWriter(acq, "test/data/markers.c3d")
-        mapper.calculate_missing_markers(acq)
-        GaitEventDetectorFactory().get_zenis_detector().detect_events(acq)
-        self.assertEqual(acq.GetEvents().GetItemNumber(), 622, "Zenis event detector does not work")
+        GaitEventDetectorFactory().get_zenis_detector().detect_events(self.acq)
+        self.assertEqual(self.acq.GetEvents().GetItemNumber(), 622, "Zenis event detector does not work")
 
 
 class TestForcePlateEvents(unittest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        settings = files.loadModelSettings(self.settings_path, self.settings_file)
+        self.acq = btkTools.smartReader(self.path, settings["Translators"])
+        HBMToCGM2Mapper().calculate_missing_markers(self.acq)
 
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
+        cls.path = "test/data/test.c3d"
+        cls.settings_path = "settings/"
+        cls.settings_file = "HBM_Trunk.settings"
 
     def test_good_case(self):
-        acq = btkTools.smartReader(self.path)
-        GaitEventDetectorFactory().get_force_plate_detector().detect_events(acq)
-        btkTools.smartWriter(acq, "test/data/out.c3d")
-        self.assertEqual(acq.GetEvents().GetItemNumber(), 622, "Zenis event detector does not work")
+        GaitEventDetectorFactory().get_force_plate_detector().detect_events(self.acq)
+        self.assertEqual(self.acq.GetEvents().GetItemNumber(), 622, "Force plate event detector does not work")
 
 
 if __name__ == '__main__':

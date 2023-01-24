@@ -1,15 +1,23 @@
 import unittest
 from pyCGM2.Tools import btkTools
-from pyCGM2.Events import eventProcedures, eventFilters
+from pyCGM2.Utils import files
 from gait_analysis.models import HBMToCGM2Mapper
 
 
 class TestHBMToCGM2Mapper(unittest.TestCase):
 
+    def setUp(self) -> None:
+        super().setUp()
+        settings = files.loadModelSettings(self.settings_path, self.settings_file)
+        self.acq = btkTools.smartReader(self.path, settings["Translators"])
+
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
         cls.path = "test/data/test.c3d"
+        cls.settings_path = "settings/"
+        cls.settings_file = "HBM_Trunk.settings"
+
         cls._NAME_MAPPINGS = ("RASI",
                               "LASI",
                               "RPSI",
@@ -34,20 +42,15 @@ class TestHBMToCGM2Mapper(unittest.TestCase):
                               "RVMH",
                               "RHEE",
                               "RTOE",
-                              "CLAV",
-                              "T2")
+                              "CLAV")
 
     def test_good_case(self):
-        mapper = HBMToCGM2Mapper()
-        acq = btkTools.smartReader(self.path, mapper.get_translator())
-        mapper.calculate_missing_markers(acq)
+        HBMToCGM2Mapper().calculate_missing_markers(self.acq)
         for marker_name in self._NAME_MAPPINGS:
             try:
-                acq.GetPoint(marker_name)
+                self.acq.GetPoint(marker_name)
             except RuntimeError:
                 self.assertTrue(False, f"{marker_name} not found")
-
-
 
 
 if __name__ == '__main__':
