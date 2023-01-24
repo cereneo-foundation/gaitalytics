@@ -42,7 +42,8 @@ class TestForcePlateEvents(unittest.TestCase):
 
     def test_good_case(self):
         GaitEventDetectorFactory().get_force_plate_detector().detect_events(self.acq)
-        self.assertEqual(self.acq.GetEvents().GetItemNumber(), 622, "Force plate event detector does not work")
+        btkTools.smartWriter(self.acq, "test/data/out.c3d")
+        self.assertEqual(self.acq.GetEvents().GetItemNumber(), 622, "Zenis event detector does not work")
 
 
 if __name__ == '__main__':
