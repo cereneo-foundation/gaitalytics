@@ -56,70 +56,69 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
     This class detects gait events from Force Plate signal
     """
 
-    def __init__(self, mappedFP: str = 'LR', weight_threshold: int = 10):
+    def __init__(self, mapped_fp: str = 'LR', weight_threshold: int = 10):
         """ Initializes Object
         Args:
              mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LR)
         """
-        self._mappedFP = mappedFP
+        self._mapped_fp = mapped_fp
         self._weight_threshold = weight_threshold
 
-    def addForcePlateGeneralEvents_Cefir(self, btkAcq: btkAcquisition):
+    def addforceplategeneralevents_cefir(self, btk_acq: btkAcquisition):
         """add maximum force plate as general event
         Args:
-            btkAcq (btk.acquisition): btk acquisition instance
-            mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LR, for FP1=Left & FP2=Right)
+            btk_acq (btk.acquisition): btk acquisition instance
 
         Adapted from pyCGM2 forceplates.py
         """
-        ff = btkAcq.GetFirstFrame()
-        lf = btkAcq.GetLastFrame()
-        pf = btkAcq.GetPointFrequency()
-        appf = btkAcq.GetNumberAnalogSamplePerFrame()
+        first_frame = btk_acq.GetFirstFrame()
+        last_frame = btk_acq.GetLastFrame()
+        freq = btk_acq.GetPointFrequency()
+        analog_sample_per_frame = btk_acq.GetNumberAnalogSamplePerFrame()
 
         # --- ground reaction force wrench ---
-        pfe = btkForcePlatformsExtractor()
-        grwf = btkGroundReactionWrenchFilter()
+        fp_extractor = btkForcePlatformsExtractor()
+        ground_reaction = btkGroundReactionWrenchFilter()
 
         # Filter the FP signal
-        signal_processing.forcePlateFiltering(btkAcq)
+        signal_processing.forcePlateFiltering(btk_acq)
         # --
-        pfe.SetInput(btkAcq)
-        pfc = pfe.GetOutput()
-        grwf.SetInput(pfc)
-        grwc = grwf.GetOutput()
-        grwc.Update()
+        fp_extractor.SetInput(btk_acq)
+        fp_collection = fp_extractor.GetOutput()
+        ground_reaction.SetInput(fp_collection)
+        ground_reaction_collection = ground_reaction.GetOutput()
+        ground_reaction_collection.Update()
 
         # remove force plates events
         #
 
         # add general events
-        indexFP = 0
-        for letter in self._mappedFP:
+        index_fp = 0
+        for letter in self._mapped_fp:
 
-            force = grwc.GetItem(indexFP).GetForce().GetValues()
-            force_downsample = force[0:(lf - ff + 1) * appf:appf][:, 2]  # downsample
+            force = ground_reaction_collection.GetItem(index_fp).GetForce().GetValues()
+            force_downsample = force[0:(last_frame - first_frame + 1) * analog_sample_per_frame:analog_sample_per_frame][:, 2]  # down sample
 
             detection = detect_onset.detect_onset(force_downsample, threshold=self._weight_threshold)
             sequence = FS_or_FO(force_downsample, detection)  # return array of ["Label event":str,index of event:int]
             if letter == "L":
                 for elem in sequence:
                     type_event = elem[0]
-                    indx_event = elem[1]
+                    index_event = elem[1]
 
-                    ev = btkEvent(type_event, (indx_event - 1) / pf, 'Left', btkEvent.Automatic, '',
+                    ev = btkEvent(type_event, (index_event - 1) / freq, 'Left', btkEvent.Automatic, '',
                                   'event from Force plate assignment')
-                    btkAcq.AppendEvent(ev)
+                    btk_acq.AppendEvent(ev)
             elif letter == "R":
                 for elem in sequence:
                     type_event = elem[0]
-                    indx_event = elem[1]
+                    index_event = elem[1]
 
-                    ev = btkEvent(type_event, (indx_event - 1) / pf, 'Right', btkEvent.Automatic, '',
+                    ev = btkEvent(type_event, (index_event - 1) / freq, 'Right', btkEvent.Automatic, '',
                                   'event from Force plate assignment')
-                    btkAcq.AppendEvent(ev)
+                    btk_acq.AppendEvent(ev)
 
-            indexFP += 1
+            index_fp += 1
 
     def detect_events(self, acq: btkAcquisition):
         """
@@ -127,7 +126,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         Args:
             acq: acquisition read from btk c3d
         """
-        self.addForcePlateGeneralEvents_Cefir(acq)
+        self.addforceplategeneralevents_cefir(acq)
 
 
 class GaitEventDetectorFactory(object):
