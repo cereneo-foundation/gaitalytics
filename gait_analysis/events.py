@@ -2,14 +2,14 @@ from abc import ABC, abstractmethod
 
 import numpy
 from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
-from pyCGM2.Tools import btkTools
 from pyCGM2.Events import eventFilters, eventProcedures
-from pyCGM2.Lib.eventDetector import zeni
-
 from pyCGM2.Signal import detect_onset
-from pyCGM2.Signal import signal_processing
-from gait_analysis.utils import FS_or_FO
+from gait_analysis import utils
+from pyCGM2.Tools import btkTools
 
+FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
+GAIT_EVENT_FOOT_STRIKE = "Foot Strike"
+GAIT_EVENT_FOOT_OFF = "Foot Off"
 
 class AbstractGaitEventDetector(ABC):
 
@@ -18,7 +18,13 @@ class AbstractGaitEventDetector(ABC):
         pass
 
     @staticmethod
-    def clear_events(self, bkt_acq: btkAcquisition, event_names: list = None):
+    def clear_events(bkt_acq: btkAcquisition, event_names: list = None):
+        """
+        clears all events in acquisition
+
+        :param bkt_acq: loaded acquisition
+        :param event_names: List of event names to delete. None equals all
+        """
         if event_names is None:
             bkt_acq.ClearEvents()
         else:
@@ -40,9 +46,9 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         self._foot_strike_offset = foot_strike_offset
         self._foot_off_offset = foot_off_offset
 
-
     def detect_events(self, acq: btkAcquisition):
         """detects zeni gait events and stores it in to the acquisition
+
         :param acq: loaded and filtered acquisition
         """
 
@@ -58,82 +64,67 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):
     """
-    This class detects gait events from Force Plate signal
+    This class detects gait events from Force Plate signals
     """
 
-    def __init__(self, mapped_fp: str = 'LR', weight_threshold: int = 10):
-        """ Initializes Object
-        Args:
-             mappedForcePlate (str): letters indicated foot assigned to a force plate (eg LR)
+    def __init__(self, mapped_force_plate: dict = FORCE_PLATE_SIDE_MAPPING_CAREN, force_gait_event_threshold: int = 10):
         """
-        self._mapped_fp = mapped_fp
-        self._weight_threshold = weight_threshold
-
-    def addforceplategeneralevents_cefir(self, btk_acq: btkAcquisition):
-        """add maximum force plate as general event
-        Args:
-            btk_acq (btk.acquisition): btk acquisition instance
-
-        Adapted from pyCGM2 forceplates.py
+        Initializes Object
+        :param mapped_force_plate: Dictionary with name of force plate and index
+        :param force_gait_event_threshold: threshold in newton to define gait event
         """
-        first_frame = btk_acq.GetFirstFrame()
-        last_frame = btk_acq.GetLastFrame()
-        freq = btk_acq.GetPointFrequency()
-        analog_sample_per_frame = btk_acq.GetNumberAnalogSamplePerFrame()
 
-        # --- ground reaction force wrench ---
-        fp_extractor = btkForcePlatformsExtractor()
-        ground_reaction = btkGroundReactionWrenchFilter()
-
-        # Filter the FP signal
-        signal_processing.forcePlateFiltering(btk_acq)
-        # --
-        fp_extractor.SetInput(btk_acq)
-        fp_collection = fp_extractor.GetOutput()
-        ground_reaction.SetInput(fp_collection)
-        ground_reaction_collection = ground_reaction.GetOutput()
-        ground_reaction_collection.Update()
-
-        # remove force plates events
-        #
-
-        # add general events
-        index_fp = 0
-        for letter in self._mapped_fp:
-
-            force = ground_reaction_collection.GetItem(index_fp).GetForce().GetValues()
-            force_downsample = force[
-                               0:(last_frame - first_frame + 1) * analog_sample_per_frame:analog_sample_per_frame][:,
-                               2]  # down sample
-
-            detection = detect_onset.detect_onset(force_downsample, threshold=self._weight_threshold)
-            sequence = FS_or_FO(force_downsample, detection)  # return array of ["Label event":str,index of event:int]
-            if letter == "L":
-                for elem in sequence:
-                    type_event = elem[0]
-                    index_event = elem[1]
-
-                    ev = btkEvent(type_event, (index_event - 1) / freq, 'Left', btkEvent.Automatic, '',
-                                  'event from Force plate assignment')
-                    btk_acq.AppendEvent(ev)
-            elif letter == "R":
-                for elem in sequence:
-                    type_event = elem[0]
-                    index_event = elem[1]
-
-                    ev = btkEvent(type_event, (index_event - 1) / freq, 'Right', btkEvent.Automatic, '',
-                                  'event from Force plate assignment')
-                    btk_acq.AppendEvent(ev)
-
-            index_fp += 1
+        self._mapped_force_plate = mapped_force_plate
+        self._weight_threshold = force_gait_event_threshold
 
     def detect_events(self, acq: btkAcquisition):
         """
-        detects gait events and stores it in to the acquisition
-        Args:
-            acq: acquisition read from btk c3d
+        Detect force plate gait events with peak detection
+        :param acq: loaded and filtered acquisition
         """
-        self.addforceplategeneralevents_cefir(acq)
+        point_frequency = acq.GetPointFrequency()
+
+        for side_name in self._mapped_force_plate.keys():
+            force_down_sample = utils.force_plate_down_sample(acq, self._mapped_force_plate[side_name])
+            detection = detect_onset.detect_onset(force_down_sample, threshold=self._weight_threshold)
+            sequence = self._detect_gait_event_type(force_down_sample, detection)
+            self._store_force_plate_events(acq, side_name, point_frequency, sequence)
+
+    @staticmethod
+    def _store_force_plate_events(btk_acq, side_name, point_frequency, sequence):
+        for elem in sequence:
+            type_event = elem[0]
+            index_event = elem[1]
+
+            ev = btkEvent(type_event, (index_event - 1) / point_frequency, side_name, btkEvent.Automatic, '',
+                          'event from Force plate assignment')
+            btk_acq.AppendEvent(ev)
+
+    @staticmethod
+    def _detect_gait_event_type(force_plate_signal: numpy.ndarray, detected_force_plate_events: numpy.ndarray) -> list:
+        """
+        Iterate through each event detected by detect_onset and determine if the event is a FootStrike or a FootOff.
+        Return array of ["Type of event":str,index of event:int]
+        :param force_plate_signal: Signal of the force plate
+        :param detected_force_plate_events: detection from detect_onset
+        :return: 2 dimensional array with event name and frame index
+        """
+
+        signal_length = len(force_plate_signal)
+        detected_event_types = []
+        for couple_index in detected_force_plate_events:
+            for signal_index in couple_index:
+
+                # check for index out of bound
+                if 20 < signal_index < (signal_length - 20):
+
+                    # positive or negative slope (FeetOff or FeetStrike)
+                    diff = force_plate_signal[signal_index - 20] - force_plate_signal[signal_index + 20]
+                    if diff > 0:
+                        detected_event_types.append(["Foot Off", signal_index])
+                    else:
+                        detected_event_types.append(["Foot Strike", signal_index])
+        return detected_event_types  # Contain the label of the event and the corresponding index
 
 
 class GaitEventDetectorFactory(object):

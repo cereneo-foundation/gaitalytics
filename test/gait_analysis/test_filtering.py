@@ -1,9 +1,7 @@
 import unittest
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
-from gait_analysis.models import HBMToCGM2Mapper
-from gait_analysis.events import GaitEventDetectorFactory
-from gait_analysis.filtering import low_pass_filtering
+from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 
 
 class TestFiltering(unittest.TestCase):
@@ -23,8 +21,10 @@ class TestFiltering(unittest.TestCase):
         cls.settings_file = "CGM2_5_CEFIR.settings"
 
     def test_good_case(self):
-        low_pass_filtering(self.acq)
-        #btkTools.smartWriter(self.acq, f"{self.data_path}1min_filtered.c3d")
+        low_pass_point_filtering(self.acq)
+        low_pass_force_plate_filtering(self.acq)
+
+        btkTools.smartWriter(self.acq, f"{self.data_path}1min_filtered.c3d")
 
 
 

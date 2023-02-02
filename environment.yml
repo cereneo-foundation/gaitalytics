@@ -7,8 +7,7 @@ dependencies:
   - pip=22.3.1
   - python=3.8.15
   - conda=22.11.1
-  #- numpy=1.21.6
-  - btk
+  - btk=0.4.dev0
   - opensim
   - pip:
       - pycgm2
