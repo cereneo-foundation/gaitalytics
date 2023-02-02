@@ -14,7 +14,7 @@ class TestAnalysis(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.data_path = "test/data/"
-        cls.test_file = "test/data/walking_0.11.c3d"
+        cls.test_file = "test/data/walking_0_11.c3d"
         cls.static_file = "static.c3d"
         cls.settings_path = "settings/"
         cls.settings_file = "HBM_Trunk_cgm2.2.settings"

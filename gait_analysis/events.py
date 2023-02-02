@@ -4,6 +4,7 @@ import numpy
 from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
 from pyCGM2.Tools import btkTools
 from pyCGM2.Events import eventFilters, eventProcedures
+from pyCGM2.Lib.eventDetector import zeni
 
 from pyCGM2.Signal import detect_onset
 from pyCGM2.Signal import signal_processing
@@ -29,7 +30,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, filter_frequency: int = 15, filter_order: int = 2, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
         Args:
             foot_strike_offset: numbers of frames to offset next foot strike event
@@ -37,6 +38,8 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         """
         self._foot_strike_offset = foot_strike_offset
         self._foot_off_offset = foot_off_offset
+        self._filter_frequency = filter_frequency
+        self._filter_order = filter_order
 
     def detect_events(self, acq: btkAcquisition):
         """
@@ -44,11 +47,11 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         Args:
             acq: acquisition read from btk c3d
         """
-        evp = eventProcedures.ZeniProcedure()
-        evp.setFootOffOffset(self._foot_off_offset)
-        evp.setFootStrikeOffset(self._foot_strike_offset)
-        evf = eventFilters.EventFilter(evp, acq)
-        evf.detect()
+        [acq, state] = zeni(acq,
+                            self._foot_strike_offset,
+                            self._foot_off_offset,
+                            fc_lowPass_marker=self._filter_frequency,
+                            order_lowPass_marker=self._filter_order)
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):
@@ -97,7 +100,9 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         for letter in self._mapped_fp:
 
             force = ground_reaction_collection.GetItem(index_fp).GetForce().GetValues()
-            force_downsample = force[0:(last_frame - first_frame + 1) * analog_sample_per_frame:analog_sample_per_frame][:, 2]  # down sample
+            force_downsample = force[
+                               0:(last_frame - first_frame + 1) * analog_sample_per_frame:analog_sample_per_frame][:,
+                               2]  # down sample
 
             detection = detect_onset.detect_onset(force_downsample, threshold=self._weight_threshold)
             sequence = FS_or_FO(force_downsample, detection)  # return array of ["Label event":str,index of event:int]

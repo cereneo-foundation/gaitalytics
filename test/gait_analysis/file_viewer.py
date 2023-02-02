@@ -1,13 +1,19 @@
-from gait_analysis import file_utils
+from pyCGM2.Tools import btkTools
+from pyCGM2.Utils import utils
 
 # This pipeline refactors gait event to a qtm suitable form
-FILENAME = "./data/Gait LB - IOR 1.c3d"
+FILENAME = "test/data/static.c3d"
 
 
 def main():
-    c3d_wrapper = file_utils.C3dFileWrapper(FILENAME)
-    events = c3d_wrapper.get_events()
-    print(events)
+    acq = btkTools.smartReader(FILENAME)
+    acq.GetPoints()
+    i = acq.BeginPoint()
+    while i != acq.EndPoint():
+        print(i.value().GetLabel())
+        i.incr()
+
+
 
 
 # Using the special variable

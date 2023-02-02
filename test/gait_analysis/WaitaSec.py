@@ -10,14 +10,14 @@ from pyCGM2.Lib.CGM import cgm2_5
 LOGGER = pyCGM2.LOGGER
 ###
 # data
-DATA_PATH = "C:\\Users\\simon\\OneDrive\\Bureau\\CERENEO\\Data\\pyCGM2\\26_01_pyCGM2_Simon\\"
+DATA_PATH = "test/data/"
 staticFile ="Calib02.c3d" # static trial
 trialName = "1min.c3d" # gait trial
 
-datapath_settings= r"C:\Users\simon\anaconda3\envs\Gait_Analysis\Lib\site-packages\pyCGM2\Settings"
+datapath_settings= r"settings"
 
 # setting
-settings = files.loadModelSettings(datapath_settings,"CGM2_5-pyCGM2_bis.settings")
+settings = files.loadModelSettings(datapath_settings,"CGM2_5_CEFIR.settings")
 
 ###
 # CGM2.5 CALIBRATION
