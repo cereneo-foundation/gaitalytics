@@ -30,28 +30,30 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, filter_frequency: int = 15, filter_order: int = 2, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
-        Args:
-            foot_strike_offset: numbers of frames to offset next foot strike event
-            foot_off_offset: number of frames to offset next foot off event
+
+        :param foot_strike_offset: numbers of frames to offset next foot strike event
+        :param foot_off_offset: number of frames to offset next foot off event
         """
+
         self._foot_strike_offset = foot_strike_offset
         self._foot_off_offset = foot_off_offset
-        self._filter_frequency = filter_frequency
-        self._filter_order = filter_order
+
 
     def detect_events(self, acq: btkAcquisition):
+        """detects zeni gait events and stores it in to the acquisition
+        :param acq: loaded and filtered acquisition
         """
-        detects gait events and stores it in to the acquisition
-        Args:
-            acq: acquisition read from btk c3d
-        """
-        [acq, state] = zeni(acq,
-                            self._foot_strike_offset,
-                            self._foot_off_offset,
-                            fc_lowPass_marker=self._filter_frequency,
-                            order_lowPass_marker=self._filter_order)
+
+        evp = eventProcedures.ZeniProcedure()
+        evp.setFootStrikeOffset(self._foot_strike_offset)
+        evp.setFootOffOffset(self._foot_off_offset)
+
+        # event filter
+        evf = eventFilters.EventFilter(evp, acq)
+        evf.detect()
+        state = evf.getState()
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):

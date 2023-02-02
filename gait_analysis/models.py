@@ -20,22 +20,22 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
 
     @classmethod
     def calculate_missing_markers(cls, acq: btkAcquisition):
-        """ Maps hmb trunk model to cgm2
+        """Maps hmb trunk model to cgm2
         Iterates through point names and maps hbm trunk to cgm2 names. Further calculates missing points from existing
-        Args:
-            acq: acquisition read from btk c3d
+        :param acq: loaded acquisition
         """
         cls._calc_toe(acq, "L")
         cls._calc_toe(acq, "R")
 
     @classmethod
     def _calc_toe(cls, acq: btkAcquisition, side: str = "L"):
-        """ creates LTOE or RTOE marker for cmg2.
+        """creates LTOE or RTOE marker for cmg2.
         calculates the mean values for LHEE, LFMH and LVMH resp. RHEE, RFMH and RVMH.
-        Args:
-           acq: acquisition read from btk c3d
-           site: Left ("L") or Right ("R") side.
-       """
+
+        :param acq: loaded acquisition
+        :param side: Left ("L") or Right ("R") side.
+        """
+
         hee = acq.GetPoint(f"{side}HEE")
         fmh = acq.GetPoint(f"{side}FMH")
         vmh = acq.GetPoint(f"{side}VMH")

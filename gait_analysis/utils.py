@@ -1,4 +1,7 @@
 import numpy
+from btk import btkAcquisition
+
+
 def FS_or_FO(FP_signal: numpy.ndarray, FP_detection: numpy.ndarray):
     """Iterate through each event detected by detect_onset and determine if the event is a FootStrike
         or a FootOff. Return array of ["Type of event":str,index of event:int]
@@ -18,3 +21,17 @@ def FS_or_FO(FP_signal: numpy.ndarray, FP_detection: numpy.ndarray):
                 else:
                     detected_FS_or_FO.append(["Foot Strike", indx])
     return detected_FS_or_FO  # Contain the label of the event and the corresponding index
+
+
+def get_marker_names(acq: btkAcquisition) -> list:
+    """
+    Returns marker names
+    :param acq: loaded acquisition
+    :return: all marker names contained in acquisition
+    """
+    marker_names = []
+    i = acq.BeginPoint()
+    while i != acq.EndPoint():
+        marker_names.append(i.value().GetLabel())
+        i.incr()
+    return marker_names
