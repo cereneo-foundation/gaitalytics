@@ -26,7 +26,7 @@ class TestAnalysis(unittest.TestCase):
         cls.settings_file = "CGM2_5_CEFIR.settings"
 
     def test_analysis(self):
-        modelled_filenames = ["1min_modelled_events.c3d"]  # two gait trials with both gait event and CGMi model ouptuts
+        modelled_filenames = ["1min_filtered_modelled_events.c3d"]  # two gait trials with both gait event and CGMi model ouptuts
 
         analysis_instance = analysis.makeAnalysis(self.data_path, modelled_filenames, emgChannels=None)
         # construction of the analysis instance.

@@ -4,7 +4,8 @@ from pyCGM2.ForcePlates import forceplates
 from pyCGM2.Lib.CGM import cgm2_5
 
 
-def fit_trial_to_model(acq_walk: btkAcquisition,
+def fit_trial_to_model(acq_trial: btkAcquisition,
+                       acq_calc: btkAcquisition,
                        data_path: str,
                        trial_file_name: str,
                        static_file_name: str,
@@ -60,29 +61,30 @@ def fit_trial_to_model(acq_walk: btkAcquisition,
                                                       marker_weight,
                                                       required_mp,
                                                       optional_mp,
-                                                      True,
+                                                      False,
                                                       left_flat_foot,
                                                       right_flat_foot,
                                                       head_flat,
                                                       marker_diameter,
                                                       hjc,
-                                                      point_suffix)
+                                                      point_suffix,
+                                                      forceBtkAcq = acq_calc)
 
     moment_projection_enums = enums.enumFromtext(moment_projection, enums.MomentProjection)
-    matching_food_side_on = forceplates.matchingFootSideOnForceplate(acq_walk)
+    matching_food_side_on = forceplates.matchingFootSideOnForceplate(acq_trial)
     # detect correct foot contact with a force plate
     ###
     # fitting function
 
-    acq_walk, anomaly_detected = cgm2_5.fitting(model, data_path, trial_file_name,
-                                                translators,
-                                                marker_weight,
-                                                True,
-                                                marker_diameter,
-                                                point_suffix,
-                                                matching_food_side_on,
-                                                moment_projection_enums,
-                                                frameInit=None,
-                                                frameEnd=None,
-                                                forceBtkAcq=acq_walk)
+    acq_trial, anomaly_detected = cgm2_5.fitting(model, data_path, trial_file_name,
+                                                 translators,
+                                                 marker_weight,
+                                                 False,
+                                                 marker_diameter,
+                                                 point_suffix,
+                                                 matching_food_side_on,
+                                                 moment_projection_enums,
+                                                 frameInit=None,
+                                                 frameEnd=None,
+                                                 forceBtkAcq=acq_trial)
     return anomaly_detected
