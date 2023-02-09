@@ -1,5 +1,7 @@
+from pyCGM2.Report import normativeDatasets
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
+from pyCGM2.Lib import analysis, plot
 
 from gait_analysis.analysis import fit_trial_to_model
 from gait_analysis.events import GaitEventDetectorFactory
@@ -47,14 +49,26 @@ def main():
 
     # detect gait events #
     ######################
+    GaitEventDetectorFactory().get_zenis_detector().clear_events(acq_trial)
     GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+
+    analysisInstance = analysis.makeAnalysis(DATA_PATH, TEST_EVENTS_FILE_NAME,
+                                             emgChannels=None,
+                                             btkAcqs=[acq_trial])
+    normativeDataset = normativeDatasets.NormativeData("Schwartz2008", "Free")  # selected normative dataset
+    ###
+    # plots
+    plot.plot_DescriptiveKinematic(DATA_PATH, analysisInstance, "LowerLimb", normativeDataset)
+    ###
+    plot.plot_DescriptiveKinetic(DATA_PATH, analysisInstance, "LowerLimb", normativeDataset)
+    plot.plot_spatioTemporal(DATA_PATH, analysisInstance)
+
+    # export as spreadsheet
+    analysis.exportAnalysis(analysisInstance, DATA_PATH, "spreadsheet")
 
 
 # Using the special variable
 # __name__
 if __name__ == "__main__":
     main()
-
-
-

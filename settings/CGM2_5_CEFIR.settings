@@ -5,43 +5,43 @@ Global:
   IkAccuracy: 1e-8
 
 Translators: # Translators adapt your current marker set
-    LASI: None #[string]
-    RASI: None
-    LPSI: None
-    RPSI: None
-    RTHI: None
-    RKNE: None
+    LASI: LASIS #[string]
+    RASI: RASIS
+    LPSI: LPSIS
+    RPSI: RPSIS
+    RTHI: RLTHI
+    RKNE: RLEK
     RTIAP: None
     RTIAD: None
-    RTIB: None
-    RANK: None
+    RTIB: RLSHA
+    RANK: RLM
     RTIAP: None
     RTIAD: None
     RHEE: None
     RSMH: None
     RTOE: None
-    RFMH: None
-    RVMH: None
-    LTHI: None
-    LKNE: None
+    RFMH: RMT2
+    RVMH: RMT5
+    LTHI: LLTHI
+    LKNE: LLEK
     LTHAP: None
     LTHAD: None
-    LTIB: None
-    LANK: None
+    LTIB: LLSHA
+    LANK: LLM
     LTIAP: None
     LTIAD: None
     LHEE: None
     LSMH: None
     LTOE: None
-    LFMH: None
-    LVMH: None
-    RKNM: None
-    LKNM: None
-    RMED: None
-    LMED: None
+    LFMH: LMT2
+    LVMH: LMT5
+    RKNM: RMEK
+    LKNM: LMEK
+    RMED: RMM
+    LMED: LMM
     C7: T2 # cf Armand et al.2013 https://doi.org/10.1016/j.gaitpost.2013.06.016
     T10: None
-    CLAV: None
+    CLAV: JN
     STRN: CLAV
     LFHD: GLAB #Eames et al.1999 10.1016/S0167-9457(99)00022-6
     LBHD: LMAS
