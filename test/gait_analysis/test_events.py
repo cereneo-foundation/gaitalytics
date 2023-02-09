@@ -16,7 +16,7 @@ class TestZenisEvents(unittest.TestCase):
     def setUpClass(cls):
         super().setUpClass()
         cls.data_path = "test/data/"
-        cls.path = f"{cls.data_path}1min_modelled.c3d"
+        cls.path = f"{cls.data_path}1min_filtered_modelled.c3d"
         cls.settings_path = "settings/"
         cls.settings_file = "CGM2_5_CEFIR.settings"
 
@@ -34,7 +34,7 @@ class TestForcePlateEvents(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.path = "test/data/1min_modelled.c3d"
+        cls.path = "test/data/1min_filtered_modelled.c3d"
         cls.settings_path = "settings/"
         cls.settings_file = "CGM2_5_CEFIR.settings"
 
