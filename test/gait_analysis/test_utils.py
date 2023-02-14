@@ -1,4 +1,5 @@
 import unittest
+
 from gait_analysis import utils
 
 
@@ -11,7 +12,8 @@ class TestWeightCalculation(unittest.TestCase):
 class TestHeightCalculation(unittest.TestCase):
     def test_weight(self):
         weight = utils.calculate_height_from_markers_file("1min_static.c3d", "test/data/")
-        self.assertEqual(round(weight), 84)
+        self.assertEqual(1588, round(weight))
+
 
 if __name__ == '__main__':
     unittest.main()

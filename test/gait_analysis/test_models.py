@@ -1,11 +1,13 @@
 import unittest
+
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
-from gait_analysis.models import HBMToCGM2Mapper
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
-from gait_analysis.utils import calculate_height_from_markers, calculate_weight_from_force_plates
+
 from gait_analysis.analysis import fit_trial_to_model
 from gait_analysis.events import GaitEventDetectorFactory
+from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
+from gait_analysis.models import HBMToCGM2Mapper
+from gait_analysis.utils import calculate_height_from_markers, calculate_weight_from_force_plates
 
 
 class TestHBMToCGM2Mapper(unittest.TestCase):
@@ -59,7 +61,6 @@ class TestHBMToCGM2Mapper(unittest.TestCase):
 
 class TestCGM2HBMtoCGM2Mapper(unittest.TestCase):
 
-
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
@@ -81,8 +82,6 @@ class TestCGM2HBMtoCGM2Mapper(unittest.TestCase):
         #################################
         low_pass_point_filtering(acq_trial)
         low_pass_force_plate_filtering(acq_trial)
-        # save filtered file
-        btkTools.smartWriter(acq_trial, f"{self.data_path}{self.test_file}")
 
         # get anthropometric parameters #
         #################################
