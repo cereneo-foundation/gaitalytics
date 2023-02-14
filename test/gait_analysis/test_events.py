@@ -1,8 +1,9 @@
 import unittest
+
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
+
 from gait_analysis.events import GaitEventDetectorFactory
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 
 
 class TestZenisEvents(unittest.TestCase):
@@ -18,7 +19,7 @@ class TestZenisEvents(unittest.TestCase):
         cls.data_path = "test/data/"
         cls.path = f"{cls.data_path}1min_filtered_modelled.c3d"
         cls.settings_path = "settings/"
-        cls.settings_file = "CGM2_5_CEFIR.settings"
+        cls.settings_file = "CGM2_5-pyCGM2.settings"
 
     def test_good_case(self):
         GaitEventDetectorFactory().get_zenis_detector().detect_events(self.acq)
@@ -36,7 +37,7 @@ class TestForcePlateEvents(unittest.TestCase):
         super().setUpClass()
         cls.path = "test/data/1min_filtered_modelled.c3d"
         cls.settings_path = "settings/"
-        cls.settings_file = "CGM2_5_CEFIR.settings"
+        cls.settings_file = "CGM2_5-pyCGM2.settings"
 
     def test_good_case(self):
         GaitEventDetectorFactory().get_force_plate_detector().detect_events(self.acq)
