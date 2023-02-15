@@ -43,6 +43,7 @@ def main():
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST}", settings["Translators"])
     treadspeed = calculate_treadmill_speed(acq_trial)
     correct_points(acq_trial, treadspeed)
+
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST}")
 
 

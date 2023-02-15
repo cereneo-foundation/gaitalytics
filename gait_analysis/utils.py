@@ -63,8 +63,8 @@ def calculate_weight_from_force_plates(acq_calc: btkAcquisition) -> float:
 def correct_points(acq_trial: btkAcquisition, treadmill_speed: float):
     for i in (0, acq_trial.GetPointNumber() - 1):
         for frame_i in range(0, acq_trial.GetPointFrameNumber() - 1):
-            frame_i
-        acq_trial.GetPoint(i).GetValues()[1, :] += (frame_i * treadmill_speed)
+            acq_trial.GetPoint(i).SetValue(frame_i, 1, acq_trial.GetPoint(i).GetValues()[frame_i, 1] + (
+                    frame_i * treadmill_speed))
 
 
 def calculate_treadmill_speed(acq_trial: btkAcquisition) -> float:
