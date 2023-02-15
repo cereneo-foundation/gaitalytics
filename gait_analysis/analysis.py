@@ -1,7 +1,11 @@
+import os
+
 from btk import btkAcquisition
 from pyCGM2 import enums
 from pyCGM2.ForcePlates import forceplates
 from pyCGM2.Lib.CGM import cgm2_5
+
+os.add_dll_directory("C:/OpenSim 4.4/bin")
 
 
 def fit_trial_to_model(acq_trial: btkAcquisition,

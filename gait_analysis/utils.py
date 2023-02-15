@@ -58,3 +58,36 @@ def calculate_weight_from_force_plates(acq_calc: btkAcquisition) -> float:
     wl = np.mean(acq_calc.GetAnalogs().GetItem(2).GetValues())
     wr = np.mean(acq_calc.GetAnalogs().GetItem(8).GetValues())
     return np.abs((wl + wr) / 9.81)
+
+
+def correct_points(acq_trial: btkAcquisition, treadmill_speed: float):
+    for i in (0, acq_trial.GetPointNumber() - 1):
+        for frame_i in range(0, acq_trial.GetPointFrameNumber() - 1):
+            frame_i
+        acq_trial.GetPoint(i).GetValues()[1, :] += (frame_i * treadmill_speed)
+
+
+def calculate_treadmill_speed(acq_trial: btkAcquisition) -> float:
+    # TODO clean up please abo
+    rhee = acq_trial.GetPoint("RHEE")
+    lhee = acq_trial.GetPoint("LHEE")
+    speeds = []
+    stride_time = []
+    stride_dist = []
+    start_y = 0
+    start_frame = 0
+    for i in range(0, (acq_trial.GetEvents().GetItemNumber() - 1)):
+        event = acq_trial.GetEvent(i)
+        if event.GetContext() == "Right":
+            if event.GetLabel() == "Foot Strike":
+                start_frame = event.GetFrame()
+                start_y = rhee.GetValue(event.GetFrame(), 1)
+            else:
+                end_frame = event.GetFrame()
+                end_y = rhee.GetValue(event.GetFrame(), 1)
+                time_passed = (end_frame - start_frame)
+                dist = np.abs(start_y - end_y)
+                stride_dist.append(dist)
+                stride_time.append(time_passed)
+                speeds.append(dist / time_passed)
+    return np.mean(speeds)

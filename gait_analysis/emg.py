@@ -1,6 +1,6 @@
-from btk import btkAcquisition
-import numpy as np # in others too ?
+import numpy as np  # in others too ?
 import scipy as sp
+from btk import btkAcquisition
 from scipy import signal
 
 
@@ -35,20 +35,20 @@ class EMGCoherenceAnalysis:
         :param acq: EMG raw acquisition
         :return: filtered version of EMG signal
         """
-        x = acq.get_point(acq.GetPointLabel(self.emg_channel_1)) # get EMG data 
+        x = acq.get_point(acq.GetPointLabel(self.emg_channel_1))  # get EMG data
         x -= np.mean(x)
 
         # Frequency filtering
         fs = acq.GetPointFrequency()
-        high = 10/fs #hyperparameter
-        low = 500/fs #hyperparameter
-        b, a = sp.signal.butter(2, [high,low], btype='bandpass') #hyperparameter
+        high = 10 / fs  # hyperparameter
+        low = 500 / fs  # hyperparameter
+        b, a = sp.signal.butter(2, [high, low], btype='bandpass')  # hyperparameter
         acq_filtered = sp.signal.filtfilt(b, a, x)
 
-        acq_rectified = abs(acq_filtered) # EMG Rectification
+        acq_rectified = abs(acq_filtered)  # EMG Rectification
 
         return acq_rectified
-    
+
         pass
 
     def get_windows(self, acq: btkAcquisition):

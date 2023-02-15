@@ -1,3 +1,7 @@
+import os
+
+os.add_dll_directory("C:/OpenSim 4.4/bin")
+
 from pyCGM2.Lib import analysis, plot
 from pyCGM2.Report import normativeDatasets
 from pyCGM2.Tools import btkTools

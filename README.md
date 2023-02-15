@@ -7,15 +7,23 @@ from a Motek CAREN system.
 
 ## Installation
 
-This library depends on ezc3d  (https://github.com/pyomeca/ezc3d)
-please follow the instructions on their site to install the dependency
+Please use anaconda other any other conda distribution to set up the required environment. To install libraries please
+use following cli command:
+
+````shell
+conda env update --file ./environment.yml
+````
+
+After successfully installing the necessary libraries you need to manually install opensim 4.4
+https://simtk.org/frs/?group_id=91.
+Then manually proceed in following tasks
+
+1. Add OpenSim bin to windows path
+2. install opensim lib into conda
+
+   You will find the instructions on this website with title Installing Anaconda and the "opensim" Python package
+   https://simtk-confluence.stanford.edu:8443/display/OpenSim/Scripting+in+Python
 
 ## Usage
 
-### C3DFileWrapper
-
-```python
-from pyCGM2.Tools import btkTools
-path = "test/data/test.c3d"
-acq = btkTools.smartReader(path)
-```
+Please take the resources in the example folder for advice.

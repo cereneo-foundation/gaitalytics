@@ -1,6 +1,5 @@
 name: gait_analysis
 channels:
-  - opensim-org
   - conda-forge
   - defaults
 dependencies:
