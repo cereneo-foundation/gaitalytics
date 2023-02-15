@@ -1,4 +1,4 @@
-name: Gait_Analysis
+name: gait_analysis
 channels:
   - opensim-org
   - conda-forge
