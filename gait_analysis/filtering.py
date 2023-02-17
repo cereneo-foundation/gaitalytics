@@ -37,9 +37,10 @@ def band_pass_filter_emg(acq: btkAcquisition, emg_label: str, frequency_high: in
     Band-pass filter and EMG pre-processing
 
     :param acq: EMG raw acquisition
-    :param frequency_high:
-    :param frequency_low:
-    :return: filtered version of EMG signal as an array
+    :param emg_label: Voltage channel for EMG analog to be filtered
+    :param frequency_high: high-pass frequency
+    :param frequency_low: low-pass frequency
+    :return:
     """
     x = acq.GetAnalog(emg_label).GetValues()  # get EMG data as array from c3d file
     x -= np.mean(x)
