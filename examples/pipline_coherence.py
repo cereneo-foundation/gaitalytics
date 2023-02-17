@@ -20,12 +20,10 @@ def main():
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
 
     #Instanciate EMGCoherenceAnalysis objects
-    coh_left = EMGCoherenceAnalysis(1, 2, "Left")
-    coh_right = EMGCoherenceAnalysis(3, 4, "Right")
+    coh_left = EMGCoherenceAnalysis(1, 2, "Left") # Verify if good channel indexs
+    coh_right = EMGCoherenceAnalysis(3, 4, "Right") # Verify if good channel indexs
 
     #Processing
-    print(acq_trial)
-    band_pass_filter_emg(acq_trial)
     band_pass_filter_emg(acq_trial, coh_left.emg_channel_1_index)
     band_pass_filter_emg(acq_trial, coh_left.emg_channel_2_index)
     band_pass_filter_emg(acq_trial, coh_right.emg_channel_1_index)

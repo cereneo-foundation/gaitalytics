@@ -14,7 +14,6 @@ class EMGCoherenceAnalysis:
                  emg_channel_1: int,
                  emg_channel_2: int,
                  side: str,
-                 window_size: int = 1024
                  ):
         """
         Initializes Object
@@ -22,18 +21,16 @@ class EMGCoherenceAnalysis:
         :param emg_channel_1: first EMG channel
         :param emg_channel_2: second EMG channel
         :param side: leg on which the analogs are recorded
-        :param window_size: size of windows used for the FFT in coherence calculation
         """
         self.emg_channel_1_index = f"{self.VOLTAGE_PREFIX}{emg_channel_1}"
         self.emg_channel_2_index = f"{self.VOLTAGE_PREFIX}{emg_channel_2}"
         self._side = side
-        self._window_size = window_size
 
-    def get_swing_phase(self, acq: btkAcquisition): # call it 'get_swing_phase' everywhere
+    def get_swing_phase(self, acq: btkAcquisition):
         """
-        Selects portions of EMG signal to analyze with coherence. These portions correspond to swing phase in gait
+        Selects EMG signal segments that correspond to swing phase in gait.
 
-        :param acq: EMG raw acquisition with events added
+        :param acq: EMG acquisition with events added
         :return: list of swing phase windows. Given as pairs: [Toe off index, Heel strike index]
         """
         events_list = acq.GetEvents()
@@ -56,23 +53,24 @@ class EMGCoherenceAnalysis:
                         foot_strike_list.append(event.GetFrame())
             event_iterator.incr()
 
-        segments = list(zip(foot_off_list, foot_strike_list))  # merge list to make a list of windows
+        segments = list(zip(foot_off_list, foot_strike_list))  # merge lists to make a list of segments
+        
+        # Save segments as attribute
         self._segments = segments
-        #return segments
 
     def calculate_coherence(self, acq: btkAcquisition) -> tuple:
         """
-        Calculates coherence over frequency for each window and averages them
+        Calculates coherence over frequency for each segment and averages them
 
         :param acq: filtered version of EMG signal
-        :param windows: list of selected EMG signal windows
         :return f: frequencies axis for plot
-        :return mean_coherence: averaged coherence over all windows
+        :return mean_coherence: averaged coherence over all segments
         """
-        # Extract swing phase segments for both signals
+        # Extract swing phase segments from both signals
         emg_channel_1 = [acq.GetAnalog(self._emg_channel_1_index).GetValues()[start:end] for start, end in self._segments]
         emg_channel_2 = [acq.GetAnalog(self._emg_channel_2_index).GetValues()[start:end] for start, end in self._segments]
 
+        # Coherence calculation
         f, coh_segments = sp.signal.coherence(emg_channel_1, emg_channel_2, fs=acq.GetAnalogFrequency(), window='hann', nperseg=None, noverlap=None)
         mean_coherence = coh_segments.mean(axis=0)
 
