@@ -1,6 +1,7 @@
 from btk import btkAcquisition
 from pyCGM2.Signal import signal_processing
 from gait_analysis.utils import get_marker_names
+import numpy as np
 
 
 def low_pass_point_filtering(acq: btkAcquisition, filter_frequency: int = 15, filter_order=2, markers_to_filter: list = []):
@@ -28,3 +29,23 @@ def low_pass_force_plate_filtering(acq: btkAcquisition, filter_frequency: int = 
     :return:
     """
     signal_processing.forcePlateFiltering(acq, order=filter_order, fc=filter_frequency)
+
+
+def band_pass_filter_emg(acq: btkAcquisition, emg_label: str, frequency_high: int = 10,
+                         frequency_low: int = 400):
+    """
+    Band-pass filter and EMG pre-processing
+
+    :param acq: EMG raw acquisition
+    :param frequency_high:
+    :param frequency_low:
+    :return: filtered version of EMG signal as an array
+    """
+    x = acq.GetAnalog(emg_label).GetValues()  # get EMG data as array from c3d file
+    x -= np.mean(x)
+
+    # Frequency filtering
+    acq_filtered = signal_processing.highPass(array=x, lowerFreq=frequency_low, upperFreq=frequency_high, fa=acq.GetAnalogFrequency())
+
+    # EMG Rectification
+    acq.GetAnalog(emg_label).SetData(signal_processing.rectify(acq_filtered))
