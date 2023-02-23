@@ -7,7 +7,7 @@ from pyCGM2.Utils import files
 
 from gait_analysis.events import GaitEventDetectorFactory
 from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
-from gait_analysis.utils import calculate_treadmill_speed, correct_points
+from gait_analysis.utils import correct_points_frame_by_frame
 
 # This is an example pipeline #
 ###############################
@@ -41,8 +41,7 @@ def main():
     GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST}")
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST}", settings["Translators"])
-    treadspeed = calculate_treadmill_speed(acq_trial)
-    correct_points(acq_trial, treadspeed)
+    correct_points_frame_by_frame(acq_trial)
 
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST}")
 

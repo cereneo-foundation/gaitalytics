@@ -1,7 +1,3 @@
-import os
-
-os.add_dll_directory("C:/OpenSim 4.4/bin")
-
 from pyCGM2.Lib import analysis, plot
 from pyCGM2.Report import normativeDatasets
 from pyCGM2.Tools import btkTools
@@ -17,11 +13,11 @@ from gait_analysis.utils import calculate_height_from_markers, calculate_weight_
 
 # Define paths
 DATA_PATH = "test/data/"
-TEST_ORIGIN_FILE_NAME = "1min.c3d"
-TEST_FILTERED_FILE_NAME = "1min_filtered.c3d"
-TEST_MODELLED_FILE_NAME = "1min_filtered_modelled.c3d"
-TEST_EVENTS_FILE_NAME = "1min_filtered_modelled_events.c3d"
-STATIC_FILE_NAME = "1min_static.c3d"
+TEST_ORIGIN_FILE_NAME = "1min_emg_walk.c3d"
+TEST_FILTERED_FILE_NAME = "1min_emg_walk_filtered.c3d"
+TEST_MODELLED_FILE_NAME = "1min_emg_walk_filtered_modelled.c3d"
+TEST_EVENTS_FILE_NAME = "1min_emg_walk_filtered_modelled_events.c3d"
+STATIC_FILE_NAME = "1min_emg_static.c3d"
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "CGM2_5-pyCGM2.settings"
 

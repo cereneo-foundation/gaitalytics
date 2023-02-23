@@ -60,6 +60,36 @@ def calculate_weight_from_force_plates(acq_calc: btkAcquisition) -> float:
     return np.abs((wl + wr) / 9.81)
 
 
+def correct_points_frame_by_frame(acq_trial: btkAcquisition):
+    frame_size = acq_trial.GetPointFrameNumber()
+    correction = get_fastest_point_by_frame(acq_trial, 1)
+    for frame_number in range(1, frame_size):
+        if (frame_number + 2) < frame_size:
+            correction_new = get_fastest_point_by_frame(acq_trial, frame_number + 1)
+        correct_points_in_frame(acq_trial, frame_number, correction)
+        correction += correction_new
+
+
+def correct_points_in_frame(acq_trial: btkAcquisition, frame_number: int, correction: float):
+    print(f"{frame_number}:{correction}")
+    for point_number in range(0, acq_trial.GetPointNumber()):
+        acq_trial.GetPoint(point_number).SetValue(frame_number, 1,
+                                                  (acq_trial.GetPoint(point_number).GetValue(frame_number,
+                                                                                             1) - correction))
+
+
+def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
+    rfmh_point = acq_trial.GetPoint("RFMH")
+    rhee_point = acq_trial.GetPoint("RHEE")
+    lfmh_point = acq_trial.GetPoint("LFMH")
+    lhee_point = acq_trial.GetPoint("LHEE")
+    lfmh_dist = lfmh_point.GetValue(frame_number - 1, 1) - lfmh_point.GetValue(frame_number, 1)
+    lhee_dist = lhee_point.GetValue(frame_number - 1, 1) - lhee_point.GetValue(frame_number, 1)
+    rfmh_dist = rfmh_point.GetValue(frame_number - 1, 1) - rfmh_point.GetValue(frame_number, 1)
+    rhee_dist = rhee_point.GetValue(frame_number - 1, 1) - rhee_point.GetValue(frame_number, 1)
+    return np.max([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])
+
+
 def correct_points(acq_trial: btkAcquisition, treadmill_speed: float):
     for i in range(0, acq_trial.GetPointNumber()):
         for frame_i in range(0, acq_trial.GetPointFrameNumber() - 1):

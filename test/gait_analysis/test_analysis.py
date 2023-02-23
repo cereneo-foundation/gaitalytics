@@ -1,7 +1,5 @@
-import os
 import unittest
 
-os.add_dll_directory("C:/OpenSim 4.4/bin")
 from pyCGM2.Lib import analysis
 from pyCGM2.Lib import plot
 from pyCGM2.Report import normativeDatasets
