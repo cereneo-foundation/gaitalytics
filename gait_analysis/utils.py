@@ -40,7 +40,7 @@ def calculate_height_from_markers(acq_calc: btkAcquisition) -> int:
         # TODO need a nice factor to determine height from forehead
     except RuntimeError:
         # I no GLAB use t2
-        return int(round(np.mean(acq_calc.GetPoint("GLAB").GetValues()[:, 2])) * 1.05)
+        return int(round(np.mean(acq_calc.GetPoint("T2").GetValues()[:, 2])) * 1.05)
         # TODO need a nice factor to determine height from forehead
 
 
@@ -75,7 +75,7 @@ def correct_points_in_frame(acq_trial: btkAcquisition, frame_number: int, correc
     for point_number in range(0, acq_trial.GetPointNumber()):
         acq_trial.GetPoint(point_number).SetValue(frame_number, 1,
                                                   (acq_trial.GetPoint(point_number).GetValue(frame_number,
-                                                                                             1) - correction))
+                                                                                             1) + correction))
 
 
 def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
@@ -87,37 +87,4 @@ def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
     lhee_dist = lhee_point.GetValue(frame_number - 1, 1) - lhee_point.GetValue(frame_number, 1)
     rfmh_dist = rfmh_point.GetValue(frame_number - 1, 1) - rfmh_point.GetValue(frame_number, 1)
     rhee_dist = rhee_point.GetValue(frame_number - 1, 1) - rhee_point.GetValue(frame_number, 1)
-    return np.max([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])
-
-
-def correct_points(acq_trial: btkAcquisition, treadmill_speed: float):
-    for i in range(0, acq_trial.GetPointNumber()):
-        for frame_i in range(0, acq_trial.GetPointFrameNumber() - 1):
-            acq_trial.GetPoint(i).SetValue(frame_i, 1, acq_trial.GetPoint(i).GetValues()[frame_i, 1] - (
-                    frame_i * treadmill_speed))
-
-
-def calculate_treadmill_speed(acq_trial: btkAcquisition) -> float:
-    # TODO clean up please abo
-    rhee = acq_trial.GetPoint("RHEE")
-    lhee = acq_trial.GetPoint("LHEE")
-    speeds = []
-    stride_time = []
-    stride_dist = []
-    start_y = 0
-    start_frame = 0
-    for i in range(0, (acq_trial.GetEvents().GetItemNumber() - 1)):
-        event = acq_trial.GetEvent(i)
-        if event.GetContext() == "Right":
-            if event.GetLabel() == "Foot Strike":
-                start_frame = event.GetFrame()
-                start_y = rhee.GetValue(event.GetFrame(), 1)
-            else:
-                end_frame = event.GetFrame()
-                end_y = rhee.GetValue(event.GetFrame(), 1)
-                time_passed = (end_frame - start_frame)
-                dist = np.abs(start_y - end_y)
-                stride_dist.append(dist)
-                stride_time.append(time_passed)
-                speeds.append(dist / time_passed)
-    return np.mean(speeds)
+    return np.min([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])

@@ -1,7 +1,5 @@
 import os
 
-os.add_dll_directory("C:/OpenSim 4.4/bin")
-
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
