@@ -4,7 +4,7 @@ from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
 from gait_analysis.analysis import fit_trial_to_model
-from gait_analysis.events import GaitEventDetectorFactory
+from gait_analysis.events import GaitEventDetectorFactory, check_events_order
 from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 from gait_analysis.utils import calculate_height_from_markers, calculate_weight_from_force_plates
 
@@ -52,6 +52,10 @@ def main():
     GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
+    [anomaly_detected, anomaly_event_indices] = check_events_order(acq_trial)
+    if anomaly_detected:
+        print(anomaly_event_indices)
+
     analysisInstance = analysis.makeAnalysis(DATA_PATH, [TEST_EVENTS_FILE_NAME],
                                              emgChannels=None)
     normativeDataset = normativeDatasets.NormativeData("Schwartz2008", "Free")  # selected normative dataset
@@ -63,7 +67,7 @@ def main():
     plot.plot_spatioTemporal(DATA_PATH, analysisInstance)
 
     # export as spreadsheet
-    analysis.exportAnalysis(analysisInstance, DATA_PATH, "spreadsheet")
+    analysis.exportAnalysis(analysisInstance, DATA_PATH, "test")
 
 
 # Using the special variable

@@ -1,15 +1,17 @@
 from abc import ABC, abstractmethod
 
 import numpy
-from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
+from btk import btkAcquisition, btkEvent
 from pyCGM2.Events import eventFilters, eventProcedures
 from pyCGM2.Signal import detect_onset
-from gait_analysis import utils
 from pyCGM2.Tools import btkTools
+
+from gait_analysis import utils
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 GAIT_EVENT_FOOT_STRIKE = "Foot Strike"
 GAIT_EVENT_FOOT_OFF = "Foot Off"
+
 
 class AbstractGaitEventDetector(ABC):
 
@@ -147,3 +149,21 @@ class GaitEventDetectorFactory(object):
         if self._force_plate is None:
             self._force_plate = ForcePlateEventDetection()
         return self._force_plate
+
+
+def check_events_order(acq_walk: btkAcquisition) -> [bool, list]:
+    anomaly_event_indices = []
+    anomaly_detected = False
+    for event_index in range(0, acq_walk.GetEventNumber()):
+        if (event_index + 1) < acq_walk.GetEventNumber():
+            current_event = acq_walk.GetEvent(event_index)
+            next_event = acq_walk.GetEvent(event_index)
+            if current_event.GetContext() != next_event.GetContext():
+                if current_event.GetLabel() != GAIT_EVENT_FOOT_STRIKE:
+                    anomaly_event_indices.append(event_index + 1)
+                    anomaly_detected = True
+                else:
+                    if current_event.GetLabel() != GAIT_EVENT_FOOT_OFF:
+                        anomaly_event_indices.append(event_index + 1)
+                        anomaly_detected = True
+    return [anomaly_detected, anomaly_event_indices]

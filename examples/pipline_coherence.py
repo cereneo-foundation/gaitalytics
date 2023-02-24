@@ -10,7 +10,7 @@ from gait_analysis.filtering import band_pass_filter_emg
 
 # Define paths
 DATA_PATH = "test/data/"
-TEST_ORIGIN_FILE_NAME = "1min.c3d"
+TEST_ORIGIN_FILE_NAME = "1min_emg_walk.c3d"
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "CGM2_5-pyCGM2.settings"
 
