@@ -7,7 +7,7 @@ from pyCGM2.Tools import btkTools
 from pyCGM2.Processing import cycle
 
 ##
-path_a = "C:/ViconData/TMR/SaskiaN_TMR102/20_12_D1"
+path_a = "C:/ViconData/TMR/SaskiaN_TMR102/21_12_D2"
 file_list = []
 for root, dirs, files_ in os.walk(path_a):
     # select file name
