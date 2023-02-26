@@ -4,8 +4,8 @@ from PiGPipeline_SimonPlayground.Pipeline_Event import add_event, correct_gaitcy
 ###
 # Convert the files in PiG markers name
 DATA_PATH = r"C:/ViconData/TMR/"
-SUBJECT = "Luca_M_TMR104/"
-SESSIONS = ["Gait_D1_07-12/", "Gait_D2_08-12/"]
+SUBJECT = "SaskiaN_TMR102/"
+SESSIONS = ["20_12_D1/", "21_12_D2/"]
 
 make_PiG_conversion(DATA_PATH,SUBJECT,SESSIONS)
 ##
@@ -18,10 +18,15 @@ from pyCGM2.Tools import btkTools
 from pyCGM2.Processing import cycle
 
 ##
-file_a = "C:/ViconData/TMR/JiahuiA_TMR109/23_12_D2/23_12_D2_GameSession03PiGwithEvents.c3d"
+
+##
+file_a = "C:/ViconData/TMR/SaskiaN_TMR102/20_12_D1/GameSession06PiGwithEvents.c3d"
 acq = btkTools.smartReader(file_a)
 
 gait_cycle = correct_gaitcycles(acq)
+
+###
+
 ##
 import matplotlib.pyplot as plt
 plt.plot(acq.GetPoint('LAbsAnkleAngle').GetValues()[:,0][0:100])
@@ -29,8 +34,21 @@ plt.plot(acq.GetPoint('LAbsAnkleAngle').GetValues()[:,0][0:100])
 import numpy as np
 dur = []
 for elem in gait_cycle:
-    dur.append(elem.getSpatioTemporalParameter("speed"))
+    if elem.getEvents("All")[0].GetContext()=="Left":
+        dur.append(elem.getSpatioTemporalParameter("stanceDuration"))
 print(np.mean(dur))
+
+
+xspan = np.linspace(1,len(dur),len(dur))
+plt.plot(xspan,dur,'-o',"blue",label = "Left")
+dur = []
+for elem in gait_cycle:
+    if elem.getEvents("All")[0].GetContext()=="Right":
+        dur.append(elem.getSpatioTemporalParameter("stanceDuration"))
+print(np.mean(dur))
+xspan = np.linspace(1,len(dur),len(dur))
+plt.plot(xspan,dur,'-o',"r",label = "Right")
+plt.legend()
 ##
 cyclos = cycle.Cycles()
 cyclos.setKinematicCycles(gait_cycle)

@@ -36,6 +36,7 @@ def add_event(DATA_PATH: str, SUBJECT: str, SESSIONS: str):
             print(save_name)
             btkTools.smartWriter(acq_trial, save_name)
 
+
 def return_event_from_leg(acq, context):
     list_event = list()
     for event in btk.Iterate(acq.GetEvents()):
@@ -43,13 +44,41 @@ def return_event_from_leg(acq, context):
             list_event.append(event)
     return list_event
 
-def correct_gaitcycles(acq,seq = ["Foot Strike","Foot Off","Foot Strike"],context = ["Left","Right"]):
-    gaitCycles = list()
-    for side in context:
-        event_from_this_side = return_event_from_leg(acq,side)
 
-        for i in range(len(event_from_this_side) - 2):
-            if [event_from_this_side[i].GetLabel(), event_from_this_side[i + 1].GetLabel(), event_from_this_side[i + 2].GetLabel()] == seq:
-                gaitCycles.append(cycle.GaitCycle(acq, event_from_this_side[i].GetFrame(), event_from_this_side[i + 2].GetFrame(), side))
+
+def return_events(acq):
+    list_event = list()
+    for event in btk.Iterate(acq.GetEvents()):
+        list_event.append(event)
+    return list_event
+
+
+def construct_correct_seq(context):
+    if context == "Right":
+        oppositeSide = "Left"
+    elif context == "Left":
+        oppositeSide = "Right"
+    return [["Foot Strike", context], ["Foot Off", oppositeSide], ["Foot Strike", oppositeSide], ["Foot Off", context],
+            ["Foot Strike", context]]
+
+
+def correct_seq(subset_of_event):
+    context = subset_of_event[0].GetContext()
+    corr_seq = construct_correct_seq(context)
+
+    comparis = []
+    for event in subset_of_event:
+        comparis.append([event.GetLabel(), event.GetContext()])
+    return corr_seq == comparis
+
+
+def correct_gaitcycles(acq, seq=["Foot Strike", "Foot Off", "Foot Strike"], context=["Left", "Right"]):
+    gaitCycles = list()
+    list_events = return_events(acq)
+    for i in range(len(list_events) - 5):
+        if correct_seq(list_events[i:i + 5]):
+            gaitCycles.append(cycle.GaitCycle(acq, list_events[i].GetFrame(), list_events[i + 5].GetFrame(),
+                                              list_events[i].GetContext()))
 
     return gaitCycles
+##

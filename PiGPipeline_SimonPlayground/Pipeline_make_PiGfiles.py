@@ -6,6 +6,7 @@ from PiGPipeline_SimonPlayground import SimonPipelineUtils
 
 def make_PiG_conversion(DATA_PATH, SUBJECT, SESSIONS):
     translators = SimonPipelineUtils.make_translator_PiG()
+
     # traverse whole directory
     for sess in SESSIONS[:]:
         file_list = []
