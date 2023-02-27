@@ -160,7 +160,7 @@ for fichier in file_list:
     print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 
 ##
-/BaselinePiGwithevent.c3d"
+#/BaselinePiGwithevent.c3d"
 acq = btkTools.smartReader(file_a)
 
 gait_cycle = correct_gaitcycles(acq)

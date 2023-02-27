@@ -88,3 +88,15 @@ def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
     rfmh_dist = rfmh_point.GetValue(frame_number - 1, 1) - rfmh_point.GetValue(frame_number, 1)
     rhee_dist = rhee_point.GetValue(frame_number - 1, 1) - rhee_point.GetValue(frame_number, 1)
     return np.min([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])
+
+
+def return_max_length(arrays):
+    return len(max(arrays,key=len))
+
+def tolerant_mean(arrs):
+    lens = [len(i) for i in arrs]
+    arr = np.ma.empty((np.max(lens), len(arrs)))
+    arr.mask = True
+    for idx, l in enumerate(arrs):
+        arr[:len(l), idx] = l
+    return arr.mean(axis=-1), arr.std(axis=-1)
