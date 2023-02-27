@@ -9,6 +9,10 @@ from PiGPipeline_SimonPlayground.Pipeline_Event import add_event, correct_gaitcy
 from pyCGM2.Tools import btkTools
 from pyCGM2.Processing import cycle
 import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+import numpy as np
+from kneed import KneeLocator
+from sklearn.metrics import silhouette_score
 
 ##
 last_sess_D1 = r"C:/ViconData/TMR/SaskiaN_TMR102/20_12_D1/GameSession06PiGwithEvents.c3d"
@@ -94,8 +98,7 @@ print(np.shape(matx))
 
 ##
 
-from sklearn.cluster import KMeans
-import numpy as np
+
 X = matx
 kmeans = KMeans(n_clusters=2, random_state=0, n_init="auto").fit(X)
 print(kmeans.labels_)
@@ -124,10 +127,47 @@ print(len(test))
 colors = ['red','blue']
 for i in range(len(test)):
     plt.scatter(test[i][0],test[i][1],c=colors[kmeans.labels_[i]])
+###
+# A list holds the SSE values for each k
+sse = []
+for k in range(1, 11):
+    kmeans = KMeans(n_clusters=k, random_state=0, n_init="auto").fit(X)
+    sse.append(kmeans.inertia_)
 
 ##
+
+
+plt.plot(range(1, 11), sse)
+plt.xticks(range(1, 11))
+plt.xlabel("Number of Clusters")
+plt.ylabel("SSE")
+plt.show()
+
+##
+
+kl = KneeLocator(range(1, 11), sse, curve="convex", direction="decreasing")
+print(kl.elbow)
+##
+# A list holds the silhouette coefficients for each k
+silhouette_coefficients = []
+
+# Notice you start at 2 clusters for silhouette coefficient
+for k in range(2, 11):
+    kmeans = KMeans(n_clusters=k, random_state=0, n_init="auto").fit(X)
+
+    score = silhouette_score(X, kmeans.labels_)
+    silhouette_coefficients.append(score)
+
+##
+
+plt.plot(range(2, 11), silhouette_coefficients)
+plt.xticks(range(2, 11))
+plt.xlabel("Number of Clusters")
+plt.ylabel("Silhouette Coefficient")
+plt.show()
+##
 pt2=[]
-for cycl in gait_cycle_D2[:100]:
+for cycl in gait_cycle_D2[:20]:
     pt2.append(cycl.getPointTimeSequenceData("RAnkleAngles")[:,0])
 i=0
 
@@ -150,6 +190,9 @@ print(np.shape(matx2))
 
 ##
 # Fit D2 on D1
+
+kmeans = KMeans(n_clusters=2, random_state=0, n_init="auto").fit(X)
+test = kmeans.transform(X)
 fitt = kmeans.predict(matx2)
 trans = kmeans.transform(matx2)
 
