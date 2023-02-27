@@ -45,7 +45,6 @@ def return_event_from_leg(acq, context):
     return list_event
 
 
-
 def return_events(acq):
     list_event = list()
     for event in btk.Iterate(acq.GetEvents()):
@@ -59,8 +58,9 @@ def construct_correct_seq(context):
     elif context == "Left":
         oppositeSide = "Right"
     return [[["Foot Strike", context], ["Foot Off", oppositeSide], ["Foot Strike", oppositeSide], ["Foot Off", context],
-            ["Foot Strike", context]],[["Foot Strike", context], ["Foot Off", context], ["Foot Strike", oppositeSide], ["Foot Off", oppositeSide],
-            ["Foot Strike", context]]]
+             ["Foot Strike", context]],
+            [["Foot Strike", context], ["Foot Off", context], ["Foot Strike", oppositeSide], ["Foot Off", oppositeSide],
+             ["Foot Strike", context]]]
 
 
 def correct_seq(subset_of_event):
@@ -73,7 +73,7 @@ def correct_seq(subset_of_event):
     return corr_seq[0] == comparis or corr_seq[1] == comparis
 
 
-def correct_gaitcycles(acq, seq=["Foot Strike", "Foot Off", "Foot Strike"], context=["Left", "Right"]):
+def correct_gaitcycles(acq):
     gaitCycles = list()
     list_events = return_events(acq)
     for i in range(len(list_events) - 5):
@@ -82,4 +82,13 @@ def correct_gaitcycles(acq, seq=["Foot Strike", "Foot Off", "Foot Strike"], cont
                                           list_events[i].GetContext()))
 
     return gaitCycles
+
+
+def return_gait_one_side(list_gait_cycle, context):
+    list_side = list()
+    for cycle in list_gait_cycle:
+        if cycle.getEvents("All")[0].GetContext() == context:
+            list_side.append(cycle)
+    return list_side
+
 ##

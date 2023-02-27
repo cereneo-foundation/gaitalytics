@@ -91,7 +91,8 @@ def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
 
 
 def return_max_length(arrays):
-    return len(max(arrays,key=len))
+    return len(max(arrays, key=len))
+
 
 def tolerant_mean(arrs):
     lens = [len(i) for i in arrs]
@@ -100,3 +101,18 @@ def tolerant_mean(arrs):
     for idx, l in enumerate(arrs):
         arr[:len(l), idx] = l
     return arr.mean(axis=-1), arr.std(axis=-1)
+
+
+def create_matrix_padded(matrix, max_length):
+    matx = []
+    lin_array = len(np.shape(matrix[0])) == 1
+    for array in matrix:
+        to_pad = max_length - len(array)
+        if lin_array:
+            array_pad = np.pad(array, (0, to_pad), 'constant', constant_values=0)
+        else:
+            array_pad = np.pad(array[:, 0], (0, to_pad), 'constant', constant_values=0)
+        matx.append(array_pad)
+    return matx
+
+
