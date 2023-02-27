@@ -58,8 +58,9 @@ def construct_correct_seq(context):
         oppositeSide = "Left"
     elif context == "Left":
         oppositeSide = "Right"
-    return [["Foot Strike", context], ["Foot Off", oppositeSide], ["Foot Strike", oppositeSide], ["Foot Off", context],
-            ["Foot Strike", context]]
+    return [[["Foot Strike", context], ["Foot Off", oppositeSide], ["Foot Strike", oppositeSide], ["Foot Off", context],
+            ["Foot Strike", context]],[["Foot Strike", context], ["Foot Off", context], ["Foot Strike", oppositeSide], ["Foot Off", oppositeSide],
+            ["Foot Strike", context]]]
 
 
 def correct_seq(subset_of_event):
@@ -69,7 +70,7 @@ def correct_seq(subset_of_event):
     comparis = []
     for event in subset_of_event:
         comparis.append([event.GetLabel(), event.GetContext()])
-    return corr_seq == comparis
+    return corr_seq[0] == comparis or corr_seq[1] == comparis
 
 
 def correct_gaitcycles(acq, seq=["Foot Strike", "Foot Off", "Foot Strike"], context=["Left", "Right"]):
@@ -77,8 +78,8 @@ def correct_gaitcycles(acq, seq=["Foot Strike", "Foot Off", "Foot Strike"], cont
     list_events = return_events(acq)
     for i in range(len(list_events) - 5):
         if correct_seq(list_events[i:i + 5]):
-            gaitCycles.append(cycle.GaitCycle(acq, list_events[i].GetFrame(), list_events[i + 5].GetFrame(),
-                                              list_events[i].GetContext()))
+            gaitCycles.append(cycle.Cycle(acq, list_events[i].GetFrame(), list_events[i + 5].GetFrame(),
+                                          list_events[i].GetContext()))
 
     return gaitCycles
 ##
