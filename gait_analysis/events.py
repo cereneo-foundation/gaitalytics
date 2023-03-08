@@ -7,10 +7,9 @@ from pyCGM2.Signal import detect_onset
 from pyCGM2.Tools import btkTools
 
 from gait_analysis import utils
+from gait_analysis.utils.c3d import GAIT_EVENT_FOOT_STRIKE, GAIT_EVENT_FOOT_OFF
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
-GAIT_EVENT_FOOT_STRIKE = "Foot Strike"
-GAIT_EVENT_FOOT_OFF = "Foot Off"
 
 
 class AbstractGaitEventDetector(ABC):

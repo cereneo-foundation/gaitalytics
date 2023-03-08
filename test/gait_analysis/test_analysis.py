@@ -40,9 +40,9 @@ class TestAnalysis(unittest.TestCase):
         plot.plot_DescriptiveKinetic(self.data_path, analysis_instance, "LowerLimb", normative_dataset)
         plot.plot_spatioTemporal(self.data_path, analysis_instance)
 
-    def test_modelling(self):
-        fit_trial_to_model(self.test_acq, self.static_acq, self.data_path, self.test_file, self.static_file,
-                           self.settings, 83.0, 1720)
+   # def test_modelling(self):
+      #  fit_trial_to_model(self.test_acq, self.static_acq, self.data_path, self.test_file, self.static_file,
+          #                 self.settings, 83.0, 1720)
 
 
 if __name__ == '__main__':

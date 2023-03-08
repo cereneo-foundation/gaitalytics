@@ -1,15 +1,5 @@
 import numpy as np
-from enum import Enum
 from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
-from pyCGM2.Tools import btkTools
-
-
-class SideEnum(Enum):
-    """
-    Helper enum to define side
-    """
-    LEFT = "L"
-    RIGHT = "R"
 
 
 def get_marker_names(acq: btkAcquisition) -> list:

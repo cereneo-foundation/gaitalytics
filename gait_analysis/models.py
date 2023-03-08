@@ -1,8 +1,8 @@
 import abc
 
-from pandas import DataFrame
 from btk import btkAcquisition, btkPoint
 from numpy import mean
+from gait_analysis.utils.c3d import SideEnum
 
 
 class AbstractToCGM2Mapper(abc.ABC):
@@ -24,11 +24,11 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
         Iterates through point names and maps hbm trunk to cgm2 names. Further calculates missing points from existing
         :param acq: loaded acquisition
         """
-        cls._calc_toe(acq, "L")
-        cls._calc_toe(acq, "R")
+        cls._calc_toe(acq, SideEnum.LEFT)
+        cls._calc_toe(acq, SideEnum.RIGHT)
 
     @classmethod
-    def _calc_toe(cls, acq: btkAcquisition, side: str = "L"):
+    def _calc_toe(cls, acq: btkAcquisition, side: SideEnum = SideEnum.LEFT):
         """creates LTOE or RTOE marker for cmg2.
         calculates the mean values for LHEE, LFMH and LVMH resp. RHEE, RFMH and RVMH.
 
@@ -36,10 +36,10 @@ class HBMToCGM2Mapper(AbstractToCGM2Mapper):
         :param side: Left ("L") or Right ("R") side.
         """
 
-        hee = acq.GetPoint(f"{side}HEE")
-        fmh = acq.GetPoint(f"{side}FMH")
-        vmh = acq.GetPoint(f"{side}VMH")
+        hee = acq.GetPoint(f"{side.value}HEE")
+        fmh = acq.GetPoint(f"{side.value}FMH")
+        vmh = acq.GetPoint(f"{side.value}VMH")
         toe_values = mean([hee.GetValues(), fmh.GetValues(), vmh.GetValues()], axis=0)
-        toe = btkPoint(f"{side}TOE", acq.GetPointFrameNumber())
+        toe = btkPoint(f"{side.value}TOE", acq.GetPointFrameNumber())
         toe.SetValues(toe_values)
         acq.AppendPoint(toe)

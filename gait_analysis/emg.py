@@ -1,11 +1,12 @@
 from btk import btkAcquisition
-import numpy as np
 import scipy as sp
 from scipy import signal
-from gait_analysis import events
+
+import gait_analysis.utils.c3d
+from gait_analysis.utils.c3d import ANALOG_VOLTAGE_PREFIX_LABEL
 
 class EMGCoherenceAnalysis:
-    VOLTAGE_PREFIX = "Voltage."
+
     """
     This class contains all the material to calculate coherence from analog EMG signals
     """
@@ -22,8 +23,8 @@ class EMGCoherenceAnalysis:
         :param emg_channel_2: second EMG channel
         :param side: leg on which the analogs are recorded
         """
-        self.emg_channel_1_index = f"{self.VOLTAGE_PREFIX}{emg_channel_1}"
-        self.emg_channel_2_index = f"{self.VOLTAGE_PREFIX}{emg_channel_2}"
+        self.emg_channel_1_index = f"{ANALOG_VOLTAGE_PREFIX_LABEL}{emg_channel_1}"
+        self.emg_channel_2_index = f"{ANALOG_VOLTAGE_PREFIX_LABEL}{emg_channel_2}"
         self._side = side
 
     def get_swing_phase(self, acq: btkAcquisition):
@@ -43,12 +44,12 @@ class EMGCoherenceAnalysis:
         while event_iterator != acq.GetEvents().End():
             event = event_iterator.value()
             if event.GetContext() == self._side:
-                if event.GetLabel() == events.GAIT_EVENT_FOOT_OFF:
+                if event.GetLabel() == gait_analysis.utils.utils.c3d_utils.GAIT_EVENT_FOOT_OFF:
                     # TODO what is last Event is FS????? FUCK
                     foot_off_list.append(event.GetFrame())
                     if start: # Be sure first event ist Foot of (we want swing phase)
                         start = False
-                elif event.GetLabel() == events.GAIT_EVENT_FOOT_STRIKE:
+                elif event.GetLabel() == gait_analysis.utils.utils.c3d_utils.GAIT_EVENT_FOOT_STRIKE:
                     if not start: # Be sure first event ist Foot of (we want swing phase)
                         foot_strike_list.append(event.GetFrame())
             event_iterator.incr()

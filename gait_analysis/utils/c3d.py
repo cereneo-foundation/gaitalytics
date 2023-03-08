@@ -1,0 +1,24 @@
+from enum import Enum
+
+METADATA_PROCESSING_LABEL = "PROCESSING"
+METADATA_PROCESSING_BODYMASS_LABEL = "Bodymass"
+METADATA_PROCESSING_HEIGHT_LABEL = "Height"
+METADATA_PROCESSING_LEG_LENGTH_LABEL = "LegLength"
+METADATA_PROCESSING_KNEE_WIDTH_LABEL = "KneeWidth"
+METADATA_PROCESSING_ANKLE_WIDTH_LABEL = "AnkleWidth"
+
+ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
+
+GAIT_EVENT_FOOT_STRIKE = "Foot Strike"
+GAIT_EVENT_FOOT_OFF = "Foot Off"
+
+
+class SideEnum(Enum):
+    """
+    Helper enum to define side
+    """
+    LEFT = "L"
+    RIGHT = "R"
+
+
+

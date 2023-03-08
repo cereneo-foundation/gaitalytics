@@ -1,14 +1,10 @@
 from btk import btkAcquisition
 from pyCGM2.Tools import btkTools
 import numpy as np
-from gait_analysis.utils import SideEnum
 
-C3D_METADATA_PROCESSING_LABEL = "PROCESSING"
-C3D_METADATA_PROCESSING_BODYMASS_LABEL = "Bodymass"
-C3D_METADATA_PROCESSING_HEIGHT_LABEL = "Height"
-C3D_METADATA_PROCESSING_LEG_LENGTH_LABEL = "LegLength"
-C3D_METADATA_PROCESSING_KNEE_WIDTH_LABEL = "KneeWidth"
-C3D_METADATA_PROCESSING_ANKLE_WIDTH_LABEL = "AnkleWidth"
+from gait_analysis.utils.c3d import METADATA_PROCESSING_LABEL, METADATA_PROCESSING_BODYMASS_LABEL, \
+    METADATA_PROCESSING_HEIGHT_LABEL, METADATA_PROCESSING_LEG_LENGTH_LABEL, \
+    METADATA_PROCESSING_KNEE_WIDTH_LABEL, METADATA_PROCESSING_ANKLE_WIDTH_LABEL, SideEnum
 
 
 class AnthropomorphicCalculator:
@@ -19,14 +15,14 @@ class AnthropomorphicCalculator:
         from given calibration acquisition
         :param acq_static: calibration acquisition
         """
-        self._metrics = {C3D_METADATA_PROCESSING_BODYMASS_LABEL: 0,
-                         C3D_METADATA_PROCESSING_HEIGHT_LABEL: 0,
-                         f"{SideEnum.LEFT.value}{C3D_METADATA_PROCESSING_LEG_LENGTH_LABEL}": 0,
-                         f"{SideEnum.RIGHT.value}{C3D_METADATA_PROCESSING_LEG_LENGTH_LABEL}": 0,
-                         f"{SideEnum.LEFT.value}{C3D_METADATA_PROCESSING_KNEE_WIDTH_LABEL}": 0,
-                         f"{SideEnum.RIGHT.value}{C3D_METADATA_PROCESSING_KNEE_WIDTH_LABEL}": 0,
-                         f"{SideEnum.LEFT.value}{C3D_METADATA_PROCESSING_ANKLE_WIDTH_LABEL}": 0,
-                         f"{SideEnum.RIGHT.value}{C3D_METADATA_PROCESSING_ANKLE_WIDTH_LABEL}": 0}
+        self._metrics = {METADATA_PROCESSING_BODYMASS_LABEL: 0,
+                         METADATA_PROCESSING_HEIGHT_LABEL: 0,
+                         f"{SideEnum.LEFT.value}{METADATA_PROCESSING_LEG_LENGTH_LABEL}": 0,
+                         f"{SideEnum.RIGHT.value}{METADATA_PROCESSING_LEG_LENGTH_LABEL}": 0,
+                         f"{SideEnum.LEFT.value}{METADATA_PROCESSING_KNEE_WIDTH_LABEL}": 0,
+                         f"{SideEnum.RIGHT.value}{METADATA_PROCESSING_KNEE_WIDTH_LABEL}": 0,
+                         f"{SideEnum.LEFT.value}{METADATA_PROCESSING_ANKLE_WIDTH_LABEL}": 0,
+                         f"{SideEnum.RIGHT.value}{METADATA_PROCESSING_ANKLE_WIDTH_LABEL}": 0}
 
         self._calculate_height(acq_static)
         self._calculate_weight(acq_static)
@@ -40,7 +36,7 @@ class AnthropomorphicCalculator:
         """
         for label in self._metrics:
             btkTools.smartSetMetadata(acq,
-                                      C3D_METADATA_PROCESSING_LABEL,
+                                      METADATA_PROCESSING_LABEL,
                                       label,
                                       0,
                                       self._metrics[label])
@@ -51,12 +47,12 @@ class AnthropomorphicCalculator:
         :param acq_static: calibration c3d file
         """
         try:
-            self._metrics[C3D_METADATA_PROCESSING_HEIGHT_LABEL] = int(
+            self._metrics[METADATA_PROCESSING_HEIGHT_LABEL] = int(
                 round(np.mean(acq_static.GetPoint("GLAB").GetValues()[:, 2])) * 1.005)
             # TODO need a nice factor to determine height from forehead
         except RuntimeError:
             # I no GLAB use t2
-            self._metrics[C3D_METADATA_PROCESSING_HEIGHT_LABEL] = int(
+            self._metrics[METADATA_PROCESSING_HEIGHT_LABEL] = int(
                 round(np.mean(acq_static.GetPoint("T2").GetValues()[:, 2])) * 1.05)
             # TODO need a nice factor to determine height from forehead
 
@@ -67,7 +63,7 @@ class AnthropomorphicCalculator:
         """
         wl = np.mean(acq_static.GetAnalogs().GetItem(2).GetValues())
         wr = np.mean(acq_static.GetAnalogs().GetItem(8).GetValues())
-        self._metrics[C3D_METADATA_PROCESSING_BODYMASS_LABEL] = np.abs((wl + wr) / 9.81)
+        self._metrics[METADATA_PROCESSING_BODYMASS_LABEL] = np.abs((wl + wr) / 9.81)
 
     def _calculate_leg_length(self, acq_static: btkAcquisition, side: SideEnum = SideEnum.LEFT):
         """
@@ -77,7 +73,7 @@ class AnthropomorphicCalculator:
         """
         upper_leg_length = self._calculate_point_distance(acq_static, f"{side.value}ASI", f"{side.value}KNE")
         lower_leg_length = self._calculate_point_distance(acq_static, f"{side.value}KNE", f"{side.value}ANK")
-        self._metrics[f"{side.value}{C3D_METADATA_PROCESSING_LEG_LENGTH_LABEL}"] = abs(
+        self._metrics[f"{side.value}{METADATA_PROCESSING_LEG_LENGTH_LABEL}"] = abs(
             upper_leg_length + lower_leg_length)
 
     def _calculate_knee_width(self, acq_static: btkAcquisition, side: SideEnum = SideEnum.LEFT):
@@ -87,7 +83,7 @@ class AnthropomorphicCalculator:
         :param side: side to calculate
         """
         knee_width = self._calculate_point_distance(acq_static, f"{side.value}KNE", f"{SideEnum.value}KNM")
-        self._metrics[f"{side.value}{C3D_METADATA_PROCESSING_KNEE_WIDTH_LABEL}"] = abs(knee_width)
+        self._metrics[f"{side.value}{METADATA_PROCESSING_KNEE_WIDTH_LABEL}"] = abs(knee_width)
 
     def _calculate_ankle_width(self, acq_static: btkAcquisition, side: SideEnum = SideEnum.LEFT):
         """
@@ -96,7 +92,7 @@ class AnthropomorphicCalculator:
         :param side: side to calculate
         """
         ankle_width = self._calculate_point_distance(acq_static, f"{side.value}ANK", f"{SideEnum.value}MED")
-        self._metrics[f"{side.value}{C3D_METADATA_PROCESSING_ANKLE_WIDTH_LABEL}"] = abs(ankle_width)
+        self._metrics[f"{side.value}{METADATA_PROCESSING_ANKLE_WIDTH_LABEL}"] = abs(ankle_width)
 
     @staticmethod
     def _calculate_point_distance(acq_static: btkAcquisition, point_a_label, point_b_label) -> float:
