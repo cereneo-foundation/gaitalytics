@@ -1,6 +1,15 @@
 import numpy as np
+from enum import Enum
 from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
 from pyCGM2.Tools import btkTools
+
+
+class SideEnum(Enum):
+    """
+    Helper enum to define side
+    """
+    LEFT = "L"
+    RIGHT = "R"
 
 
 def get_marker_names(acq: btkAcquisition) -> list:
@@ -33,31 +42,6 @@ def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list
     force = ground_reaction_collection.GetItem(force_plate_index).GetForce().GetValues()
     return force[0:(last_frame_index - first_frame_index + 1) * analog_sample_per_frame:analog_sample_per_frame][:, 2]
 
-
-def calculate_height_from_markers(acq_calc: btkAcquisition) -> int:
-    try:
-        return int(round(np.mean(acq_calc.GetPoint("GLAB").GetValues()[:, 2])) * 1.005)
-        # TODO need a nice factor to determine height from forehead
-    except RuntimeError:
-        # I no GLAB use t2
-        return int(round(np.mean(acq_calc.GetPoint("T2").GetValues()[:, 2])) * 1.05)
-        # TODO need a nice factor to determine height from forehead
-
-
-def calculate_height_from_markers_file(static_file_name: str, data_path: str) -> int:
-    acq_calc = btkTools.smartReader(f"{data_path}{static_file_name}")
-    return calculate_height_from_markers(acq_calc)
-
-
-def calculate_weight_from_force_plates_file(static_file_name: str, data_path: str) -> float:
-    acq_calc = btkTools.smartReader(f"{data_path}{static_file_name}")
-    return calculate_weight_from_force_plates(acq_calc)
-
-
-def calculate_weight_from_force_plates(acq_calc: btkAcquisition) -> float:
-    wl = np.mean(acq_calc.GetAnalogs().GetItem(2).GetValues())
-    wr = np.mean(acq_calc.GetAnalogs().GetItem(8).GetValues())
-    return np.abs((wl + wr) / 9.81)
 
 
 def correct_points_frame_by_frame(acq_trial: btkAcquisition):
@@ -114,5 +98,3 @@ def create_matrix_padded(matrix, max_length):
             array_pad = np.pad(array[:, 0], (0, to_pad), 'constant', constant_values=0)
         matx.append(array_pad)
     return matx
-
-
