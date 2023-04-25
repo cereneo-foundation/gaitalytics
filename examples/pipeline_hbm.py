@@ -6,43 +6,47 @@ from pyCGM2.Lib import analysis, plot
 from gait_analysis.analysis import fit_trial_to_model
 from gait_analysis.events import GaitEventDetectorFactory
 from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
-from gait_analysis.utils import calculate_height_from_markers, calculate_weight_from_force_plates
+
 
 # This is an example pipeline #
 ###############################
 
 # Define paths
-DATA_PATH = "test/data/"
-TEST_ORIGIN_FILE_NAME = "1min.c3d"
-TEST_FILTERED_FILE_NAME = "1min_filtered.c3d"
-TEST_MODELLED_FILE_NAME = "1min_filtered_modelled.c3d"
-TEST_EVENTS_FILE_NAME = "1min_filtered_modelled_events.c3d"
-STATIC_FILE_NAME = "1min_static.c3d"
+DATA_PATH = "C:/ViconData/Handshake/Bramberger/20230420/"
+TEST_ORIGIN_FILE_NAME = "S003.3.c3d"
+TEST_EVENTS_FILE_NAME = "S003.4.c3d"
 SETTINGS_PATH = "settings/"
-SETTINGS_FILE = "CGM2_5-pyCGM2.settings"
+SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
+
+ANALYSIS_KINEMATIC_LABELS_DICT = {
+    'Left': ["LHipAngles", "LKneeAngles", "LAnkleAngles", "LFootProgressAngles", "LPelvisAngles",
+             "LThoraxAngles", "LSpineAngles"],
+    'Right': ["RHipAngles", "RKneeAngles", "RAnkleAngles", "RFootProgressAngles", "RPelvisAngles",
+              "RThoraxAngles", "RSpineAngles"]}
+
+ANALYSIS_KINETIC_LABELS_DICT = {
+    'Left': ["LHipMoment", "LKneeMoment", "LAnkleMoment", "LHipPower", "LKneePower", "LAnklePower"],
+    'Right': ["RHipMoment", "RKneeMoment", "RAnkleMoment", "RHipPower", "RKneePower", "RAnklePower"]}
 
 
 def main():
     settings = files.loadModelSettings(SETTINGS_PATH, SETTINGS_FILE)
 
     # load file into memory
-    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
-
-    # filter points and force plate #
-    #################################
-    low_pass_point_filtering(acq_trial)
-    low_pass_force_plate_filtering(acq_trial)
-
+  #  acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
 
     # detect gait events #
     ######################
-    GaitEventDetectorFactory().get_zenis_detector().clear_events(acq_trial)
-    GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
-    btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+
+   # GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
+   # btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}", settings["Translators"])
 
     analysisInstance = analysis.makeAnalysis(DATA_PATH, TEST_EVENTS_FILE_NAME,
                                              emgChannels=None,
-                                             btkAcqs=[acq_trial])
+                                             btkAcqs=[acq_trial],
+                                             kinematicLabelsDict = ANALYSIS_KINEMATIC_LABELS_DICT,
+                                             kineticLabelsDict = ANALYSIS_KINETIC_LABELS_DICT)
     normativeDataset = normativeDatasets.NormativeData("Schwartz2008", "Free")  # selected normative dataset
     ###
     # plots
