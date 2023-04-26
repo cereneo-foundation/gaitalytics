@@ -110,6 +110,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         :param detected_force_plate_events: detection from detect_onset
         :return: 2 dimensional array with event name and frame index
         """
+        # Sophie was here !!! :D
 
         signal_length = len(force_plate_signal)
         detected_event_types = []
