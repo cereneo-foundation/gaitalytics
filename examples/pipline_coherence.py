@@ -2,7 +2,6 @@
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 from gait_analysis.emg import EMGCoherenceAnalysis
-from gait_analysis.filtering import band_pass_filter_emg
 
 
 # This is an example pipeline #
@@ -23,11 +22,7 @@ def main():
     coh_left = EMGCoherenceAnalysis(1, 2, "Left") # Verify if good channel indexs
     coh_right = EMGCoherenceAnalysis(3, 4, "Right") # Verify if good channel indexs
 
-    #Processing
-    band_pass_filter_emg(acq_trial, coh_left.emg_channel_1_index)
-    band_pass_filter_emg(acq_trial, coh_left.emg_channel_2_index)
-    band_pass_filter_emg(acq_trial, coh_right.emg_channel_1_index)
-    band_pass_filter_emg(acq_trial, coh_right.emg_channel_2_index)
+
 
     #Results stored in a tuple of frequencies and coherences
     coherence_result_left = coh_left.calculate_coherence(acq_trial)

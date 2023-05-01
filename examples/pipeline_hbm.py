@@ -3,10 +3,6 @@ from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 from pyCGM2.Lib import analysis, plot
 
-from gait_analysis.analysis import fit_trial_to_model
-from gait_analysis.events import GaitEventDetectorFactory
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
-
 
 # This is an example pipeline #
 ###############################

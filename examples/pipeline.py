@@ -5,7 +5,6 @@ from pyCGM2.Utils import files
 
 from gait_analysis.analysis import fit_trial_to_model
 from gait_analysis.events import GaitEventDetectorFactory, check_events_order
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 from gait_analysis.utils import calculate_height_from_markers, calculate_weight_from_force_plates
 
 # This is an example pipeline #

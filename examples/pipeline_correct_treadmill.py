@@ -4,7 +4,6 @@ from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
 from gait_analysis.events import GaitEventDetectorFactory
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 from gait_analysis.utils import correct_points_frame_by_frame
 
 # This is an example pipeline #

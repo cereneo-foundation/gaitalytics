@@ -5,8 +5,7 @@ from pyCGM2.Utils import files
 
 import gait_analysis.events
 from gait_analysis.events import EventNormalSequencePerContextChecker, EventNormalSequenceInterContextChecker
-from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
-from gait_analysis.models import HBMToCGM2Mapper
+
 
 # This is an example pipeline #
 ###############################
