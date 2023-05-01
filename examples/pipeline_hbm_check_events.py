@@ -3,7 +3,8 @@ from argparse import ArgumentParser, Namespace
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
-from gait_analysis.events import GaitEventDetectorFactory
+import gait_analysis.events
+from gait_analysis.events import EventNormalSequencePerContextChecker, EventNormalSequenceInterContextChecker
 from gait_analysis.filtering import low_pass_point_filtering, low_pass_force_plate_filtering
 from gait_analysis.models import HBMToCGM2Mapper
 
@@ -14,7 +15,6 @@ from gait_analysis.models import HBMToCGM2Mapper
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
 DATA_PATH = "C:/ViconData/Handshake/Bramberger/20230420/"
-TEST_ORIGIN_FILE_NAME = "S003.3.c3d"
 TEST_EVENTS_FILE_NAME = "S003.4.c3d"
 
 
@@ -30,15 +30,16 @@ def main():
 
     # load file into memory
 
-    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
+    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
     # detect gait events #
     ######################
-
-    GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
-    btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
-
-
+    [anomaly_detected, abnormal_event_frames] = EventNormalSequencePerContextChecker(
+        EventNormalSequenceInterContextChecker()).check_events(acq_trial)
+    print(f"Anomaly: {anomaly_detected}")
+   # print(f"Frames: {abnormal_event_frames}")
+    for abnorm in abnormal_event_frames:
+        print(abnorm)
 
 
 # Using the special variable

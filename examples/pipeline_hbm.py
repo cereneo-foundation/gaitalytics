@@ -32,14 +32,6 @@ ANALYSIS_KINETIC_LABELS_DICT = {
 def main():
     settings = files.loadModelSettings(SETTINGS_PATH, SETTINGS_FILE)
 
-    # load file into memory
-  #  acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
-
-    # detect gait events #
-    ######################
-
-   # GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
-   # btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}", settings["Translators"])
 
     analysisInstance = analysis.makeAnalysis(DATA_PATH, TEST_EVENTS_FILE_NAME,
@@ -48,6 +40,8 @@ def main():
                                              kinematicLabelsDict = ANALYSIS_KINEMATIC_LABELS_DICT,
                                              kineticLabelsDict = ANALYSIS_KINETIC_LABELS_DICT)
     normativeDataset = normativeDatasets.NormativeData("Schwartz2008", "Free")  # selected normative dataset
+
+    analysis.exportAnalysis(analysisInstance, DATA_PATH, "spreadsheet")
     ###
     # plots
     plot.plot_DescriptiveKinematic(DATA_PATH, analysisInstance, "LowerLimb", normativeDataset)
