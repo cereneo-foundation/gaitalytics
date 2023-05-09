@@ -2,10 +2,8 @@ from argparse import ArgumentParser, Namespace
 
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
-
-import gait_analysis.events
-from gait_analysis.events import EventNormalSequencePerContextChecker, EventNormalSequenceInterContextChecker
-
+from gait_analysis.cycles import HeelStrikeCycleBuilder
+from gait_analysis.event.events import EventNormalSequencePerContextChecker, EventNormalSequenceInterContextChecker
 
 # This is an example pipeline #
 ###############################
@@ -13,8 +11,8 @@ from gait_analysis.events import EventNormalSequencePerContextChecker, EventNorm
 # Define paths
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
-DATA_PATH = "C:/ViconData/Handshake/Bramberger/20230420/"
-TEST_EVENTS_FILE_NAME = "S003.4.c3d"
+DATA_PATH = "C:/Users/boeni/Projects/gait_analysis/test/data/"
+TEST_EVENTS_FILE_NAME = "PGV_0_45.4.c3d"
 
 
 def get_args() -> Namespace:
@@ -31,14 +29,14 @@ def main():
 
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
-    # detect gait events #
-    ######################
-    [anomaly_detected, abnormal_event_frames] = EventNormalSequencePerContextChecker(
-        EventNormalSequenceInterContextChecker()).check_events(acq_trial)
-    print(f"Anomaly: {anomaly_detected}")
-   # print(f"Frames: {abnormal_event_frames}")
-    for abnorm in abnormal_event_frames:
-        print(abnorm)
+    cycle_builder = EventCycleBuilder(
+        EventNormalSequencePerContextChecker(EventNormalSequenceInterContextChecker()))
+
+    cycles = cycle_builder.build_cycles(acq_trial)
+    cycles
+
+
+
 
 
 # Using the special variable

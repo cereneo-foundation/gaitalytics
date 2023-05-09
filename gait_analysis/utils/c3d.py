@@ -9,8 +9,7 @@ METADATA_PROCESSING_ANKLE_WIDTH_LABEL = "AnkleWidth"
 
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
-GAIT_EVENT_FOOT_STRIKE = "Foot Strike"
-GAIT_EVENT_FOOT_OFF = "Foot Off"
+
 
 
 class SideEnum(Enum):
