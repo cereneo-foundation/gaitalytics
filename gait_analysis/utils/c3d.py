@@ -1,15 +1,22 @@
 from enum import Enum
 
-METADATA_PROCESSING_LABEL = "PROCESSING"
-METADATA_PROCESSING_BODYMASS_LABEL = "Bodymass"
-METADATA_PROCESSING_HEIGHT_LABEL = "Height"
-METADATA_PROCESSING_LEG_LENGTH_LABEL = "LegLength"
-METADATA_PROCESSING_KNEE_WIDTH_LABEL = "KneeWidth"
-METADATA_PROCESSING_ANKLE_WIDTH_LABEL = "AnkleWidth"
+
+class AxesNames(Enum):
+    X = "x"
+    Y = "y"
+    Z = "z"
+
+    @classmethod
+    def getAxesByIndex(cls, index):
+        if index == 0:
+            return cls.X
+        elif index == 1:
+            return cls.Y
+        elif index == 2:
+            return cls.Z
+
 
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
-
-
 
 
 class SideEnum(Enum):
@@ -18,6 +25,3 @@ class SideEnum(Enum):
     """
     LEFT = "L"
     RIGHT = "R"
-
-
-

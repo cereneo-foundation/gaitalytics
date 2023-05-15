@@ -2,8 +2,10 @@ from argparse import ArgumentParser, Namespace
 
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
-from gait_analysis.cycles import HeelStrikeCycleBuilder
-from gait_analysis.event.events import EventNormalSequencePerContextChecker, EventNormalSequenceInterContextChecker
+
+from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
+from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker
+from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 
 # This is an example pipeline #
 ###############################
@@ -29,11 +31,10 @@ def main():
 
     acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
-    cycle_builder = EventCycleBuilder(
-        EventNormalSequencePerContextChecker(EventNormalSequenceInterContextChecker()))
+    cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
 
     cycles = cycle_builder.build_cycles(acq_trial)
-    cycles
+    LinearTimeNormalisation().nomalise(acq_trial, cycles)
 
 
 

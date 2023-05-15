@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
-from gait_analysis.event.events import GaitEventDetectorFactory
+from gait_analysis.event.detection import GaitEventDetectorFactory
 
 
 # This is an example pipeline #

@@ -40,7 +40,7 @@ class EventAnomalyChecker(ABC):
     :param abnormal_event_frames: list of found already found anomalies
     :return: flag is anomalies found, list of anomalies
     """
-
+    @staticmethod
     def _check_events(self, acq_walk: btkAcquisition, abnormal_event_frames: list) -> [bool, list]:
         pass
 
