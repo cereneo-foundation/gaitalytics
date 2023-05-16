@@ -13,8 +13,8 @@ from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 # Define paths
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
-DATA_PATH = "C:/Users/boeni/Projects/gait_analysis/test/data/"
-TEST_EVENTS_FILE_NAME = "PGV_0_45.4.c3d"
+DATA_PATH = "./test/data/"
+TEST_EVENTS_FILE_NAME = "S003.4.c3d"
 
 
 def get_args() -> Namespace:
@@ -34,7 +34,7 @@ def main():
     cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
 
     cycles = cycle_builder.build_cycles(acq_trial)
-    LinearTimeNormalisation().nomalise(acq_trial, cycles)
+    LinearTimeNormalisation().normalise(acq_trial, cycles)
 
 
 

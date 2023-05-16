@@ -91,8 +91,6 @@ class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
 
         for current_event_index in range(0, acq_walk.GetEventNumber()):
             current_event = acq_walk.GetEvent(current_event_index)
-            print("")
-            print(f"Curr Frame: {current_event.GetFrame()} {current_event.GetContext()} {current_event.GetLabel()}")
 
             current_label = current_event.GetLabel()
 
@@ -111,11 +109,10 @@ class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
         anomaly_detected = False
         for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
             next_event = acq_walk.GetEvent(next_event_index)
-            print(f"Next Frame: {next_event.GetFrame()} {next_event.GetContext()} {next_event.GetLabel()}")
             if next_event.GetContext() != current_event.GetContext():
                 anomaly_detected = True
                 abnormal_event_frames.append(
-                    {"Label": current_event.GetLabel(), "Start-Frame": current_event.GetFrame(),
+                    {"Context": current_event.GetLabel(), "Start-Frame": current_event.GetFrame(),
                      "End-Frame": next_event.GetFrame(),
                      "Anomaly": "Normal Inter Context Sequence"})
             break
@@ -128,12 +125,11 @@ class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
         counter_events_between_context = 0
         for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
             next_event = acq_walk.GetEvent(next_event_index)
-            print(f"Next Frame: {next_event.GetFrame()} {next_event.GetContext()} {next_event.GetLabel()}")
             if next_event.GetContext() == current_event.GetContext():
                 if counter_events_between_context != 2:
                     anomaly_detected = True
                     abnormal_event_frames.append(
-                        {"Label": current_event.GetLabel(), "Start-Frame": current_event.GetFrame(),
+                        {"Context": current_event.GetLabel(), "Start-Frame": current_event.GetFrame(),
                          "End-Frame": next_event.GetFrame(),
                          "Anomaly": "Normal Inter Context Sequence"})
                 break

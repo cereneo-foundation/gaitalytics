@@ -48,11 +48,15 @@ class EventCycleBuilder(CycleBuilder):
             context = start_event.GetContext()
             label = start_event.GetLabel()
             if label == self.event_label:
-                end_event = find_next_event(acq, label, context, event_index)
-                numbers[context] = numbers.get(context) + 1
-                if end_event is not None:
-                    cycle = GaitCycle(numbers[context], context, start_event.GetFrame(), end_event.GetFrame())
-                    gait_cycles[context].append(cycle)
+                try:
+                    [end_event, unused_events] = find_next_event(acq, label, context, event_index)
+                    numbers[context] = numbers.get(context) + 1
+                    if end_event is not None:
+                        cycle = GaitCycle(numbers[context], context, start_event.GetFrame(), end_event.GetFrame(),
+                                          unused_events)
+                        gait_cycles[context].append(cycle)
+                except IndexError as err:
+                    pass # If events do not match in the end this will be raised
         return gait_cycles
 
 

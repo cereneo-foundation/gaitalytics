@@ -5,7 +5,7 @@ import json
 
 from pyCGM2.Tools import btkTools
 
-from gait_analysis.event.anomaly import BasicContextChecker
+from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker
 
 # This is an example pipeline #
 ###############################
@@ -31,12 +31,14 @@ def main():
         filtered_files = list(filter(r.match, file_name))
         for filtered_file in filtered_files:
             acq_trial = btkTools.smartReader(f"{root}/{filtered_file}")
-            detected, anomalies = BasicContextChecker().check_events(acq_trial)
+            detected, anomalies = BasicContextChecker(EventNormalSequenceInterContextChecker()).check_events(acq_trial)
             if detected:
                 print(f"{root}/{filtered_file}")
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")
                 f = open(f"{root}/{event_anomaly}", "w")
-                json.dump(anomalies, f)
+                for anomaly in anomalies:
+                    print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']}", file=f)
+               # json.dump(anomalies, f)
                 f.close()
 
 

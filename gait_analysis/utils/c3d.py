@@ -7,7 +7,7 @@ class AxesNames(Enum):
     Z = "z"
 
     @classmethod
-    def getAxesByIndex(cls, index):
+    def get_axes_by_index(cls, index):
         if index == 0:
             return cls.X
         elif index == 1:

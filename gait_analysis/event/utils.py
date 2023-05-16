@@ -26,15 +26,13 @@ class GaitContext(Enum):
         return cls.LEFT
 
 
-def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, List[btkEvent]]:
-    unused_event = []
+def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, btkEvent]:
     if acq.GetEventNumber() >= start_index + 1:
         for event_index in range(start_index + 1, acq.GetEventNumber()):
             event = acq.GetEvent(event_index)
             if event.GetContext() == context:
                 if event.GetLabel() == label:
-                    return event, unused_event
+                    return [event, unused_event]
                 else:
-                    unused_event.append(event)
-    else:
-        return None
+                    unused_event = event
+    raise IndexError()

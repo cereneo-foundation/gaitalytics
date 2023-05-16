@@ -34,7 +34,7 @@ def main():
     # detect gait events #
     ######################
 
-    GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
+    GaitEventDetectorFactory().get_force_plate_detector().detect_events(acq_trial)
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
 
