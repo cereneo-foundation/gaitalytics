@@ -5,29 +5,28 @@ import numpy as np
 from btk import btkAcquisition, btkPoint
 
 from gait_analysis.cycle.builder import GaitCycle
+from gait_analysis.utils.c3d import AxesNames
 from pandas import DataFrame
 
 
 class NormalisedPoint:
-    _HEADER_PREFIX_FRAME = "Frame "
-    _HEADER_PREFIX_CYCLE = "Cycle "
 
-    def __init__(self, label: str, direction: str, side: str):
+    def __init__(self, label: str, direction: str):
         self.label = label
         self.direction = direction
-        self.side = side
+        self.table = None
 
     def _create_table(self, data: np.ndarray):
         column_names = []
         for index in range(0, len(data)):
-            column_names.append(f"{self._HEADER_PREFIX_FRAME}{index}")
-        return DataFrame(data=data, columns=column_names)
+            column_names.append(index)
+        return DataFrame(data=[data], columns=np.array(column_names))
 
     def add_cycle_data(self, data: np.ndarray, cycle_number: int):
-        data_frame = self._create_table(data)
         if self.table is not None:
-            self.table.append(data_frame)
+            self.table.loc[cycle_number] = data
         else:
+            data_frame = self._create_table(data)
             self.table = data_frame
 
 
@@ -37,25 +36,28 @@ class TimeNormalisationAlgorithm(ABC):
 
         pass
 
-    def _define_key(self, point: btkPoint, direction_index: int, side: str) -> str:
-        return f"{point.GetLabel()}.{direction_index}.{side}"
+    @classmethod
+    def _define_key(cls, point: btkPoint, direction_index: int) -> str:
+        return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).value}"
 
     def normalise(self, acq: btkAcquisition, cycles: List[GaitCycle]) -> {}:
-        list_of_data = {}
+        data_list = {}
         for point_index in range(0, acq.GetPointNumber()):
-            for side in cycles:
-                interpolated_data_dict = {}
-                point = acq.GetPoint(point_index)
-                for cycle in cycles[side]:
-                    interpolated_data = self._run_algorithm(point.GetValues(), cycle.start_frame, cycle.end_frame)
-                    for direction_index in range(0, len(interpolated_data)):
-                        if not self._define_key(point, direction_index, side) in list_of_data:
-                            list_of_data[self._define_key(point, direction_index, side)] = NormalisedPoint(
-                                point.GetLabel(), direction_index, side)
-                        list_of_data[self._define_key(point, direction_index, side)].add_cycle_data(
-                            interpolated_data[direction_index].tolist(), cycle.number)
+            point = acq.GetPoint(point_index)
+            if point.GetType() > 0:
+                for side in cycles:
+                    if point.GetLabel()[0] == side[0]:  # TODO: Name convention maybe different in other models
+                        for cycle in cycles[side]:
+                            interpolated_data = self._run_algorithm(point.GetValues(), cycle.start_frame,
+                                                                    cycle.end_frame)
+                            for direction_index in range(0, len(interpolated_data)):
+                                if not self._define_key(point, direction_index) in data_list:
+                                    data_list[self._define_key(point, direction_index)] = NormalisedPoint(
+                                        point.GetLabel(), direction_index)
+                                data_list[self._define_key(point, direction_index)].add_cycle_data(
+                                    interpolated_data[direction_index], cycle.number)
 
-                point.GetLabel()
+        return data_list
 
     @abstractmethod
     def _run_algorithm(self, data: np.ndarray, start_frame: int, end_frame: int,

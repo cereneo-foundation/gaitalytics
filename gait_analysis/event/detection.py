@@ -127,27 +127,3 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
                     else:
                         detected_event_types.append([GaitEventLabel.FOOT_STRIKE.value, signal_index])
         return detected_event_types  # Contain the label of the event and the corresponding index
-
-
-class GaitEventDetectorFactory(object):
-
-    def __init__(self):
-        self._zenis = None
-        self._force_plate = None
-
-    def __new__(cls):
-        if not hasattr(cls, 'instance'):
-            cls.instance = super(GaitEventDetectorFactory, cls).__new__(cls)
-        return cls.instance
-
-    def get_zenis_detector(self) -> AbstractGaitEventDetector:
-        if self._zenis is None:
-            self._zenis = ZenisGaitEventDetector()
-        return self._zenis
-
-    def get_force_plate_detector(self) -> AbstractGaitEventDetector:
-        if self._force_plate is None:
-            self._force_plate = ForcePlateEventDetection()
-        return self._force_plate
-
-

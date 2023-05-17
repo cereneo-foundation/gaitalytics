@@ -1,10 +1,8 @@
 import os
 import re
 from argparse import ArgumentParser, Namespace
-import json
 
-from pyCGM2.Tools import btkTools
-
+from gait_analysis.utils import c3d
 from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker
 
 # This is an example pipeline #
@@ -30,7 +28,7 @@ def main():
         r = re.compile(".*\.4\.c3d")
         filtered_files = list(filter(r.match, file_name))
         for filtered_file in filtered_files:
-            acq_trial = btkTools.smartReader(f"{root}/{filtered_file}")
+            acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
             detected, anomalies = BasicContextChecker(EventNormalSequenceInterContextChecker()).check_events(acq_trial)
             if detected:
                 print(f"{root}/{filtered_file}")
@@ -38,7 +36,7 @@ def main():
                 f = open(f"{root}/{event_anomaly}", "w")
                 for anomaly in anomalies:
                     print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']}", file=f)
-               # json.dump(anomalies, f)
+
                 f.close()
 
 

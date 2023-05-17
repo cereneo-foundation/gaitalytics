@@ -3,7 +3,7 @@ from argparse import ArgumentParser, Namespace
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
-from gait_analysis.event.detection import GaitEventDetectorFactory
+from gait_analysis.event.detection import ZenisGaitEventDetector, ForcePlateEventDetection
 
 
 # This is an example pipeline #
@@ -33,8 +33,9 @@ def main():
 
     # detect gait events #
     ######################
+    ForcePlateEventDetection().detect_events(acq_trial)
+    ZenisGaitEventDetector().detect_events(acq_trial)
 
-    GaitEventDetectorFactory().get_force_plate_detector().detect_events(acq_trial)
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
 

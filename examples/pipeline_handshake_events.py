@@ -5,7 +5,7 @@ import re
 from pyCGM2.Tools import btkTools
 from pyCGM2.Utils import files
 
-from gait_analysis.event.detection import GaitEventDetectorFactory
+from gait_analysis.event.detection import ZenisGaitEventDetector
 
 # This is an example pipeline #
 ###############################
@@ -34,7 +34,7 @@ def main():
             if not os.path.exists(f"{root}/{event_added_file}"):
                 print(f"{root}/{filtered_file}")
                 acq_trial = btkTools.smartReader(f"{root}/{filtered_file}", settings["Translators"])
-                GaitEventDetectorFactory().get_zenis_detector().detect_events(acq_trial)
+                ZenisGaitEventDetector().detect_events(acq_trial)
                 btkTools.smartWriter(acq_trial, f"{root}/{event_added_file}")
 
 

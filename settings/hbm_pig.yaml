@@ -1,0 +1,47 @@
+marker_set_mapping:
+  right_heel: RHEE
+  left_heel: LHEE
+  right_hip: RASIS
+  left_hip: LASIS
+
+model_mapping:
+  hip_anterior_tilt:
+    modelled_name: PelvisAngles.y
+    plot_name:  Hip Anterior Tilt
+  hip_upward_obliquity:
+    modelled_name: PelvisAngles.x
+    plot_name: Hip Upward Obliquity
+  hip_internal_rotation:
+    modelled_name: PelvisAngles.z
+    plot_name: Hip Internal Rotation
+  foot_internal_rotation:
+    modelled_name: FootProgressAngles.z
+    plot_name: Foot Internal Rotation
+  hip_flex:
+    modelled_name: HipAngles.y
+    plot_name: Hip Flexion
+  hip_add:
+    modelled_name: HipAngles.x
+    plot_name: Hip Adduction
+  hip_ir:
+    modelled_name: HipAngles.z
+    plot_name: Hip Internal Rotation
+  knee_flex:
+    modelled_name: KneeAngles.y
+    plot_name: Knee Flexion
+  knee_add:
+    modelled_name: KneeAngles.x
+    plot_name: Knee Adduction
+  knee_ir:
+    modelled_name: KneeAngles.z
+    plot_name: Knee Internal Rotation
+  ankle_dorsi_flex:
+    modelled_name: AnkleAngles.y
+    plot_name: Foot Dorsiflexion
+  ankle_add:
+    modelled_name: AnkleAngles.x
+    plot_name: Foot Adduction
+  ankle_ir:
+    modelled_name: AnkleAngles.z
+    plot_name: Foot Internal Rotation
+
