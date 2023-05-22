@@ -6,7 +6,7 @@ from pyCGM2.Events import eventFilters, eventProcedures
 from pyCGM2.Signal import detect_onset
 from pyCGM2.Tools import btkTools
 from gait_analysis.event.utils import GaitEventLabel
-from gait_analysis import utils
+from gait_analysis.utils import utils
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 

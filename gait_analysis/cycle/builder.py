@@ -8,7 +8,7 @@ from gait_analysis.event.anomaly import EventAnomalyChecker
 
 class GaitCycle:
 
-    def __init__(self, number: int, context: str, start_frame: int, end_frame: int, unused_events: List[btkEvent]):
+    def __init__(self, number: int, context: str, start_frame: int, end_frame: int, unused_events: btkEvent):
         self.number = number
         self.context = context
         self.start_frame = start_frame
