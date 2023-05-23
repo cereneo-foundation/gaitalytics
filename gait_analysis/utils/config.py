@@ -11,5 +11,5 @@ KEY_MARKER_MAPPING_L_HIP = "left_hip"
 
 
 def read_configs(file_path: str) -> dict:
-    f = open(file_path, "r")
-    return yaml.safe_load(f)
+    with open(file_path, 'r') as f:
+        return yaml.safe_load(f)

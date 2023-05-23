@@ -26,7 +26,7 @@ class BaseNormalisedAnalysis(ABC):
             if results is None:
                 results = result
             else:
-                results = results.append(result)
+                results = concat([results, result])
         return results
 
 

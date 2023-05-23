@@ -7,3 +7,6 @@ dependencies:
   - python=3.8.15
   - btk=0.4.dev0
   - scipy
+  - pandas
+  - matplotlib
+  - pyyaml
