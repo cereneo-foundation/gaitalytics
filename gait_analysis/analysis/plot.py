@@ -120,7 +120,6 @@ class PdfPlotter(BasicPlotter):
             d['CreationDate'] = datetime.today()
             d['ModDate'] = datetime.today()
 
-            pdf.close()
 
     def _add_footer_header(self):
        ## TODO headers footers

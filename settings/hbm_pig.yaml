@@ -165,15 +165,7 @@ model_mapping_plot:
       plot_name: Ankle Internal Rotation Force
       group: Foo
 
-    gr_force:
-      modelled_name: GroundReactionForce.z
-      plot_name: GroundReaction Force
-      group: Foo
 
-    ngr_force:
-      modelled_name: NormalisedGRF.z
-      plot_name: Normalised GroundReaction Force
-      group: Foo
 
     ### Kinetics
     hip_flex_moment:
@@ -219,21 +211,31 @@ model_mapping_plot:
     ankle_flex_moment:
       modelled_name: AnkleMoment.y
       plot_name: Ankle Dorsiflexion Moment
-      group: Foo
+      group: Kinetics
 
     ankle_add_moment:
       modelled_name: AnkleMoment.x
       plot_name: Ankle Adduction Moment
-      group: Foo
+      group: Kinetics
 
     ankle_ir_moment:
       modelled_name: AnkleMoment.z
       plot_name: Ankle Internal Rotation Moment
-      group: Foo
+      group: Kinetics
 
     ankle_power:
       modelled_name: AnklePower.z
       plot_name: Ankle Power
+      group: Kinetics
+
+    gr_force:
+      modelled_name: GroundReactionForce.z
+      plot_name: GroundReaction Force
+      group: Kinetics
+
+    ngr_force:
+      modelled_name: NormalisedGRF.z
+      plot_name: Normalised GroundReaction Force
       group: Kinetics
 
 
