@@ -11,10 +11,11 @@ from pandas import DataFrame
 
 class NormalisedPoint:
 
-    def __init__(self, label: str, direction: str):
+    def __init__(self, label: str, direction: str, data_type: int):
         self.label = label
         self.direction = direction
         self.table = None
+        self.data_type = data_type
         self.event_frames = []
 
     def _create_table(self, data: np.ndarray):
@@ -57,7 +58,7 @@ class TimeNormalisationAlgorithm(ABC):
                             for direction_index in range(0, len(interpolated_data)):
                                 if not self._define_key(point, direction_index) in data_list:
                                     data_list[self._define_key(point, direction_index)] = NormalisedPoint(
-                                        point.GetLabel(), direction_index)
+                                        point.GetLabel(), direction_index, point.GetType())
                                 data_list[self._define_key(point, direction_index)].add_cycle_data(
                                     interpolated_data[direction_index], cycle.number)
                                 data_list[self._define_key(point, direction_index)].add_event_frame(
@@ -78,7 +79,7 @@ class TimeNormalisationAlgorithm(ABC):
 class LinearTimeNormalisation(TimeNormalisationAlgorithm):
 
     def _define_event_frame(self, cycle: GaitCycle, number_frames: int = 100) -> int:
-        return round((cycle.unusedEvents.GetFrame() - cycle.start_frame) / (cycle.end_frame - cycle.start_frame) * 100)
+        return (cycle.unusedEvents.GetFrame() - cycle.start_frame) / (cycle.end_frame - cycle.start_frame) * 100
 
     def _run_algorithm(self, data: np.ndarray, start_frame: int, end_frame: int,
                        number_frames: int = 100) -> np.ndarray:

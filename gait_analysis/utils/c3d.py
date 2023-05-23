@@ -4,8 +4,9 @@ import btk
 
 class DataType(Enum):
     Angles = 1
-    Moments = 2
-    Power = 3
+    Forces = 2
+    Moments = 3
+    Power = 4
 
 
 class AxesNames(Enum):

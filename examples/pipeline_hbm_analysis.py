@@ -1,19 +1,14 @@
 from argparse import ArgumentParser, Namespace
 
-import configparser
-
 import yaml
-from pandas import DataFrame
+
 from gait_analysis.utils import c3d
 
-from gait_analysis.analysis.plot import BasicPlotter
+from gait_analysis.analysis.plot import PdfPlotter, SeparatelyPicturePlot, PlotGroup
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker
+from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
-import matplotlib.pyplot as plt
-
-from gait_analysis.utils.c3d import DataType
 
 # This is an example pipeline #
 ###############################
@@ -32,9 +27,6 @@ def get_args() -> Namespace:
 
 
 def main():
-    # load file into memory
-    f = open(SETTINGS_FILE, "r")
-    config = yaml.safe_load(f)
 
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
@@ -43,13 +35,8 @@ def main():
     cycles = cycle_builder.build_cycles(acq_trial)
     normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
-    plot = BasicPlotter(config)
-    figures = plot.plot_figures_separately(desc_results, DataType.Angles)
-    for fig in figures:
-        fig.savefig(fname=f"plots/{fig._suptitle.get_text()}.svg", format="svg")
-        plt.close(fig)
-    # sd_results = SDNormalisedAnalysis(normalised_data).analyse()
-    # print(sd_results)
+    desc_results.to_csv("plots/desc.csv", index=False)
+
 
 
 # Using the special variable

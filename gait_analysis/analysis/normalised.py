@@ -22,6 +22,7 @@ class BaseNormalisedAnalysis(ABC):
             result = self._do_magic(table)
             result['metric'] = key
             result['event_frame'] = mean(self.data_list[key].event_frames)
+            result['data_type'] = self.data_list[key].data_type
             if results is None:
                 results = result
             else:

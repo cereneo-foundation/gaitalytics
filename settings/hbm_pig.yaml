@@ -1,84 +1,241 @@
+## Zenis settings
 marker_set_mapping:
   right_heel: RHEE
   left_heel: LHEE
   right_hip: RASIS
   left_hip: LASIS
 
-model_mapping:
-  thorax_forward_tilt:
-    modelled_name: SpineAngles.y
-    plot_name: Thorax Forward Tilt
-    data_type: 1
-  thorax_backward_tilt:
-    modelled_name: ThoraxAngles.y
-    plot_name: Thorax Backward Tilt
-    data_type: 1
-  thorax_left_tilt:
-    modelled_name: SpineAngles.x
-    plot_name: Thorax Left Tilt
-    data_type: 1
-  thorax_right_tilt:
-    modelled_name: ThoraxAngles.x
-    plot_name: Thorax Right Tilt
-    data_type: 1
-  thorax_left_rotation:
-    modelled_name: SpineAngles.z
-    plot_name: Thorax Left Rotation
-    data_type: 1
-  thorax_right_rotation:
-    modelled_name: ThoraxAngles.z
-    plot_name: Thorax Right Rotation
-    data_type: 1
-  pelvis_anterior_tilt:
-    modelled_name: PelvisAngles.y
-    plot_name:  Pelvis Anterior Tilt
-    data_type: 1
-  pelvis_upward_obliquity:
-    modelled_name: PelvisAngles.x
-    plot_name: Pelvis Upward Obliquity
-    data_type: 1
-  pelvis_internal_rotation:
-    modelled_name: PelvisAngles.z
-    plot_name: Pelvis Internal Rotation
-    data_type: 1
-  hip_flex:
-    modelled_name: HipAngles.y
-    plot_name: Hip Flexion
-    data_type: 1
-  hip_add:
-    modelled_name: HipAngles.x
-    plot_name: Hip Adduction
-    data_type: 1
-  hip_ir:
-    modelled_name: HipAngles.z
-    plot_name: Hip Internal Rotation
-    data_type: 1
-  knee_flex:
-    modelled_name: KneeAngles.y
-    plot_name: Knee Flexion
-    data_type: 1
-  knee_add:
-    modelled_name: KneeAngles.x
-    plot_name: Knee Adduction
-    data_type: 1
-  knee_ir:
-    modelled_name: KneeAngles.z
-    plot_name: Knee Internal Rotation
-    data_type: 1
-  ankle_dorsi_flex:
-    modelled_name: AnkleAngles.y
-    plot_name: Foot Dorsiflexion
-    data_type: 1
-  ankle_add:
-    modelled_name: AnkleAngles.x
-    plot_name: Ankle Adduction
-    data_type: 1
-  ankle_ir:
-    modelled_name: AnkleAngles.z
-    plot_name: Ankle Internal Rotation
-    data_type: 1
-  foot_internal_rotation:
-    modelled_name: FootProgressAngles.z
-    plot_name: Foot Internal Rotation
-    data_type: 1
+## Plot settings
+model_mapping_plot:
+  data_types:
+    1:
+      y_label: Angle (deg)
+    2:
+      y_label: Force (N/kg)
+    3:
+      y_label: Moment (N.mm/kg)
+    4:
+      y_label: Power (W/kg)
+
+  plots:
+    ### Angles
+    thorax_forward_tilt:
+      modelled_name: SpineAngles.y
+      plot_name: Thorax Forward Tilt
+      group: Kinematics
+
+    thorax_backward_tilt:
+      modelled_name: ThoraxAngles.y
+      plot_name: Thorax Backward Tilt
+      group: Kinematics
+
+    thorax_left_tilt:
+      modelled_name: SpineAngles.x
+      plot_name: Thorax Left Tilt
+      group: Kinematics
+
+    thorax_right_tilt:
+      modelled_name: ThoraxAngles.x
+      plot_name: Thorax Right Tilt
+      group: Kinematics
+
+    thorax_left_rotation:
+      modelled_name: SpineAngles.z
+      plot_name: Thorax Left Rotation
+      group: Kinematics
+
+    thorax_right_rotation:
+      modelled_name: ThoraxAngles.z
+      plot_name: Thorax Right Rotation
+      group: Kinematics
+
+    pelvis_anterior_tilt:
+      modelled_name: PelvisAngles.y
+      plot_name:  Pelvis Anterior Tilt
+      group: Kinematics
+
+    pelvis_upward_obliquity:
+      modelled_name: PelvisAngles.x
+      plot_name: Pelvis Upward Obliquity
+      group: Kinematics
+
+    pelvis_internal_rotation:
+      modelled_name: PelvisAngles.z
+      plot_name: Pelvis Internal Rotation
+      group: Kinematics
+
+    hip_flex:
+      modelled_name: HipAngles.y
+      plot_name: Hip Flexion
+      group: Kinematics
+
+    hip_add:
+      modelled_name: HipAngles.x
+      plot_name: Hip Adduction
+      group: Kinematics
+
+    hip_ir:
+      modelled_name: HipAngles.z
+      plot_name: Hip Internal Rotation
+      group: Kinematics
+
+    knee_flex:
+      modelled_name: KneeAngles.y
+      plot_name: Knee Flexion
+      group: Kinematics
+
+    knee_add:
+      modelled_name: KneeAngles.x
+      plot_name: Knee Adduction
+      group: Kinematics
+
+    knee_ir:
+      modelled_name: KneeAngles.z
+      plot_name: Knee Internal Rotation
+      group: Kinematics
+
+    ankle_dorsi_flex:
+      modelled_name: AnkleAngles.y
+      plot_name: Foot Dorsiflexion
+      group: Kinematics
+
+    ankle_add:
+      modelled_name: AnkleAngles.x
+      plot_name: Ankle Adduction
+      group: Kinematics
+
+    ankle_ir:
+      modelled_name: AnkleAngles.z
+      plot_name: Ankle Internal Rotation
+      group: Kinematics
+
+    foot_internal_rotation:
+      modelled_name: FootProgressAngles.z
+      plot_name: Foot Internal Rotation
+      group: Kinematics
+
+    ### Forces
+    waist_force:
+      modelled_name: WaistForce.z
+      plot_name: Waist Force
+      group: Foo
+
+    hip_flex_force:
+      modelled_name: HipForce.y
+      plot_name: Hip Flexion Force
+      group: Foo
+
+    hip_add_force:
+      modelled_name: HipForce.x
+      plot_name: Hip Adduction Force
+      group: Foo
+
+    hip_ir_force:
+      modelled_name: HipForce.z
+      plot_name: Hip Adduction Force
+      group: Foo
+
+    knee_flex_force:
+      modelled_name: KneeForce.y
+      plot_name: Knee Flexion Force
+      group: Foo
+
+    knee_add_force:
+      modelled_name: KneeForce.x
+      plot_name: Knee Adduction Force
+      group: Foo
+
+    knee_ir_force:
+      modelled_name: KneeForce.x
+      plot_name: Knee Internal Rotation Force
+      group: Foo
+
+    ankle_flex_force:
+      modelled_name: AnkleForce.y
+      plot_name:  Ankle Dorsiflexion Force
+      group: Foo
+
+    ankle_add_force:
+      modelled_name: AnkleForce.x
+      plot_name: Ankle Adduction Force
+      group: Foo
+
+    ankle_ir_force:
+      modelled_name: AnkleForce.z
+      plot_name: Ankle Internal Rotation Force
+      group: Foo
+
+    gr_force:
+      modelled_name: GroundReactionForce.z
+      plot_name: GroundReaction Force
+      group: Foo
+
+    ngr_force:
+      modelled_name: NormalisedGRF.z
+      plot_name: Normalised GroundReaction Force
+      group: Foo
+
+    ### Kinetics
+    hip_flex_moment:
+      modelled_name: HipMoment.y
+      plot_name: Hip Flexion Moment
+      group: Kinetics
+
+    hip_add_moment:
+      modelled_name: HipMoment.x
+      plot_name: Hip Adduction Moment
+      group: Kinetics
+
+    hip_ir_moment:
+      modelled_name: HipMoment.z
+      plot_name: Hip Adduction Moment
+      group: Kinetics
+
+    hip_power:
+      modelled_name: HipPower.z
+      plot_name: Hip Power
+      group: Kinetics
+
+    knee_flex_moment:
+      modelled_name: KneeMoment.y
+      plot_name: Knee Flexion Moment
+      group: Kinetics
+
+    knee_add_moment:
+      modelled_name: KneeMoment.x
+      plot_name: Knee Adduction Moment
+      group: Kinetics
+
+    knee_ir_moment:
+      modelled_name: KneeMoment.x
+      plot_name: Knee Internal Rotation Moment
+      group: Kinetics
+
+    knee_power:
+      modelled_name: KneePower.z
+      plot_name: Knee Power
+      group: Kinetics
+
+    ankle_flex_moment:
+      modelled_name: AnkleMoment.y
+      plot_name: Ankle Dorsiflexion Moment
+      group: Foo
+
+    ankle_add_moment:
+      modelled_name: AnkleMoment.x
+      plot_name: Ankle Adduction Moment
+      group: Foo
+
+    ankle_ir_moment:
+      modelled_name: AnkleMoment.z
+      plot_name: Ankle Internal Rotation Moment
+      group: Foo
+
+    ankle_power:
+      modelled_name: AnklePower.z
+      plot_name: Ankle Power
+      group: Kinetics
+
+
+
 
