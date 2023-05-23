@@ -92,22 +92,23 @@ class SeparatelyPicturePlot(BasicPlotter):
         for key in keys:
             fig, ax = plt.subplots()
             self._plot_side_by_side_figure(ax, key, results)
-
-            fig.legend(["Left Event", "Right Event", "Left", "Right"])
+            ax.legend().remove()
+            fig.legend(["Left", "Right"])
             figures.append(fig)
         return figures
 
 
 class PdfPlotter(BasicPlotter):
 
-    def __init__(self, configs: dict, plot_path: str, cols: int = 4, rows: int = 3):
+    def __init__(self, configs: dict, plot_path: str, filename: str = "overview.pdf", cols: int = 4, rows: int = 3):
         super().__init__(configs)
         self.plot_path = plot_path
         self.cols = cols
         self.rows = rows
+        self.filename = filename
 
     def plot(self, results: DataFrame, data_types: List[DataType]):
-        with PdfPages(f'{self.plot_path}/overview.pdf') as pdf:
+        with PdfPages(f'{self.plot_path}/{self.filename}') as pdf:
             for data_type in data_types:
                 figures = self._plot_data_type(data_type, results)
                 for figure in figures:
@@ -118,6 +119,12 @@ class PdfPlotter(BasicPlotter):
             d = pdf.infodict()
             d['CreationDate'] = datetime.today()
             d['ModDate'] = datetime.today()
+
+            pdf.close()
+
+    def _add_footer_header(self):
+       ## TODO headers footers
+        pass
 
     @staticmethod
     def _create_figure(data_type: DataType) -> Figure:
