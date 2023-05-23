@@ -2,8 +2,10 @@
 marker_set_mapping:
   right_heel: RHEE
   left_heel: LHEE
-  right_hip: RASIS
-  left_hip: LASIS
+  right_toe: RTM2
+  left_toe: LTM2
+  right_hip: RPSIS
+  left_hip: LPSIS
 
 ## Plot settings
 model_mapping_plot:

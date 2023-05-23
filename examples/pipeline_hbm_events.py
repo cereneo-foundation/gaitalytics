@@ -1,8 +1,6 @@
 from argparse import ArgumentParser, Namespace
 
-from pyCGM2.Tools import btkTools
-from pyCGM2.Utils import files
-
+from gait_analysis.utils import c3d
 from gait_analysis.event.detection import ZenisGaitEventDetector, ForcePlateEventDetection
 
 
@@ -25,17 +23,15 @@ def get_args() -> Namespace:
 
 
 def main():
-    settings = files.loadModelSettings(SETTINGS_PATH, SETTINGS_FILE)
-
     # load file into memory
 
-    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
+    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
 
     # detect gait events #
     ######################
     ZenisGaitEventDetector().detect_events(acq_trial)
 
-    btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    c3d.write_btk(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
 
 

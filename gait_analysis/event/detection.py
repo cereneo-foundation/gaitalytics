@@ -1,12 +1,14 @@
 from abc import ABC, abstractmethod
 
-import numpy
+import btk
+import numpy as np
 from btk import btkAcquisition, btkEvent
-from pyCGM2.Events import eventFilters, eventProcedures
 from pyCGM2.Signal import detect_onset
 from pyCGM2.Tools import btkTools
+from pyCGM2.Events.eventProcedures import ZeniProcedure
 from gait_analysis.event.utils import GaitEventLabel
-from gait_analysis.utils import utils
+from gait_analysis.utils import utils, config, c3d
+from scipy import signal
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 
@@ -36,13 +38,13 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, config: dict, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
         :param foot_off_offset: number of frames to offset next foot off event
         """
-
+        self.config = config
         self._foot_strike_offset = foot_strike_offset
         self._foot_off_offset = foot_off_offset
 
@@ -52,14 +54,43 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         :param acq: loaded and filtered acquisition
         """
 
-        evp = eventProcedures.ZeniProcedure()
-        evp.setFootStrikeOffset(self._foot_strike_offset)
-        evp.setFootOffOffset(self._foot_off_offset)
+        right_heel = acq.GetPoint(self.config[config.KEY_MARKER_MAPPING][config.KEY_MARKER_MAPPING_R_HEEL]).GetValues()
+        left_heel = acq.GetPoint(self.config[config.KEY_MARKER_MAPPING][config.KEY_MARKER_MAPPING_L_HEEL]).GetValues()
+        right_hip = acq.GetPoint(self.config[config.KEY_MARKER_MAPPING][config.KEY_MARKER_MAPPING_R_HIP]).GetValues()
+        left_hip = acq.GetPoint(self.config[config.KEY_MARKER_MAPPING][config.KEY_MARKER_MAPPING_L_HIP]).GetValues()
 
-        # event filter
-        evf = eventFilters.EventFilter(evp, acq)
-        evf.detect()
-        state = evf.getState()
+        sacrum = (right_hip + left_hip) / 2.0
+        right_diff_heel = right_heel - sacrum
+        left_diff_heel = left_heel - sacrum
+        right_diff_toe = right_heel - sacrum
+        left_diff_toe = left_heel - sacrum
+
+        l_heel_strike = find_peaks(left_diff_heel[c3d.AxesNames.X.value])
+        r_heel_strike = find_peaks(right_diff_heel[c3d.AxesNames.X.value])
+        l_toe_off = find_peaks(left_diff_toe[c3d.AxesNames.X.value])
+        l_toe_off = find_peaks(left_diff_toe[c3d.AxesNames.X.value])
+
+        # Find peaks(max).
+        l_heel_strike = signal.argrelextrema(left_diff_heel[c3d.AxesNames.X.value], np.greater)
+        l_heel_strike = l_heel_strike[0]
+
+        r_heel_strike = signal.argrelextrema(right_diff_heel[c3d.AxesNames.X.value], np.greater)
+        r_heel_strike = r_heel_strike[0]
+
+        # Find valleys(min).
+        l_toe_off = signal.argrelextrema(left_diff_toe[c3d.AxesNames.X.value], np.less)
+        l_toe_off = l_toe_off[0]
+
+        r_toe_off = signal.argrelextrema(right_diff_toe[c3d.AxesNames.X.value], np.less)
+        r_toe_off = r_toe_off[0]
+
+        events = acq.GetEvents()
+        for toe_off in l_toe_off:
+            ev = btkEvent(type_event, toe_off, 'Left', btkEvent.Automatic, '',
+                          'event from Force plate assignment')
+            btk_acq.AppendEvent(ev)
+
+
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):

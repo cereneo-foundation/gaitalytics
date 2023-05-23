@@ -1,10 +1,10 @@
 from argparse import ArgumentParser, Namespace
 
-import yaml
 
 import pandas as pd
 
 from gait_analysis.analysis.plot import PdfPlotter, SeparatelyPicturePlot, PlotGroup
+from gait_analysis.utils import config
 
 
 # This is an example pipeline #
@@ -25,14 +25,13 @@ def get_args() -> Namespace:
 
 def main():
     # load file into memory
-    f = open(SETTINGS_FILE, "r")
-    config = yaml.safe_load(f)
+    configs = config.read_configs(SETTINGS_FILE)
     desc_results = pd.read_csv("plots/desc.csv")
     plot = PdfPlotter(config, "plots")
 
     plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 
-    plot = SeparatelyPicturePlot(config, "plots", "png")
+    plot = SeparatelyPicturePlot(configs, "plots", "png")
 
     plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 

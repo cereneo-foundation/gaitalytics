@@ -1,7 +1,7 @@
 
-from pyCGM2.Tools import btkTools
-from pyCGM2.Utils import files
+
 from gait_analysis.emg import EMGCoherenceAnalysis
+from gait_analysis.utils import c3d
 
 
 # This is an example pipeline #
@@ -15,8 +15,7 @@ SETTINGS_FILE = "CGM2_5-pyCGM2.settings"
 
 
 def main():
-    settings = files.loadModelSettings(SETTINGS_PATH, SETTINGS_FILE)
-    acq_trial = btkTools.smartReader(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}", settings["Translators"])
+    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
 
     #Instanciate EMGCoherenceAnalysis objects
     coh_left = EMGCoherenceAnalysis(1, 2, "Left") # Verify if good channel indexs

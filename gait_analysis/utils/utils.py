@@ -2,20 +2,6 @@ import numpy as np
 from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
 
 
-def get_marker_names(acq: btkAcquisition) -> list:
-    """
-    Returns marker names
-    :param acq: loaded acquisition
-    :return: all marker names contained in acquisition
-    """
-    marker_names = []
-    i = acq.BeginPoint()
-    while i != acq.EndPoint():
-        marker_names.append(i.value().GetLabel())
-        i.incr()
-    return marker_names
-
-
 def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list:
     first_frame_index = acq.GetFirstFrame()
     last_frame_index = acq.GetLastFrame()
@@ -31,7 +17,6 @@ def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list
     ground_reaction_collection.Update()
     force = ground_reaction_collection.GetItem(force_plate_index).GetForce().GetValues()
     return force[0:(last_frame_index - first_frame_index + 1) * analog_sample_per_frame:analog_sample_per_frame][:, 2]
-
 
 
 def correct_points_frame_by_frame(acq_trial: btkAcquisition):

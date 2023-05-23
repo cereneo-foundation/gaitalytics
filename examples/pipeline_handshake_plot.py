@@ -3,15 +3,10 @@ import re
 from argparse import ArgumentParser, Namespace
 
 import pandas as pd
-import yaml
+
 
 from gait_analysis.analysis.plot import PdfPlotter, PlotGroup
-from gait_analysis.utils import c3d
-
-from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.event.anomaly import BasicContextChecker
-from gait_analysis.cycle.normalisation import LinearTimeNormalisation
-from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
+from gait_analysis.utils import config
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "C:/ViconData/Handshake/"
@@ -25,8 +20,7 @@ def get_args() -> Namespace:
 
 
 def main():
-    f = open(SETTINGS_FILE, "r")
-    config = yaml.safe_load(f)
+    configs = config.read_configs(SETTINGS_FILE)
 
     for root, sub_folder, file_name in os.walk(DATA_PATH):
         r = re.compile(".*desc\.csv")
@@ -34,7 +28,7 @@ def main():
         for filtered_file in filtered_files:
 
             desc_results = pd.read_csv(f"{root}/{filtered_file}")
-            plot = PdfPlotter(config, root)
+            plot = PdfPlotter(configs, root)
 
             plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 
