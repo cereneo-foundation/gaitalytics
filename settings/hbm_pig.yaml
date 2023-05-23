@@ -5,43 +5,80 @@ marker_set_mapping:
   left_hip: LASIS
 
 model_mapping:
-  hip_anterior_tilt:
+  thorax_forward_tilt:
+    modelled_name: SpineAngles.y
+    plot_name: Thorax Forward Tilt
+    data_type: 1
+  thorax_backward_tilt:
+    modelled_name: ThoraxAngles.y
+    plot_name: Thorax Backward Tilt
+    data_type: 1
+  thorax_left_tilt:
+    modelled_name: SpineAngles.x
+    plot_name: Thorax Left Tilt
+    data_type: 1
+  thorax_right_tilt:
+    modelled_name: ThoraxAngles.x
+    plot_name: Thorax Right Tilt
+    data_type: 1
+  thorax_left_rotation:
+    modelled_name: SpineAngles.z
+    plot_name: Thorax Left Rotation
+    data_type: 1
+  thorax_right_rotation:
+    modelled_name: ThoraxAngles.z
+    plot_name: Thorax Right Rotation
+    data_type: 1
+  pelvis_anterior_tilt:
     modelled_name: PelvisAngles.y
-    plot_name:  Hip Anterior Tilt
-  hip_upward_obliquity:
+    plot_name:  Pelvis Anterior Tilt
+    data_type: 1
+  pelvis_upward_obliquity:
     modelled_name: PelvisAngles.x
-    plot_name: Hip Upward Obliquity
-  hip_internal_rotation:
+    plot_name: Pelvis Upward Obliquity
+    data_type: 1
+  pelvis_internal_rotation:
     modelled_name: PelvisAngles.z
-    plot_name: Hip Internal Rotation
-  foot_internal_rotation:
-    modelled_name: FootProgressAngles.z
-    plot_name: Foot Internal Rotation
+    plot_name: Pelvis Internal Rotation
+    data_type: 1
   hip_flex:
     modelled_name: HipAngles.y
     plot_name: Hip Flexion
+    data_type: 1
   hip_add:
     modelled_name: HipAngles.x
     plot_name: Hip Adduction
+    data_type: 1
   hip_ir:
     modelled_name: HipAngles.z
     plot_name: Hip Internal Rotation
+    data_type: 1
   knee_flex:
     modelled_name: KneeAngles.y
     plot_name: Knee Flexion
+    data_type: 1
   knee_add:
     modelled_name: KneeAngles.x
     plot_name: Knee Adduction
+    data_type: 1
   knee_ir:
     modelled_name: KneeAngles.z
     plot_name: Knee Internal Rotation
+    data_type: 1
   ankle_dorsi_flex:
     modelled_name: AnkleAngles.y
     plot_name: Foot Dorsiflexion
+    data_type: 1
   ankle_add:
     modelled_name: AnkleAngles.x
-    plot_name: Foot Adduction
+    plot_name: Ankle Adduction
+    data_type: 1
   ankle_ir:
     modelled_name: AnkleAngles.z
+    plot_name: Ankle Internal Rotation
+    data_type: 1
+  foot_internal_rotation:
+    modelled_name: FootProgressAngles.z
     plot_name: Foot Internal Rotation
+    data_type: 1
 

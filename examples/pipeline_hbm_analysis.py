@@ -13,6 +13,8 @@ from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 import matplotlib.pyplot as plt
 
+from gait_analysis.utils.c3d import DataType
+
 # This is an example pipeline #
 ###############################
 
@@ -42,9 +44,10 @@ def main():
     normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     plot = BasicPlotter(config)
-    figures = plot.plot(desc_results)
+    figures = plot.plot_figures_separately(desc_results, DataType.Angles)
     for fig in figures:
         fig.savefig(fname=f"plots/{fig._suptitle.get_text()}.svg", format="svg")
+        plt.close(fig)
     # sd_results = SDNormalisedAnalysis(normalised_data).analyse()
     # print(sd_results)
 

@@ -2,6 +2,12 @@ from enum import Enum
 import btk
 
 
+class DataType(Enum):
+    Angles = 1
+    Moments = 2
+    Power = 3
+
+
 class AxesNames(Enum):
     X = "x"
     Y = "y"
