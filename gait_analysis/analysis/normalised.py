@@ -1,4 +1,6 @@
 from abc import ABC, abstractmethod
+from statistics import mean
+
 import numpy as np
 
 from pandas import DataFrame, concat
@@ -19,6 +21,7 @@ class BaseNormalisedAnalysis(ABC):
             table = self.data_list[key].table
             result = self._do_magic(table)
             result['metric'] = key
+            result['event_frame'] = mean(self.data_list[key].event_frames)
             if results is None:
                 results = result
             else:

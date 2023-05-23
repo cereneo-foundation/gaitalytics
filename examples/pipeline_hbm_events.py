@@ -12,9 +12,9 @@ from gait_analysis.event.detection import ZenisGaitEventDetector, ForcePlateEven
 # Define paths
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
-DATA_PATH = "C:/ViconData/Handshake/Bramberger/20230420/"
-TEST_ORIGIN_FILE_NAME = "S003.3.c3d"
-TEST_EVENTS_FILE_NAME = "S003.4.c3d"
+DATA_PATH = "./test/data/"
+TEST_ORIGIN_FILE_NAME = "Baseline.3.c3d"
+TEST_EVENTS_FILE_NAME = "Baseline.4.c3d"
 
 
 def get_args() -> Namespace:
@@ -33,7 +33,6 @@ def main():
 
     # detect gait events #
     ######################
-    ForcePlateEventDetection().detect_events(acq_trial)
     ZenisGaitEventDetector().detect_events(acq_trial)
 
     btkTools.smartWriter(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")

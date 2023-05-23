@@ -141,3 +141,4 @@ dmypy.json
 /test/data/Baseline.1.c3d
 /test/data/markers.c3d
 /PiGPipeline_SimonPlayground/
+/plots/

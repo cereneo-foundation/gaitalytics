@@ -15,6 +15,7 @@ class NormalisedPoint:
         self.label = label
         self.direction = direction
         self.table = None
+        self.event_frames = []
 
     def _create_table(self, data: np.ndarray):
         column_names = []
@@ -28,6 +29,9 @@ class NormalisedPoint:
         else:
             data_frame = self._create_table(data)
             self.table = data_frame
+
+    def add_event_frame(self, event_frame: int):
+        self.event_frames.append(event_frame)
 
 
 class TimeNormalisationAlgorithm(ABC):
@@ -56,6 +60,8 @@ class TimeNormalisationAlgorithm(ABC):
                                         point.GetLabel(), direction_index)
                                 data_list[self._define_key(point, direction_index)].add_cycle_data(
                                     interpolated_data[direction_index], cycle.number)
+                                data_list[self._define_key(point, direction_index)].add_event_frame(
+                                    self._define_event_frame(cycle))
 
         return data_list
 
@@ -64,8 +70,15 @@ class TimeNormalisationAlgorithm(ABC):
                        number_frames: int = 100) -> np.ndarray:
         pass
 
+    @abstractmethod
+    def _define_event_frame(self, cycle: GaitCycle, number_frames: int = 100) -> int:
+        pass
+
 
 class LinearTimeNormalisation(TimeNormalisationAlgorithm):
+
+    def _define_event_frame(self, cycle: GaitCycle, number_frames: int = 100) -> int:
+        return round((cycle.unusedEvents.GetFrame() - cycle.start_frame) / (cycle.end_frame - cycle.start_frame) * 100)
 
     def _run_algorithm(self, data: np.ndarray, start_frame: int, end_frame: int,
                        number_frames: int = 100) -> np.ndarray:

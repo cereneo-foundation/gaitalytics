@@ -14,7 +14,7 @@ from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 # Define paths
 SETTINGS_FILE = "settings/hbm_pig.ini"
 DATA_PATH = "./test/data/"
-TEST_EVENTS_FILE_NAME = "S003.4.c3d"
+TEST_EVENTS_FILE_NAME = "Baseline.4.c3d"
 
 
 def get_args() -> Namespace:
