@@ -27,7 +27,7 @@ def main():
     # load file into memory
     configs = config.read_configs(SETTINGS_FILE)
     desc_results = pd.read_csv("plots/desc.csv")
-    plot = PdfPlotter(config, "plots")
+    plot = PdfPlotter(configs, "plots")
 
     plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 

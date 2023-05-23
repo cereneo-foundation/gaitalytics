@@ -1,5 +1,8 @@
 from enum import Enum
+
 import btk
+
+ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
 
 class DataType(Enum):
@@ -10,61 +13,41 @@ class DataType(Enum):
 
 
 class AxesNames(Enum):
-    X = "x"
-    Y = "y"
-    Z = "z"
+    x = 0
+    y = 1
+    z = 2
 
     @classmethod
     def get_axes_by_index(cls, index):
         if index == 0:
-            return cls.X
+            return cls.x
         elif index == 1:
-            return cls.Y
+            return cls.y
         elif index == 2:
-            return cls.Z
+            return cls.z
 
 
-ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
-
-
-class SideEnum(Enum):
-    """
-    Helper enum to define side
-    """
-    LEFT = "L"
-    RIGHT = "R"
-
-
-def sorted_events(acq):
+def sort_events(acq):
     """
     sort events
 
-    Args
+    Args:
         acq (btkAcquisition): a btk acquisition instance
 
     """
-    evs = acq.GetEvents()
+    events = acq.GetEvents()
 
-    contextLst = []  # recuperation de tous les contextes
-    for it in btk.Iterate(evs):
-        if it.GetContext() not in contextLst:
-            contextLst.append(it.GetContext())
+    value_frame = {}
+    for event in btk.Iterate(events):
+        if event.GetFrame() not in value_frame:
+            value_frame[event.GetFrame()] = event
 
-    valueFrame = []  # recuperation de toutes les frames SANS doublons
-    for it in btk.Iterate(evs):
-        if it.GetFrame() not in valueFrame:
-            valueFrame.append(it.GetFrame())
-    valueFrame.sort()  # trie
-
-    events = []
-    for frame in valueFrame:
-        for it in btk.Iterate(evs):
-            if it.GetFrame() == frame:
-                events.append(it)
+    sorted_keys = sorted(value_frame)
 
     newEvents = btk.btkEventCollection()
-    for ev in events:
-        newEvents.InsertItem(ev)
+    for key in sorted_keys:
+        newEvents.InsertItem(value_frame[key])
+
 
     acq.ClearEvents()
     acq.SetEvents(newEvents)
@@ -72,7 +55,7 @@ def sorted_events(acq):
 
 def read_btk(filename):
     """
-    Convenient function to read a c3d with Btk
+    read a c3d with btk
 
     Args:
         filename (str): filename with its path
@@ -83,14 +66,14 @@ def read_btk(filename):
     acq = reader.GetOutput()
 
     # sort events
-    sorted_events(acq)
+    sort_events(acq)
 
     return acq
 
 
 def write_btk(acq, filename):
     """
-    Convenient function to write a c3d with Btk
+    write a c3d with Btk
 
     Args:
         acq (btk.acquisition): a btk acquisition instance

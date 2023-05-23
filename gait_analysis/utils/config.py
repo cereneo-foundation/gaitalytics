@@ -1,7 +1,7 @@
 import yaml
 
-KEY_MAPPING_DATA_TYPE = 'data_types'
-KEY_MAPPING_PLOTS = "plots"
+KEY_PLOT_MAPPING_DATA_TYPE = 'data_types'
+KEY_PLOT_MAPPING_PLOTS = "plots"
 KEY_PLOT_MAPPING = 'model_mapping_plot'
 KEY_MARKER_MAPPING = "marker_set_mapping"
 KEY_MARKER_MAPPING_R_HEEL = "right_heel"

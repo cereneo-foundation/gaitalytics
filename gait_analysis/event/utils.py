@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import List
 
 from btk import btkAcquisition, btkEvent
 
@@ -13,6 +12,12 @@ class GaitEventLabel(Enum):
         if event_label == cls.FOOT_STRIKE.value:
             return cls.FOOT_OFF
         return cls.FOOT_STRIKE
+
+    @classmethod
+    def get_type_id(cls, event_label: str):
+        if event_label == cls.FOOT_STRIKE.value:
+            return 1
+        return 2
 
 
 class GaitContext(Enum):

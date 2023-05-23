@@ -1,9 +1,9 @@
 from abc import ABC
 
 from btk import btkAcquisition
-from pyCGM2.Tools import btkTools
 
 from gait_analysis.event.utils import GaitEventLabel
+from gait_analysis.utils import c3d
 
 
 class EventAnomalyChecker(ABC):
@@ -57,7 +57,7 @@ class BasicContextChecker(EventAnomalyChecker):
         abnormal_event_frames = []
         anomaly_detected = False
 
-        btkTools.sortedEvents(acq_walk)
+        c3d.sort_events(acq_walk)
 
         for current_event_index in range(0, acq_walk.GetEventNumber()):
             current_event = acq_walk.GetEvent(current_event_index)
@@ -87,7 +87,7 @@ class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
         abnormal_event_frames = []
         anomaly_detected = False
 
-        btkTools.sortedEvents(acq_walk)
+        c3d.sort_events(acq_walk)
 
         for current_event_index in range(0, acq_walk.GetEventNumber()):
             current_event = acq_walk.GetEvent(current_event_index)

@@ -31,20 +31,20 @@ class BasicPlotter(ABC):
 
     def _get_valid_data_keys(self, plot_group: PlotGroup) -> List[str]:
         keys = []
-        for key in self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING]:
-            if self.configs[config.KEY_PLOT_MAPPING][config.KEY_MAPPING_PLOTS][key]['group'] == plot_group.value:
+        for key in self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS]:
+            if self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['group'] == plot_group.value:
                 keys.append(key)
         return keys
 
     def _plot_side_by_side_figure(self, ax, key, results):
         ax.set_title(
-            self.configs[config.KEY_PLOT_MAPPING][config.KEY_MAPPING_PLOTS][key]['plot_name'],
+            self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['plot_name'],
             fontsize=self.MEDIUM_SIZE)
         left = results[(
-                results.metric == f"L{self.configs[config.KEY_PLOT_MAPPING][config.KEY_MAPPING_PLOTS][key]['modelled_name']}")]
+                results.metric == f"L{self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
         left.plot(x="frame_number", y=['mean'], yerr='sd', kind='line', color="red", ax=ax)
         right = results[(
-                results.metric == f"R{self.configs[config.KEY_PLOT_MAPPING][config.KEY_MAPPING_PLOTS][key]['modelled_name']}")]
+                results.metric == f"R{self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
         right.plot(x="frame_number", y=['mean'], yerr='sd', kind='line', color="green", ax=ax)
         ymin, ymax = ax.get_ylim()
         ax.vlines(x=max(left['event_frame']),
@@ -63,7 +63,7 @@ class BasicPlotter(ABC):
                   label='_nolegend_')
         ax.set_xlabel("")
         ax.set_ylabel(
-            self.configs[config.KEY_PLOT_MAPPING][config.KEY_MAPPING_DATA_TYPE][
+            self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_DATA_TYPE][
                 max(left['data_type'])]['y_label'],
             fontsize=self.SMALL_SIZE)
         ax.legend(['Left', 'Right'])

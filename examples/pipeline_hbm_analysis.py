@@ -1,14 +1,10 @@
 from argparse import ArgumentParser, Namespace
 
-import yaml
-
-from gait_analysis.utils import c3d
-
-from gait_analysis.analysis.plot import PdfPlotter, SeparatelyPicturePlot, PlotGroup
-from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.event.anomaly import BasicContextChecker
-from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
+from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
+from gait_analysis.cycle.normalisation import LinearTimeNormalisation
+from gait_analysis.event.anomaly import BasicContextChecker
+from gait_analysis.utils import c3d
 
 # This is an example pipeline #
 ###############################
@@ -27,7 +23,6 @@ def get_args() -> Namespace:
 
 
 def main():
-
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
     cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
@@ -36,7 +31,6 @@ def main():
     normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("plots/desc.csv", index=False)
-
 
 
 # Using the special variable

@@ -43,7 +43,7 @@ class TimeNormalisationAlgorithm(ABC):
 
     @classmethod
     def _define_key(cls, point: btkPoint, direction_index: int) -> str:
-        return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).value}"
+        return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).name}"
 
     def normalise(self, acq: btkAcquisition, cycles: List[GaitCycle]) -> {}:
         data_list = {}

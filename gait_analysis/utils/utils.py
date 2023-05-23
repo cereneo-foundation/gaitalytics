@@ -19,6 +19,35 @@ def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list
     return force[0:(last_frame_index - first_frame_index + 1) * analog_sample_per_frame:analog_sample_per_frame][:, 2]
 
 
+def detect_onset(x, threshold=0, n_above=1, n_below=0,
+                 threshold2=None, n_above2=1, show=False, ax=None):
+    """Detects onset in data based on amplitude threshold.
+    """
+
+    x = np.atleast_1d(x).astype('float64')
+    # deal with NaN's (by definition, NaN's are not greater than threshold)
+    x[np.isnan(x)] = -np.inf
+    # indices of data greater than or equal to threshold
+    inds = np.nonzero(x >= threshold)[0]
+    if inds.size:
+        # initial and final indexes of almost continuous data
+        inds = np.vstack((inds[np.diff(np.hstack((-np.inf, inds))) > n_below + 1],
+                          inds[np.diff(np.hstack((inds, np.inf))) > n_below + 1])).T
+        # indexes of almost continuous data longer than or equal to n_above
+        inds = inds[inds[:, 1] - inds[:, 0] >= n_above - 1, :]
+        # minimum amplitude of n_above2 values in x to detect
+        if threshold2 is not None and inds.size:
+            idel = np.ones(inds.shape[0], dtype=bool)
+            for i in range(inds.shape[0]):
+                if np.count_nonzero(x[inds[i, 0]: inds[i, 1] + 1] >= threshold2) < n_above2:
+                    idel[i] = False
+            inds = inds[idel, :]
+    if not inds.size:
+        inds = np.array([])  # standardize inds shape for output
+
+    return inds
+
+
 def correct_points_frame_by_frame(acq_trial: btkAcquisition):
     frame_size = acq_trial.GetPointFrameNumber()
     correction = get_fastest_point_by_frame(acq_trial, 1)

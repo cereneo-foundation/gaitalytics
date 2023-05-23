@@ -1,14 +1,11 @@
 from abc import ABC, abstractmethod
 
-import btk
 import numpy as np
 from btk import btkAcquisition, btkEvent
-from pyCGM2.Signal import detect_onset
-from pyCGM2.Tools import btkTools
-from pyCGM2.Events.eventProcedures import ZeniProcedure
-from gait_analysis.event.utils import GaitEventLabel
-from gait_analysis.utils import utils, config, c3d
 from scipy import signal
+
+from gait_analysis.event.utils import GaitEventLabel, GaitContext
+from gait_analysis.utils import utils, config, c3d
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 
@@ -20,17 +17,16 @@ class AbstractGaitEventDetector(ABC):
         pass
 
     @staticmethod
-    def clear_events(bkt_acq: btkAcquisition, event_names: list = None):
-        """
-        clears all events in acquisition
-
-        :param bkt_acq: loaded acquisition
-        :param event_names: List of event names to delete. None equals all
-        """
-        if event_names is None:
-            bkt_acq.ClearEvents()
-        else:
-            btkTools.clearEvents(btkAcquisition, event_names)
+    def _create_event(acq, frame: int, event_label: GaitEventLabel, event_context: GaitContext):
+        frequency = acq.GetPointFrequency()
+        event = btkEvent()
+        event.SetLabel(event_label.value)
+      #  event.SetFrame(int(frame))
+        event.SetId(GaitEventLabel.get_type_id(event_label.value))
+        event.SetDetectionFlags(btkEvent.Automatic)
+        event.SetContext(event_context.value)
+        event.SetTime(float((frame - 1) / frequency))
+        return event
 
 
 class ZenisGaitEventDetector(AbstractGaitEventDetector):
@@ -38,13 +34,13 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, config: dict, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, configs: dict, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
         :param foot_off_offset: number of frames to offset next foot off event
         """
-        self.config = config
+        self.config = configs
         self._foot_strike_offset = foot_strike_offset
         self._foot_off_offset = foot_off_offset
 
@@ -65,32 +61,20 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         right_diff_toe = right_heel - sacrum
         left_diff_toe = left_heel - sacrum
 
-        l_heel_strike = find_peaks(left_diff_heel[c3d.AxesNames.X.value])
-        r_heel_strike = find_peaks(right_diff_heel[c3d.AxesNames.X.value])
-        l_toe_off = find_peaks(left_diff_toe[c3d.AxesNames.X.value])
-        l_toe_off = find_peaks(left_diff_toe[c3d.AxesNames.X.value])
+        self._create_events(acq, left_diff_toe, GaitEventLabel.FOOT_OFF, GaitContext.LEFT)
+        self._create_events(acq, right_diff_toe, GaitEventLabel.FOOT_OFF, GaitContext.RIGHT)
+        self._create_events(acq, left_diff_heel, GaitEventLabel.FOOT_STRIKE, GaitContext.LEFT)
+        self._create_events(acq, right_diff_heel, GaitEventLabel.FOOT_STRIKE, GaitContext.RIGHT)
 
-        # Find peaks(max).
-        l_heel_strike = signal.argrelextrema(left_diff_heel[c3d.AxesNames.X.value], np.greater)
-        l_heel_strike = l_heel_strike[0]
+     #   c3d.sort_events(acq)
 
-        r_heel_strike = signal.argrelextrema(right_diff_heel[c3d.AxesNames.X.value], np.greater)
-        r_heel_strike = r_heel_strike[0]
-
-        # Find valleys(min).
-        l_toe_off = signal.argrelextrema(left_diff_toe[c3d.AxesNames.X.value], np.less)
-        l_toe_off = l_toe_off[0]
-
-        r_toe_off = signal.argrelextrema(right_diff_toe[c3d.AxesNames.X.value], np.less)
-        r_toe_off = r_toe_off[0]
-
-        events = acq.GetEvents()
-        for toe_off in l_toe_off:
-            ev = btkEvent(type_event, toe_off, 'Left', btkEvent.Automatic, '',
-                          'event from Force plate assignment')
-            btk_acq.AppendEvent(ev)
-
-
+    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: GaitContext):
+        peak_function = np.less if event_label == GaitEventLabel.FOOT_OFF else np.greater
+        extremes = signal.argrelextrema(diff[:, c3d.AxesNames.y.value], peak_function)
+        extremes = extremes[0]
+        # self._plot(diff[0:2000, c3d.AxesNames.y.value], extremes)
+        for frame in extremes:
+           acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):
@@ -114,26 +98,22 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         Detect force plate gait events with peak detection
         :param acq: loaded and filtered acquisition
         """
-        point_frequency = acq.GetPointFrequency()
 
-        for side_name in self._mapped_force_plate.keys():
-            force_down_sample = utils.force_plate_down_sample(acq, self._mapped_force_plate[side_name])
-            detection = detect_onset.detect_onset(force_down_sample, threshold=self._weight_threshold)
+        for context in GaitContext:
+            force_down_sample = utils.force_plate_down_sample(acq, self._mapped_force_plate[context.value])
+            detection = utils.detect_onset(force_down_sample, threshold=self._weight_threshold)
             sequence = self._detect_gait_event_type(force_down_sample, detection)
-            self._store_force_plate_events(acq, side_name, point_frequency, sequence)
+            self._store_force_plate_events(acq, context, sequence)
 
-    @staticmethod
-    def _store_force_plate_events(btk_acq, side_name, point_frequency, sequence):
+    def _store_force_plate_events(self, btk_acq, context, sequence):
         for elem in sequence:
-            type_event = elem[0]
-            index_event = elem[1]
-
-            ev = btkEvent(type_event, (index_event - 1) / point_frequency, side_name, btkEvent.Automatic, '',
-                          'event from Force plate assignment')
+            event_label = elem[0]
+            frame = elem[1]
+            ev = self._create_event(btk_acq, frame, event_label, context)
             btk_acq.AppendEvent(ev)
 
     @staticmethod
-    def _detect_gait_event_type(force_plate_signal: numpy.ndarray, detected_force_plate_events: numpy.ndarray) -> list:
+    def _detect_gait_event_type(force_plate_signal: np.ndarray, detected_force_plate_events: np.ndarray) -> list:
         """
         Iterate through each event detected by detect_onset and determine if the event is a FootStrike or a FootOff.
         Return array of ["Type of event":str,index of event:int]
@@ -141,7 +121,6 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         :param detected_force_plate_events: detection from detect_onset
         :return: 2 dimensional array with event name and frame index
         """
-        # Sophie was here !!! :D
 
         signal_length = len(force_plate_signal)
         detected_event_types = []
@@ -154,7 +133,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
                     # positive or negative slope (FeetOff or FeetStrike)
                     diff = force_plate_signal[signal_index - 20] - force_plate_signal[signal_index + 20]
                     if diff > 0:
-                        detected_event_types.append([GaitEventLabel.FOOT_OFF.value, signal_index])
+                        detected_event_types.append([GaitEventLabel.FOOT_OFF, signal_index])
                     else:
-                        detected_event_types.append([GaitEventLabel.FOOT_STRIKE.value, signal_index])
+                        detected_event_types.append([GaitEventLabel.FOOT_STRIKE, signal_index])
         return detected_event_types  # Contain the label of the event and the corresponding index

@@ -31,9 +31,12 @@ def main():
 
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
-    cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
+    event_checker = BasicContextChecker()
+    detected, anomalies = event_checker.check_events(acq_trial)
+    for anomaly in anomalies:
+        print(anomaly)
 
-    cycles = cycle_builder.build_cycles(acq_trial)
+
 
 # Using the special variable
 # __name__
