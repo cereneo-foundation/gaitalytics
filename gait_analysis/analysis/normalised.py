@@ -12,14 +12,14 @@ class BaseNormalisedAnalysis(ABC):
         self.data_list = data_list
 
     @abstractmethod
-    def _do_magic(self, table: DataFrame) -> {}:
+    def _do_analysis(self, table: DataFrame) -> DataFrame:
         pass
 
     def analyse(self) -> DataFrame:
         results = None
         for key in self.data_list:
             table = self.data_list[key].table
-            result = self._do_magic(table)
+            result = self._do_analysis(table)
             result['metric'] = key
             result['event_frame'] = mean(self.data_list[key].event_frames)
             result['data_type'] = self.data_list[key].data_type
@@ -32,7 +32,7 @@ class BaseNormalisedAnalysis(ABC):
 
 class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
 
-    def _do_magic(self, table: DataFrame) -> DataFrame:
+    def _do_analysis(self, table: DataFrame) -> DataFrame:
         frame_number = np.arange(1, 101, 1)  # Could be something like myRange = range(1,1000,1)
         numbers = DataFrame({"frame_number": frame_number})
         mean = table.mean(axis=0).to_frame('mean')
