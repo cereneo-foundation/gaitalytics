@@ -23,21 +23,20 @@ def get_args() -> Namespace:
 
 def main():
     for root, sub_folder, file_name in os.walk(DATA_PATH):
-        r = re.compile(".*\.4\.c3d")
+        r = re.compile("S0.*\.4\.c3d")
         filtered_files = list(filter(r.match, file_name))
         for filtered_file in filtered_files:
-            filename = filtered_file.replace(".4.c3d", "desc.csv")
-            if filename not in file_name:
-                print(f"{root}/{filtered_file}")
-                acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
+            filename = filtered_file.replace(".4.c3d", "_desc.csv")
+            print(f"{root}/{filtered_file}")
+            acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
 
-                cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
+            cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
 
-                cycles = cycle_builder.build_cycles(acq_trial)
-                normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
-                desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
+            cycles = cycle_builder.build_cycles(acq_trial)
+            normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
+            desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
 
-                desc_results.to_csv(f"{root}/{filename}", index=False)
+            desc_results.to_csv(f"out/{filename}", index=False)
 
 
 # Using the special variable

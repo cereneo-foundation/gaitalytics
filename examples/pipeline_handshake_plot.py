@@ -9,7 +9,7 @@ from gait_analysis.analysis.plot import PdfPlotter, PlotGroup
 from gait_analysis.utils import config
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
-DATA_PATH = "C:/ViconData/Handshake/"
+DATA_PATH = "out/"
 
 
 def get_args() -> Namespace:
@@ -28,7 +28,8 @@ def main():
         for filtered_file in filtered_files:
 
             desc_results = pd.read_csv(f"{root}/{filtered_file}")
-            plot = PdfPlotter(configs, root)
+            filename = filtered_file.replace("desc.csv", "overview.pdf")
+            plot = PdfPlotter(configs, "out", filename)
 
             plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 

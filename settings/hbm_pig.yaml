@@ -240,6 +240,26 @@ model_mapping_plot:
       plot_name: Normalised GroundReaction Force
       group: Kinetics
 
+    gr_ap_force:
+      modelled_name: GroundReactionForce.y
+      plot_name: GroundReaction Force AP
+      group: Kinetics
+
+    ngr_ap_force:
+      modelled_name: NormalisedGRF.y
+      plot_name: Normalised GroundReaction Force AP
+      group: Kinetics
+
+    gr_ml_force:
+      modelled_name: GroundReactionForce.x
+      plot_name: GroundReaction Force ML
+      group: Kinetics
+
+    ngr_ml_force:
+      modelled_name: NormalisedGRF.x
+      plot_name: Normalised GroundReaction Force ML
+      group: Kinetics
+
 
 
 

@@ -25,15 +25,16 @@ def get_args() -> Namespace:
 
 def main():
     for root, sub_folder, file_name in os.walk(DATA_PATH):
-        r = re.compile(".*\.4\.c3d")
+        r = re.compile("S.*\.4\.c3d")
         filtered_files = list(filter(r.match, file_name))
         for filtered_file in filtered_files:
+            print(f"{root}/{filtered_file}")
             acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
             detected, anomalies = BasicContextChecker(EventNormalSequenceInterContextChecker()).check_events(acq_trial)
             if detected:
-                print(f"{root}/{filtered_file}")
+                print(f"detected")
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")
-                f = open(f"{root}/{event_anomaly}", "w")
+                f = open(f"./plots/{event_anomaly}", "w")
                 for anomaly in anomalies:
                     print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']}", file=f)
 

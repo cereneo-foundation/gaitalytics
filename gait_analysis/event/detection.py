@@ -69,7 +69,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
      #   c3d.sort_events(acq)
 
     def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: GaitContext):
-        peak_function = np.less if event_label == GaitEventLabel.FOOT_OFF else np.greater
+        peak_function = np.less if event_label == GaitEventLabel.FOOT_STRIKE else np.greater
         extremes = signal.argrelextrema(diff[:, c3d.AxesNames.y.value], peak_function)
         extremes = extremes[0]
         # self._plot(diff[0:2000, c3d.AxesNames.y.value], extremes)

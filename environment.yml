@@ -1,3 +1,4 @@
+name: gait_analysis
 channels:
   - conda-forge
   - defaults
