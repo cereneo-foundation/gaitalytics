@@ -8,8 +8,9 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
-from gait_analysis.utils.c3d import DataType
+from gait_analysis.utils.c3d import PointDataType
 from gait_analysis.utils import config
+from gait_analysis.utils.config import MarkerModelConfig
 
 
 class PlotGroup(Enum):
@@ -22,7 +23,7 @@ class BasicPlotter(ABC):
     MEDIUM_SIZE = 10
     BIGGER_SIZE = 12
 
-    def __init__(self, configs: dict):
+    def __init__(self, configs: MarkerModelConfig):
         self.configs = configs
 
     @abstractmethod
@@ -71,7 +72,7 @@ class BasicPlotter(ABC):
 
 class SeparatelyPicturePlot(BasicPlotter):
 
-    def __init__(self, configs: dict, plot_path: str, format: str):
+    def __init__(self, configs: MarkerModelConfig, plot_path: str, format: str):
         super().__init__(configs)
         self.plot_path = plot_path
         self.format = format
@@ -97,14 +98,14 @@ class SeparatelyPicturePlot(BasicPlotter):
 
 class PdfPlotter(BasicPlotter):
 
-    def __init__(self, configs: dict, plot_path: str, filename: str = "overview.pdf", cols: int = 4, rows: int = 3):
+    def __init__(self, configs: MarkerModelConfig, plot_path: str, filename: str = "overview.pdf", cols: int = 4, rows: int = 3):
         super().__init__(configs)
         self.plot_path = plot_path
         self.cols = cols
         self.rows = rows
         self.filename = filename
 
-    def plot(self, results: DataFrame, data_types: List[DataType]):
+    def plot(self, results: DataFrame, data_types: List[PointDataType]):
         with PdfPages(f'{self.plot_path}/{self.filename}') as pdf:
             for data_type in data_types:
                 figures = self._plot_data_type(data_type, results)
@@ -122,7 +123,7 @@ class PdfPlotter(BasicPlotter):
         pass
 
     @staticmethod
-    def _create_figure(data_type: DataType) -> Figure:
+    def _create_figure(data_type: PointDataType) -> Figure:
         figure = plt.figure()
         figure.suptitle(data_type.name)
         figure.subplots_adjust(hspace=0.3, wspace=0.4)

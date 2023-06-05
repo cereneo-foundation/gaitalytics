@@ -45,7 +45,7 @@ def get_step_length(cycles: List[GaitCycle]):
     for cycle in cycles:
         cycle.number
         cycle.context
-        cycle.unusedEvents
+        cycle.unused_event
 
 
 # Using the special variable

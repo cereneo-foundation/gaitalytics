@@ -20,7 +20,7 @@ class GaitEventLabel(Enum):
         return 2
 
 
-class GaitContext(Enum):
+class GaitEventContext(Enum):
     LEFT = "Left"
     RIGHT = "Right"
 
@@ -29,6 +29,13 @@ class GaitContext(Enum):
         if context == cls.LEFT.value:
             return cls.RIGHT
         return cls.LEFT
+
+    @classmethod
+    def get_context(cls, context: str):
+        if context == cls.LEFT.value:
+            return cls.LEFT
+        else:
+            return cls.RIGHT
 
 
 def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, btkEvent]:

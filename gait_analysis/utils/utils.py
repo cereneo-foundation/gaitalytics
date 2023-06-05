@@ -23,6 +23,7 @@ def detect_onset(x, threshold=0, n_above=1, n_below=0,
                  threshold2=None, n_above2=1, show=False, ax=None):
     """Detects onset in data based on amplitude threshold.
     """
+    ## TODO rewrite code, just copied it
 
     x = np.atleast_1d(x).astype('float64')
     # deal with NaN's (by definition, NaN's are not greater than threshold)

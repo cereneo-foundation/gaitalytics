@@ -2,6 +2,7 @@ from argparse import ArgumentParser, Namespace
 
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
+from gait_analysis.cycle.extraction import CycleDataExtractor
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.utils import c3d
@@ -28,7 +29,10 @@ def main():
     cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
 
     cycles = cycle_builder.build_cycles(acq_trial)
-    normalised_data = LinearTimeNormalisation().normalise(acq_trial, cycles)
+
+    cycle_data = CycleDataExtractor().extract_data(cycles, acq_trial)
+
+    normalised_data = LinearTimeNormalisation().normalise(cycle_data)
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("plots/desc.csv", index=False)
 

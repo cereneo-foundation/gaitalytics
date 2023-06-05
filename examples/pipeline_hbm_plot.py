@@ -5,7 +5,7 @@ import pandas as pd
 
 from gait_analysis.analysis.plot import PdfPlotter, SeparatelyPicturePlot, PlotGroup
 from gait_analysis.utils import config
-
+from gait_analysis.utils.config import MarkerModelConfig
 
 # This is an example pipeline #
 ###############################
@@ -25,13 +25,15 @@ def get_args() -> Namespace:
 
 def main():
     # load file into memory
-    configs = config.read_configs(SETTINGS_FILE)
+    configs = MarkerModelConfig()
+    configs.read_configs(SETTINGS_FILE)
+
     desc_results = pd.read_csv("plots/desc.csv")
     plot = PdfPlotter(configs, "plots")
 
     plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 
-    plot = SeparatelyPicturePlot(configs, "plots", "png")
+    plot = SeparatelyPicturePlot(configs, "plots", "svg")
 
     plot.plot(desc_results, [PlotGroup.KINEMATICS, PlotGroup.KINETICS])
 

@@ -5,12 +5,25 @@ import btk
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
 
-class DataType(Enum):
+class PointDataType(Enum):
+    Points = 0
     Angles = 1
     Forces = 2
     Moments = 3
     Power = 4
 
+    @classmethod
+    def get_type_by_index(cls, index):
+        if index == 0:
+            return cls.Points
+        elif index == 1:
+            return cls.Angles
+        elif index == 2:
+            return cls.Forces
+        elif index == 3:
+            return cls.Moments
+        elif index == 4:
+            return cls.Power
 
 class AxesNames(Enum):
     x = 0

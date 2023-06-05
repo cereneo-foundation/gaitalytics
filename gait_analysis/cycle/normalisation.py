@@ -1,94 +1,92 @@
 from abc import ABC, abstractmethod
-from typing import List
+from math import ceil
+from statistics import mean
+from typing import Dict
 
 import numpy as np
-from btk import btkAcquisition, btkPoint
-
-from gait_analysis.cycle.builder import GaitCycle
-from gait_analysis.utils.c3d import AxesNames
+from btk import btkPoint
 from pandas import DataFrame
 
+from gait_analysis.cycle.extraction import RawCyclePoint, BasicCyclePoint
+from gait_analysis.utils.c3d import AxesNames
 
-class NormalisedPoint:
 
-    def __init__(self, label: str, direction: str, data_type: int):
-        self.label = label
-        self.direction = direction
-        self.table = None
-        self.data_type = data_type
-        self.event_frames = []
+class NormalisedCyclePoint(BasicCyclePoint):
 
-    def _create_table(self, data: np.ndarray):
+    def __init__(self, rawPoint: RawCyclePoint):
+        super().__init__(rawPoint.label, rawPoint.direction, rawPoint.data_type, rawPoint.context)
+        self._data_table = None
+
+    @property
+    def data_table(self) -> DataFrame:
+        return self._data_table
+
+    @data_table.setter
+    def data_table(self, data_table: DataFrame):
+        self._data_table = data_table
+
+    def get_event_frame(self) -> int:
+        return mean(self.get_event_frames())
+
+
+    @staticmethod
+    def _create_table(data: np.ndarray):
         column_names = []
         for index in range(0, len(data)):
             column_names.append(index)
         return DataFrame(data=[data], columns=np.array(column_names))
 
     def add_cycle_data(self, data: np.ndarray, cycle_number: int):
-        if self.table is not None:
-            self.table.loc[cycle_number] = data
+        if self.data_table is None:
+            self.data_table = self._create_table(data)
         else:
-            data_frame = self._create_table(data)
-            self.table = data_frame
-
-    def add_event_frame(self, event_frame: int):
-        self.event_frames.append(event_frame)
+            self.data_table.loc[cycle_number - 1] = data
 
 
 class TimeNormalisationAlgorithm(ABC):
 
-    def __init__(self):
-
-        pass
+    def __init__(self, number_frames: int = 100):
+        self._number_frames = number_frames
 
     @classmethod
     def _define_key(cls, point: btkPoint, direction_index: int) -> str:
         return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).name}"
 
-    def normalise(self, acq: btkAcquisition, cycles: List[GaitCycle]) -> {}:
-        data_list = {}
-        for point_index in range(0, acq.GetPointNumber()):
-            point = acq.GetPoint(point_index)
-            if point.GetType() > 0:
-                for side in cycles:
-                    if point.GetLabel()[0] == side[0]:  # TODO: Name convention maybe different in other models
-                        for cycle in cycles[side]:
-                            interpolated_data = self._run_algorithm(point.GetValues(), cycle.start_frame,
-                                                                    cycle.end_frame)
-                            for direction_index in range(0, len(interpolated_data)):
-                                if not self._define_key(point, direction_index) in data_list:
-                                    data_list[self._define_key(point, direction_index)] = NormalisedPoint(
-                                        point.GetLabel(), direction_index, point.GetType())
-                                data_list[self._define_key(point, direction_index)].add_cycle_data(
-                                    interpolated_data[direction_index], cycle.number)
-                                data_list[self._define_key(point, direction_index)].add_event_frame(
-                                    self._define_event_frame(cycle))
+    def normalise(self, r_data_list: Dict[str, RawCyclePoint]) -> Dict[str, NormalisedCyclePoint]:
+        n_data_list = {}
+        for data_key in r_data_list:
+            r_cycle_point = r_data_list[data_key]
+            n_cycle_point = NormalisedCyclePoint(r_cycle_point)
+            for cycle_key in r_cycle_point.get_data():
+                cycle_data = r_cycle_point.get_data()[cycle_key]
 
-        return data_list
+                interpolated_data = self._run_algorithm(cycle_data, self._number_frames)
+                n_cycle_point.add_cycle_data(interpolated_data, cycle_key)
+
+                norm_event_frame = self._define_event_frame(r_cycle_point.get_event_frames()[cycle_key],
+                                                            len(cycle_data),
+                                                            self._number_frames)
+                n_cycle_point.add_event_frame(norm_event_frame, cycle_key)
+                n_data_list[data_key] = n_cycle_point
+        return n_data_list
 
     @abstractmethod
-    def _run_algorithm(self, data: np.ndarray, start_frame: int, end_frame: int,
+    def _run_algorithm(self, data: np.ndarray,
                        number_frames: int = 100) -> np.ndarray:
         pass
 
     @abstractmethod
-    def _define_event_frame(self, cycle: GaitCycle, number_frames: int = 100) -> int:
+    def _define_event_frame(self, event_frame: int, frame_number_cycle: int, number_frames: int = 100) -> int:
         pass
 
 
 class LinearTimeNormalisation(TimeNormalisationAlgorithm):
 
-    def _define_event_frame(self, cycle: GaitCycle, number_frames: int = 100) -> int:
-        return (cycle.unusedEvents.GetFrame() - cycle.start_frame) / (cycle.end_frame - cycle.start_frame) * 100
+    def _define_event_frame(self, event_frame: int, frame_number_cycle: int, number_frames: int = 100) -> int:
+        return ceil(event_frame / frame_number_cycle * number_frames)
 
-    def _run_algorithm(self, data: np.ndarray, start_frame: int, end_frame: int,
-                       number_frames: int = 100) -> np.ndarray:
-        times = np.arange(0, end_frame - start_frame, 1)
-        times_new = np.linspace(0, end_frame - start_frame, num=100)
-
-        interpolated_data = []
+    def _run_algorithm(self, data: np.ndarray, number_frames: int = 100) -> np.ndarray:
+        times = np.arange(0, len(data), 1)
+        times_new = np.linspace(0, len(data), num=100)
         # Create an interpolation function
-        for i in range(0, len(data[0])):
-            interpolated_data.append(np.interp(times_new, times, data[start_frame:end_frame, i]))
-
-        return np.array(interpolated_data)
+        return np.interp(times_new, times, data)

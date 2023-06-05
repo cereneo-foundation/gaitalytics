@@ -18,10 +18,10 @@ class BaseNormalisedAnalysis(ABC):
     def analyse(self) -> DataFrame:
         results = None
         for key in self.data_list:
-            table = self.data_list[key].table
+            table = self.data_list[key].data_table
             result = self._do_analysis(table)
             result['metric'] = key
-            result['event_frame'] = mean(self.data_list[key].event_frames)
+            result['event_frame'] = self.data_list[key].get_event_frame()
             result['data_type'] = self.data_list[key].data_type
             if results is None:
                 results = result
@@ -45,3 +45,5 @@ class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
         result['sd_up'] = result.apply(lambda row: row['mean'] + row['sd'], axis=1)
         result['sd_down'] = result.apply(lambda row: row['mean'] - row['sd'], axis=1)
         return result
+
+
