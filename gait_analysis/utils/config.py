@@ -26,9 +26,8 @@ class MarkerModelConfig:
 
     _MODEL_MAPPING = "model_mapping"
     _MODEL_MAPPING_COM = "com"
-    _MODEL_MAPPING_L_GRF= "left_GRF"
-    _MODEL_MAPPING_R_GRF= "right_GRF"
-
+    _MODEL_MAPPING_L_GRF = "left_GRF"
+    _MODEL_MAPPING_R_GRF = "right_GRF"
 
     def __init__(self):
         self._config = None
@@ -70,7 +69,7 @@ class MarkerModelConfig:
         if side == GaitEventContext.LEFT:
             return self._config[self._MODEL_MAPPING][self._MODEL_MAPPING_L_GRF]
         else:
-            return self._config[self._MODEL_MAPPING][self._MARKER_MAPPING_R_META_HEAD_5]
+            return self._config[self._MODEL_MAPPING][self._MODEL_MAPPING_R_GRF]
 
     def get_lateral_malleoli(self, side: GaitEventContext):
         if side == GaitEventContext.LEFT:
@@ -83,7 +82,6 @@ class MarkerModelConfig:
             return self._config[self._MARKER_MAPPING][self._MARKER_MAPPING_L_MED_MALLEOLI]
         else:
             return self._config[self._MARKER_MAPPING][self._MARKER_MAPPING_R_MED_MALLEOLI]
-
 
     def read_configs(self, file_path: str):
         with open(file_path, 'r') as f:

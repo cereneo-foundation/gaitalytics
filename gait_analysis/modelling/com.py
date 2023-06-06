@@ -14,11 +14,11 @@ class BaseOutputModeller(ABC):
         self._label = label
         self._type = type
 
-    def create_point(self, acq: btkAcquisition, label: str, type: PointDataType):
+    def create_point(self, acq: btkAcquisition):
         result = self._calculate_point(acq)
-        point = btkPoint(type.value)
+        point = btkPoint(self._type.value)
         point.SetValues(result)
-        point.SetLabel(label)
+        point.SetLabel(self._label)
         acq.AppendPoint(point)
 
     @abstractmethod
@@ -29,10 +29,10 @@ class BaseOutputModeller(ABC):
 class COMModeller(BaseOutputModeller):
 
     def __init__(self, configs: MarkerModelConfig):
-        self._configs = configs
         super().__init__("COM", PointDataType.Scalar)
+        self._configs = configs
 
-    def create_com(self, acq: btkAcquisition):
+    def _calculate_point(self, acq: btkAcquisition):
         l_hip_b = acq.GetPoint(self._configs.get_back_hip(GaitEventContext.LEFT)).GetValues()
         r_hip_b = acq.GetPoint(self._configs.get_back_hip(GaitEventContext.RIGHT)).GetValues()
         l_hip_f = acq.GetPoint(self._configs.get_front_hip(GaitEventContext.LEFT)).GetValues()
@@ -64,13 +64,15 @@ class MLcMoSModeller(BaseOutputModeller):
         l_heel = acq.GetPoint(self._configs.get_heel(GaitEventContext.LEFT)).GetValues()
         r_heel = acq.GetPoint(self._configs.get_heel(GaitEventContext.RIGHT)).GetValues()
         self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli, l_med_malleoli,
-                     r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, )
+                     r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
+                     self._belt_speed)
 
     def ML_cMoS(self, COM, COM_freq, vGRF_Right, vGRF_Left, vGRF_freq, Lat_Malleoli_Marker_Right,
                 Lat_Malleoli_Marker_Left,
                 Med_Malleoli_Marker_Right, Med_Malleoli_Marker_Left, Second_Meta_Head_Marker_Right,
                 Second_Meta_Head_Marker_Left, Fifth_Meta_Head_Marker_Right, Fifth_Meta_Head_Marker_Left,
-                Heel_Marker_Right, Heel_Marker_Left, Marker_freq, dominant_leg_lenth, belt_speed, show=False):
+                Heel_Marker_Right, Heel_Marker_Left, Marker_freq, dominant_leg_length, belt_speed,
+                show=False) -> np.ndarray:
         # TODO Cyrille: Do your magic
         """MLcMoS estimation.
 
@@ -126,3 +128,4 @@ class MLcMoSModeller(BaseOutputModeller):
         cMOS                                    : float
                  mean mediolateral continuous margin of stability [m]
         """
+        return np.ndarray([])

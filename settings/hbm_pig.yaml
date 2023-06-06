@@ -2,10 +2,10 @@
 marker_set_mapping:
   right_heel: RHEE
   left_heel: LHEE
-  right_meta_2: RTM2
-  left_meta_2: LTM2
-  right_meta_5: RTM5
-  left_meta_5: LTM5
+  right_meta_2: RMT2
+  left_meta_2: LMT2
+  right_meta_5: RMT5
+  left_meta_5: LMT5
   right_front_hip: RPSIS
   left_front_hip: LPSIS
   right_back_hip: RASIS
