@@ -6,16 +6,18 @@ ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
 
 class PointDataType(Enum):
-    Points = 0
+    Marker = 0
     Angles = 1
     Forces = 2
     Moments = 3
     Power = 4
+    Scalar = 5
+    Reaction = 6
 
     @classmethod
     def get_type_by_index(cls, index):
         if index == 0:
-            return cls.Points
+            return cls.Marker
         elif index == 1:
             return cls.Angles
         elif index == 2:
@@ -24,6 +26,10 @@ class PointDataType(Enum):
             return cls.Moments
         elif index == 4:
             return cls.Power
+        elif index == 5:
+            return cls.Scalar
+        elif index == 6:
+            return cls.Reaction
 
 class AxesNames(Enum):
     x = 0

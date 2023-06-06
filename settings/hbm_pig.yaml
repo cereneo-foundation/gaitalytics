@@ -2,12 +2,24 @@
 marker_set_mapping:
   right_heel: RHEE
   left_heel: LHEE
-  right_toe: RTM2
-  left_toe: LTM2
+  right_meta_2: RTM2
+  left_meta_2: LTM2
+  right_meta_5: RTM5
+  left_meta_5: LTM5
   right_front_hip: RPSIS
   left_front_hip: LPSIS
   right_back_hip: RASIS
   left_back_hip: LASIS
+  left_lat_malleoli: LLM
+  right_lat_malleoli: RLM
+  left_med_malleoli: LMM
+  right_med_malleoli: RMM
+
+model_mapping:
+  left_GRF: LGroundReactionForce
+  right_GRF: RGroundReactionForce
+  com: COM
+
 
 ## Plot settings
 model_mapping_plot:
