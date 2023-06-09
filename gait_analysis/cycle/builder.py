@@ -4,6 +4,11 @@ from btk import btkAcquisition, btkEvent
 
 from gait_analysis.event.anomaly import EventAnomalyChecker
 from gait_analysis.event.utils import GaitEventLabel, GaitEventContext, find_next_event
+from gait_analysis.utils.c3d import PointDataType, AxesNames
+
+
+def define_key(label: str, point_type: PointDataType, direction: AxesNames, side: GaitEventContext) -> str:
+    return f"{label}.{point_type.name}.{direction.name}.{side.value}"
 
 
 class GaitCycle:
@@ -53,8 +58,8 @@ class GaitCycleList:
 
 class CycleBuilder(ABC):
 
-    def __init__(self, eventAnomalyChecker: EventAnomalyChecker):
-        self.eventAnomalyChecker = eventAnomalyChecker
+    def __init__(self, event_anomaly_checker: EventAnomalyChecker):
+        self.eventAnomalyChecker = event_anomaly_checker
 
     def build_cycles(self, aqc: btkAcquisition) -> GaitCycleList:
         [detected, detail_tuple] = self.eventAnomalyChecker.check_events(aqc)
@@ -69,8 +74,8 @@ class CycleBuilder(ABC):
 
 
 class EventCycleBuilder(CycleBuilder):
-    def __init__(self, eventAnomalyChecker: EventAnomalyChecker, event: GaitEventLabel):
-        super().__init__(eventAnomalyChecker)
+    def __init__(self, event_anomaly_checker: EventAnomalyChecker, event: GaitEventLabel):
+        super().__init__(event_anomaly_checker)
         self.event_label = event.value
 
     def _build(self, acq: btkAcquisition) -> GaitCycleList:
@@ -97,10 +102,10 @@ class EventCycleBuilder(CycleBuilder):
 
 
 class HeelStrikeToHeelStrikeCycleBuilder(EventCycleBuilder):
-    def __init__(self, eventAnomalyChecker: EventAnomalyChecker):
-        super().__init__(eventAnomalyChecker, GaitEventLabel.FOOT_STRIKE)
+    def __init__(self, event_anomaly_checker: EventAnomalyChecker):
+        super().__init__(event_anomaly_checker, GaitEventLabel.FOOT_STRIKE)
 
 
 class ToeOffToToeOffCycleBuilder(EventCycleBuilder):
-    def __init__(self, eventAnomalyChecker: EventAnomalyChecker):
-        super().__init__(eventAnomalyChecker, GaitEventLabel.FOOT_OFF)
+    def __init__(self, event_anomaly_checker: EventAnomalyChecker):
+        super().__init__(event_anomaly_checker, GaitEventLabel.FOOT_OFF)

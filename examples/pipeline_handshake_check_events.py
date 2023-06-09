@@ -3,7 +3,7 @@ import re
 from argparse import ArgumentParser, Namespace
 
 from gait_analysis.utils import c3d
-from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker
+from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker, EventSpacingChecker
 
 # This is an example pipeline #
 ###############################
@@ -12,8 +12,6 @@ from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequence
 SETTINGS_PATH = "settings/"
 SETTINGS_FILE = "HBM_Trunk_cgm2.5.settings"
 DATA_PATH = "C:/ViconData/Handshake/"
-
-
 
 
 def get_args() -> Namespace:
@@ -30,21 +28,16 @@ def main():
         for filtered_file in filtered_files:
             print(f"{root}/{filtered_file}")
             acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-            detected, anomalies = BasicContextChecker(EventNormalSequenceInterContextChecker()).check_events(acq_trial)
+            detected, anomalies = BasicContextChecker(
+                EventNormalSequenceInterContextChecker(EventSpacingChecker())).check_events(acq_trial)
             if detected:
                 print(f"detected")
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")
-                f = open(f"./plots/{event_anomaly}", "w")
+                f = open(f"./out/{event_anomaly}", "w")
                 for anomaly in anomalies:
                     print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']}", file=f)
 
                 f.close()
-
-
-
-
-
-
 
 
 # Using the special variable

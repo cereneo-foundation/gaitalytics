@@ -31,8 +31,12 @@ def main():
     cycles = cycle_builder.build_cycles(acq_trial)
 
     cycle_data = CycleDataExtractor().extract_data(cycles, acq_trial)
+    for cycle in cycle_data.values():
+        cycle.to_csv("out", "test")
 
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
+    for norm in normalised_data.values():
+        norm.to_csv("out", "test")
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("plots/desc.csv", index=False)
 

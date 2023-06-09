@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 
 from btk import btkAcquisition
 
@@ -25,8 +25,7 @@ class EventAnomalyChecker(ABC):
     """
 
     def check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
-        abnormal_event_frames = []
-        [anomaly_detected, abnormal_event_frames] = self._check_events(acq_walk, abnormal_event_frames)
+        [anomaly_detected, abnormal_event_frames] = self._check_events(acq_walk)
         if self.child is not None:
             [child_anomaly_detected, child_abnormal_event_frames] = self.child.check_events(acq_walk)
 
@@ -40,8 +39,9 @@ class EventAnomalyChecker(ABC):
     :param abnormal_event_frames: list of found already found anomalies
     :return: flag is anomalies found, list of anomalies
     """
-    @staticmethod
-    def _check_events(self, acq_walk: btkAcquisition, abnormal_event_frames: list) -> [bool, list]:
+
+    @abstractmethod
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
         pass
 
 
@@ -53,7 +53,7 @@ class BasicContextChecker(EventAnomalyChecker):
     :return: flag is anomalies found, list of anomalies
     """
 
-    def _check_events(self, acq_walk: btkAcquisition, abnormal_event_frames: list) -> [bool, list]:
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
         abnormal_event_frames = []
         anomaly_detected = False
 
@@ -75,6 +75,30 @@ class BasicContextChecker(EventAnomalyChecker):
         return [anomaly_detected, abnormal_event_frames]
 
 
+class EventSpacingChecker(EventAnomalyChecker):
+
+    def __init__(self, event_checker=None, frame_threshold=30):
+        super().__init__(event_checker)
+        self._frame_threshold = frame_threshold
+
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+        anomaly_detected = False
+        abnormal_event_frames = []
+        for current_event_index in range(0, acq_walk.GetEventNumber()):
+            current_event = acq_walk.GetEvent(current_event_index)
+            context = current_event.GetContext()
+            for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
+                next_event = acq_walk.GetEvent(next_event_index)
+                if next_event.GetContext() == context:
+                    if next_event.GetFrame() - current_event.GetFrame() > self._frame_threshold:
+                        abnormal_event_frames.append({"Context": context, "Start-Frame": current_event.GetFrame(),
+                                                      "End-Frame": next_event.GetFrame(),
+                                                      "Anomaly": "Abnormal time spacing"})
+                        anomaly_detected = True
+                    break
+        return [anomaly_detected, abnormal_event_frames]
+
+
 class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
     """
     Checks if events sequence LEFT, LEFT, RIGHT, RIGHT
@@ -83,7 +107,7 @@ class EventNormalSequenceInterContextChecker(EventAnomalyChecker):
     :return: flag is anomalies found, list of anomalies
     """
 
-    def _check_events(self, acq_walk: btkAcquisition, abnormal_event_frames: list) -> [bool, list]:
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
         abnormal_event_frames = []
         anomaly_detected = False
 

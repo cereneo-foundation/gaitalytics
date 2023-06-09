@@ -1,10 +1,11 @@
+import csv
 from abc import ABC, abstractmethod
 from typing import Dict
 
 import numpy as np
 from btk import btkAcquisition, btkPoint
 
-from gait_analysis.cycle.builder import GaitCycleList, GaitCycle
+from gait_analysis.cycle.builder import GaitCycleList, GaitCycle, define_key
 from gait_analysis.event.utils import GaitEventContext
 from gait_analysis.utils.c3d import AxesNames, PointDataType
 
@@ -59,6 +60,10 @@ class BasicCyclePoint(ABC):
     def add_cycle_data(self, data: np.ndarray, cycle_number: int):
         pass
 
+    @abstractmethod
+    def to_csv(self, path: str, prefix: str):
+        pass
+
 
 class RawCyclePoint(BasicCyclePoint):
     """
@@ -76,16 +81,25 @@ class RawCyclePoint(BasicCyclePoint):
     def add_cycle_data(self, data: np.ndarray, cycle_number: int):
         self._data[cycle_number] = data
 
+    def to_csv(self, path: str, prefix: str):
+        key = define_key(self.label, self.data_type, self.direction, self.context)
+        print(key)
+        with open(f'{path}/{prefix}_{key}_raw.csv', 'w', newline='') as file:
+            writer = csv.writer(file)
+            field = ["cycle_number", "event_between"]
+            writer.writerow(field)
+            for cycle_number in self._data:
+                event_frame = self.get_event_frames()[cycle_number]
+                row = np.array([cycle_number, event_frame])
+                row = np.concatenate((row.T, self._data[cycle_number]))
+                writer.writerow(row)
+
 
 class CycleDataExtractor:
 
-    @classmethod
-    def _define_key(cls, point: btkPoint, direction_index: int, side: str) -> str:
-        return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).name}.{side}"
-
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, RawCyclePoint]:
         data_list = {}
-        for cycle_number in range(1, cycles.get_number_of_cycles()+1):
+        for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
             for point_index in range(0, acq.GetPointNumber()):
                 point = acq.GetPoint(point_index)
                 self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number])
@@ -95,13 +109,17 @@ class CycleDataExtractor:
     def _extract_cycle(self, data_list, point, cycle: GaitCycle):
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
         for direction_index in range(0, len(raw_data[0])):
-            key = self._define_key(point, direction_index, cycle.context.value)
+            label = point.GetLabel()
+            direction = AxesNames.get_axes_by_index(direction_index)
+            data_type = PointDataType.get_type_by_index(point.GetType())
+
+            key = define_key(label, data_type, direction, cycle.context)
             if key not in data_list:
                 data_list[key] = RawCyclePoint(
-                    point.GetLabel(),
-                    AxesNames.get_axes_by_index(direction_index),
-                    PointDataType.get_type_by_index(point.GetType()),
-                    GaitEventContext.get_context(cycle.context.value))
+                    label,
+                    direction,
+                    data_type,
+                    cycle.context)
             data_list[key].add_cycle_data(
                 raw_data[:, direction_index], cycle.number)
             data_list[key].add_event_frame(
