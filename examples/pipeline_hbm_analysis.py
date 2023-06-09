@@ -1,8 +1,9 @@
 from argparse import ArgumentParser, Namespace
 
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
+from gait_analysis.analysis.raw import JointAnglesAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.cycle.extraction import CycleDataExtractor
+from gait_analysis.cycle.extraction import CycleDataExtractor, RawCyclePoint
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.utils import c3d
@@ -34,11 +35,17 @@ def main():
     for cycle in cycle_data.values():
         cycle.to_csv("out", "test")
 
+    point = RawCyclePoint.from_csv("out", "test_LASIS.Marker.x.Right_raw.csv")
+
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
     for norm in normalised_data.values():
         norm.to_csv("out", "test")
+
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("plots/desc.csv", index=False)
+
+    joint_angles_results = JointAnglesAnalysis(cycle_data).analyse()
+    joint_angles_results.to_csv("plots/joint_angles.csv", index=False)
 
 
 # Using the special variable

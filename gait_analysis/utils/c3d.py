@@ -31,6 +31,7 @@ class PointDataType(Enum):
         elif index == 6:
             return cls.Reaction
 
+
 class AxesNames(Enum):
     x = 0
     y = 1
@@ -66,7 +67,6 @@ def sort_events(acq):
     newEvents = btk.btkEventCollection()
     for key in sorted_keys:
         newEvents.InsertItem(value_frame[key])
-
 
     acq.ClearEvents()
     acq.SetEvents(newEvents)

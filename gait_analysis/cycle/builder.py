@@ -4,11 +4,6 @@ from btk import btkAcquisition, btkEvent
 
 from gait_analysis.event.anomaly import EventAnomalyChecker
 from gait_analysis.event.utils import GaitEventLabel, GaitEventContext, find_next_event
-from gait_analysis.utils.c3d import PointDataType, AxesNames
-
-
-def define_key(label: str, point_type: PointDataType, direction: AxesNames, side: GaitEventContext) -> str:
-    return f"{label}.{point_type.name}.{direction.name}.{side.value}"
 
 
 class GaitCycle:

@@ -1,18 +1,30 @@
+from __future__ import annotations
+
 import csv
 from abc import ABC, abstractmethod
 from typing import Dict
 
 import numpy as np
-from btk import btkAcquisition, btkPoint
+from btk import btkAcquisition
+from pandas import DataFrame
 
 from gait_analysis.cycle.builder import GaitCycleList, GaitCycle, define_key
 from gait_analysis.event.utils import GaitEventContext
 from gait_analysis.utils.c3d import AxesNames, PointDataType
+from gait_analysis.utils.config import MarkerModelConfig
+
+
+def define_key(configs: MarkerModelConfig, label: str, point_type: PointDataType, direction: AxesNames,
+               side: GaitEventContext) -> str:
+    return f"{label}.{point_type.name}.{direction.name}.{side.value}"
 
 
 class BasicCyclePoint(ABC):
+    EVENT_FRAME_NUMBER = "events_between"
+    CYCLE_NUMBER = "cycle_number"
+
     def __init__(self, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
-        self._event_frames = {}
+        self._event_frames = None
         self._label = label
         self._direction = direction
         self._context = context
@@ -50,18 +62,41 @@ class BasicCyclePoint(ABC):
     def label(self, value: str):
         self._label = value
 
-    def get_event_frames(self) -> Dict[int, int]:
+    @property
+    def event_frames(self) -> DataFrame:
         return self._event_frames
 
+    @event_frames.setter
+    def event_frames(self, event_frames: DataFrame):
+        self._event_frames = event_frames
+
     def add_event_frame(self, event_frame: int, cycle_number: int):
-        self._event_frames[cycle_number] = event_frame
+        if self.event_frames is None:
+            prep_dict = {cycle_number: [event_frame]}
+            self.event_frames = DataFrame.from_dict(data=prep_dict, orient="index", columns=[self.EVENT_FRAME_NUMBER])
+            self.event_frames.index.name = self.CYCLE_NUMBER
+        else:
+            self.event_frames.loc[cycle_number] = event_frame
+
+    @staticmethod
+    def _get_meta_data_filename(filename: str) -> [str, PointDataType, AxesNames, GaitEventContext]:
+        meta_data = filename.split("_")[1].split(".")
+        label = meta_data[0]
+        data_type = PointDataType[meta_data[1]]
+        direction = AxesNames[meta_data[2]]
+        context = GaitEventContext.get_context(meta_data[3])
+        return [label, data_type, direction, context]
 
     @abstractmethod
-    def add_cycle_data(self, data: np.ndarray, cycle_number: int):
+    def add_cycle_data(self, data: np.array, cycle_number: int):
         pass
 
     @abstractmethod
     def to_csv(self, path: str, prefix: str):
+        pass
+
+    @abstractmethod
+    def from_csv(self, path: str, filename: str) -> BasicCyclePoint:
         pass
 
 
@@ -73,29 +108,50 @@ class RawCyclePoint(BasicCyclePoint):
     def __init__(self, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
         super().__init__(label, direction, data_type, context)
         self._data = {}
-        self._event_frames = {}
 
-    def get_data(self) -> Dict[int, np.ndarray]:
+    @property
+    def data(self) -> Dict[int, np.array]:
         return self._data
 
-    def add_cycle_data(self, data: np.ndarray, cycle_number: int):
+    @data.setter
+    def data(self, data: Dict[int, np.array]):
+        self._data = data
+
+    def add_cycle_data(self, data: np.array, cycle_number: int):
         self._data[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
         key = define_key(self.label, self.data_type, self.direction, self.context)
-        print(key)
         with open(f'{path}/{prefix}_{key}_raw.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             field = ["cycle_number", "event_between"]
             writer.writerow(field)
             for cycle_number in self._data:
-                event_frame = self.get_event_frames()[cycle_number]
-                row = np.array([cycle_number, event_frame])
+                event_frame = self.event_frames.loc[cycle_number]
+                row = np.array([cycle_number, event_frame[self.EVENT_FRAME_NUMBER]])
                 row = np.concatenate((row.T, self._data[cycle_number]))
                 writer.writerow(row)
 
+    @classmethod
+    def from_csv(cls, path: str, filename: str) -> BasicCyclePoint:
+        [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
+        point = RawCyclePoint(label, direction, data_type, context)
+        with open(f'{path}/{filename}', 'r') as file:
+            reader = csv.reader(file)
+            next(reader)
+            for row in reader:
+                cycle_number = int(float(row[0]))
+                event_between = int(float(row[1]))
+                data = [float(row[index]) for index in range(2, len(row)) if row]
+                point.add_event_frame(event_between, cycle_number)
+                point.add_cycle_data(data, cycle_number)
+
+        return point
+
 
 class CycleDataExtractor:
+    def __init__(self, configs: MarkerModelConfig):
+        self._configs = configs
 
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, RawCyclePoint]:
         data_list = {}
@@ -106,7 +162,8 @@ class CycleDataExtractor:
                 self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
         return data_list
 
-    def _extract_cycle(self, data_list, point, cycle: GaitCycle):
+    @staticmethod
+    def _extract_cycle(data_list, point, cycle: GaitCycle):
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
         for direction_index in range(0, len(raw_data[0])):
             label = point.GetLabel()
