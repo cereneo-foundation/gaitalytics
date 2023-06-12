@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from enum import Enum
 from math import ceil
 from statistics import mean
 from typing import Dict, Set
@@ -8,13 +9,15 @@ import pandas
 import pandas as pd
 
 from gait_analysis.cycle.extraction import RawCyclePoint, BasicCyclePoint, define_key
-from gait_analysis.utils.c3d import PointDataType
+from gait_analysis.utils.c3d import PointDataType, AxesNames, GaitEventContext
+from gait_analysis.utils.config import ConfigProvider
 
 
 class NormalisedCyclePoint(BasicCyclePoint):
 
-    def __init__(self, raw_point: RawCyclePoint):
-        super().__init__(raw_point.label, raw_point.translated_label, raw_point.direction, raw_point.data_type, raw_point.context)
+    def __init__(self, label: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
+                 context: GaitEventContext):
+        super().__init__(label, translated_label, direction, data_type, context)
         self._data_table = None
 
     @property
@@ -44,17 +47,22 @@ class NormalisedCyclePoint(BasicCyclePoint):
             self.data_table.loc[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
-        key = define_key(self.label, self.data_type, self.direction, self.context)
+        key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
         output = pd.merge(self.event_frames, self.data_table, on="cycle_number")
         output.to_csv(f"{path}/{prefix}_{key}_normalised.csv")
 
-    def from_csv(self, path: str, filename: str) -> BasicCyclePoint:
-        [label, data_type, direction, context] = self._get_meta_data_filename(filename)
-        point = NormalisedCyclePoint(label, data_type, direction, context)
+    @classmethod
+    def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
+        [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
+        translated = configs.get_translated_label(label, direction, data_type)
+        label = label if translated is None else translated.value
+        point = NormalisedCyclePoint(label, translated, data_type, direction, context)
         data_table = pandas.read_csv(f"{path}/{filename}", index_col="cycle_number")
-        self.event_frames = data_table["events_between"].to_dict()
+
         data_table.drop("events_between")
-        point.data_table
+        point.data_table = data_table
+        point.event_frames = data_table["events_between"].to_dict()
+        return point
 
 
 class TimeNormalisationAlgorithm(ABC):
@@ -69,13 +77,13 @@ class TimeNormalisationAlgorithm(ABC):
         self._number_frames = number_frames
         self._data_type_fiter = data_type_filter
 
-
     def normalise(self, r_data_list: Dict[str, RawCyclePoint]) -> Dict[str, NormalisedCyclePoint]:
         n_data_list = {}
         for data_key in r_data_list:
             r_cycle_point = r_data_list[data_key]
             if r_cycle_point.data_type in self._data_type_fiter:
-                n_cycle_point = NormalisedCyclePoint(r_cycle_point)
+                n_cycle_point = NormalisedCyclePoint(r_cycle_point.label, r_cycle_point.translated_label,
+                                                     r_cycle_point.direction, r_cycle_point.data_type, r_cycle_point.context)
                 for cycle_key in r_cycle_point.data:
                     cycle_data = r_cycle_point.data[cycle_key]
 

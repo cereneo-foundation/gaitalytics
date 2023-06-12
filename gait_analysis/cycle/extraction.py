@@ -28,7 +28,8 @@ class BasicCyclePoint(ABC):
     EVENT_FRAME_NUMBER = "events_between"
     CYCLE_NUMBER = "cycle_number"
 
-    def __init__(self, label: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
+    def __init__(self, label: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
+                 context: GaitEventContext):
         self._event_frames = None
         self._label = label
         self._translated_label = translated_label
@@ -119,7 +120,8 @@ class RawCyclePoint(BasicCyclePoint):
     Stores data cuts of all cycles with label of the point, axes of the point, context of the event and events in cycles
     """
 
-    def __init__(self, configs: ConfigProvider, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
+    def __init__(self, configs: ConfigProvider, label: str, direction: AxesNames, data_type: PointDataType,
+                 context: GaitEventContext):
         try:
             if data_type == PointDataType.Marker:
                 translated_label = configs.MARKER_MAPPING(label)
@@ -157,6 +159,8 @@ class RawCyclePoint(BasicCyclePoint):
     @classmethod
     def from_csv(cls, configs, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
+        translation = configs.get_translated_label(label, direction, data_type)
+        label = label if translation is None else translation.value
         point = RawCyclePoint(configs, label, direction, data_type, context)
         with open(f'{path}/{filename}', 'r') as file:
             reader = csv.reader(file)

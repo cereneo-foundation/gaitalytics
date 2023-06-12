@@ -4,7 +4,7 @@ from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.analysis.raw import JointAnglesAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
 from gait_analysis.cycle.extraction import CycleDataExtractor, RawCyclePoint
-from gait_analysis.cycle.normalisation import LinearTimeNormalisation
+from gait_analysis.cycle.normalisation import LinearTimeNormalisation, NormalisedCyclePoint
 from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.utils import c3d
 from gait_analysis.utils.config import ConfigProvider
@@ -38,7 +38,13 @@ def main():
     for key in cycle_data:
         cycle_data[key].to_csv("out", "out")
 
+    RawCyclePoint.from_csv(configs, "out", "out_C7.Marker.x.Left_raw.csv")
+
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
+    for key in normalised_data:
+        normalised_data[key].to_csv("out", "out")
+    NormalisedCyclePoint.from_csv("out", "out_left_ankle_add.Angles.x.Left_normalised.csv")
+
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("out/desc.csv", index=False)
 
