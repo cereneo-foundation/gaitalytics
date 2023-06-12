@@ -18,13 +18,6 @@ DATA_PATH = "./test/data/"
 TEST_EVENTS_FILE_NAME = "Baseline.4.c3d"
 
 
-def get_args() -> Namespace:
-    parser = ArgumentParser(description='Event Adder')
-    parser.add_argument('--path', dest='path', type=str, help='Path to data')
-    parser.add_argument('--file', dest='file', type=str, help='Trial file name')
-    return parser.parse_args()
-
-
 def main():
     configs = ConfigProvider()
     configs.read_configs(SETTINGS_FILE)
@@ -38,12 +31,12 @@ def main():
     for key in cycle_data:
         cycle_data[key].to_csv("out", "out")
 
-    RawCyclePoint.from_csv(configs, "out", "out_C7.Marker.x.Left_raw.csv")
+    RawCyclePoint.from_csv(configs, "out", "out-C7.Marker.x.Left-raw.csv")
 
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
     for key in normalised_data:
         normalised_data[key].to_csv("out", "out")
-    NormalisedCyclePoint.from_csv("out", "out_left_ankle_add.Angles.x.Left_normalised.csv")
+    NormalisedCyclePoint.from_csv(configs, "out", "out-left_ankle_add.Angles.x.Left-normalised.csv")
 
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
     desc_results.to_csv("out/desc.csv", index=False)

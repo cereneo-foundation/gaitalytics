@@ -3,6 +3,12 @@ from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWre
 
 
 def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list:
+    """
+
+    :param acq: c3d file
+    :param force_plate_index: index of force plate in c3d
+    :return: down sample data
+    """
     first_frame_index = acq.GetFirstFrame()
     last_frame_index = acq.GetLastFrame()
     analog_sample_per_frame = acq.GetNumberAnalogSamplePerFrame()

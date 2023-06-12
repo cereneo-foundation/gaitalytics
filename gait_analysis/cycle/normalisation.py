@@ -49,7 +49,7 @@ class NormalisedCyclePoint(BasicCyclePoint):
     def to_csv(self, path: str, prefix: str):
         key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
         output = pd.merge(self.event_frames, self.data_table, on="cycle_number")
-        output.to_csv(f"{path}/{prefix}_{key}_normalised.csv")
+        output.to_csv(f"{path}/{prefix}-{key}-normalised.csv")
 
     @classmethod
     def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:

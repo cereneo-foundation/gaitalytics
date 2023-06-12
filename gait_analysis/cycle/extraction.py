@@ -95,11 +95,11 @@ class BasicCyclePoint(ABC):
 
     @staticmethod
     def _get_meta_data_filename(filename: str) -> [str, PointDataType, AxesNames, GaitEventContext]:
-        meta_data = filename.split("_")[1].split(".")
+        meta_data = filename.split("-")[1].split(".")
         label = meta_data[0]
         data_type = PointDataType[meta_data[1]]
         direction = AxesNames[meta_data[2]]
-        context = GaitEventContext.get_context(meta_data[3])
+        context = GaitEventContext(meta_data[3])
         return [label, data_type, direction, context]
 
     @abstractmethod
@@ -146,7 +146,7 @@ class RawCyclePoint(BasicCyclePoint):
 
     def to_csv(self, path: str, prefix: str):
         key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
-        with open(f'{path}/{prefix}_{key}_raw.csv', 'w', newline='') as file:
+        with open(f'{path}/{prefix}-{key}-raw.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             field = ["cycle_number", "event_between"]
             writer.writerow(field)

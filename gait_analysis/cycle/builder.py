@@ -88,7 +88,7 @@ class EventCycleBuilder(CycleBuilder):
                     [end_event, unused_events] = find_next_event(acq, label, context, event_index)
                     if end_event is not None:
                         numbers[context] = numbers[context] + 1
-                        cycle = GaitCycle(numbers[context], GaitEventContext.get_context(context),
+                        cycle = GaitCycle(numbers[context], GaitEventContext(context),
                                           start_event.GetFrame(), end_event.GetFrame(),
                                           unused_events)
                         gait_cycles.add_cycle(cycle)

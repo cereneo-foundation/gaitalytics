@@ -15,7 +15,6 @@ class PointDataType(Enum):
     Reaction = 6
 
 
-
 class AxesNames(Enum):
     x = 0
     y = 1
@@ -23,6 +22,9 @@ class AxesNames(Enum):
 
 
 class GaitEventContext(Enum):
+    """
+    Representation of gait event contexts. At the moment mainly left and right
+    """
     LEFT = "Left"
     RIGHT = "Right"
 
@@ -32,17 +34,10 @@ class GaitEventContext(Enum):
             return cls.RIGHT
         return cls.LEFT
 
-    @classmethod
-    def get_context(cls, context: str):
-        if context == cls.LEFT.value:
-            return cls.LEFT
-        else:
-            return cls.RIGHT
-
 
 def sort_events(acq):
     """
-    sort events
+    sort events in acquisition
 
     Args:
         acq (btkAcquisition): a btk acquisition instance
