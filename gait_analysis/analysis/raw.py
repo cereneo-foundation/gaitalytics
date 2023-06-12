@@ -43,7 +43,7 @@ class SpatioTemporalAnalysis(BaseRawAnalysis):
         super().__init__(data_list, PointDataType.Angles)
 
     def analyse(self) -> DataFrame:
-        data_list["LHEE"]
+        pass
 
 
     def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
@@ -92,8 +92,6 @@ class SpatioTemporalAnalysis(BaseRawAnalysis):
 
         raw_results = DataFrame({"cycle_number": data.keys()})
         raw_results['min'] = min_rom
-        raw_results['max'] = max_rom
-        raw_results['amplitude'] = amplitude_rom
         return raw_results
 
 

@@ -1,13 +1,10 @@
 from argparse import ArgumentParser, Namespace
 
-import configparser
 from typing import List
 
 import yaml
-from pandas import DataFrame
 from gait_analysis.utils import c3d
 
-from gait_analysis.analysis.plot import BasicPlotter
 from gait_analysis.cycle.builder import ToeOffToToeOffCycleBuilder, GaitCycle
 from gait_analysis.event.anomaly import BasicContextChecker
 

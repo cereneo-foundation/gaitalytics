@@ -6,7 +6,7 @@ import pandas as pd
 
 
 from gait_analysis.analysis.plot import PdfPlotter, PlotGroup
-from gait_analysis.utils import config
+from gait_analysis.utils.config import MarkerModelConfig
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "out/"
@@ -20,7 +20,8 @@ def get_args() -> Namespace:
 
 
 def main():
-    configs = config.read_configs(SETTINGS_FILE)
+    configs = MarkerModelConfig()
+    configs.read_configs(SETTINGS_FILE)
 
     for root, sub_folder, file_name in os.walk(DATA_PATH):
         r = re.compile(".*desc\.csv")

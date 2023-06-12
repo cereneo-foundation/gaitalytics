@@ -3,16 +3,16 @@ from abc import ABC, abstractmethod
 import numpy as np
 from btk import btkAcquisition, btkPoint
 
-from gait_analysis.event.utils import GaitEventContext
-from gait_analysis.utils.c3d import PointDataType
-from gait_analysis.utils.config import MarkerModelConfig
+
+from gait_analysis.utils.c3d import PointDataType, GaitEventContext
+from gait_analysis.utils.config import ConfigProvider
 
 
 class BaseOutputModeller(ABC):
 
-    def __init__(self, label: str, type: PointDataType):
+    def __init__(self, label: str, point_type: PointDataType):
         self._label = label
-        self._type = type
+        self._type = point_type
 
     def create_point(self, acq: btkAcquisition):
         result = self._calculate_point(acq)
@@ -28,21 +28,21 @@ class BaseOutputModeller(ABC):
 
 class COMModeller(BaseOutputModeller):
 
-    def __init__(self, configs: MarkerModelConfig):
-        super().__init__("COM", PointDataType.Scalar)
+    def __init__(self, configs: ConfigProvider):
+        super().__init__(configs.MARKER_MAPPING.com.value, PointDataType.Scalar)
         self._configs = configs
 
     def _calculate_point(self, acq: btkAcquisition):
-        l_hip_b = acq.GetPoint(self._configs.get_back_hip(GaitEventContext.LEFT)).GetValues()
-        r_hip_b = acq.GetPoint(self._configs.get_back_hip(GaitEventContext.RIGHT)).GetValues()
-        l_hip_f = acq.GetPoint(self._configs.get_front_hip(GaitEventContext.LEFT)).GetValues()
-        r_hip_f = acq.GetPoint(self._configs.get_front_hip(GaitEventContext.RIGHT)).GetValues()
+        l_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.left_back_hip.value).GetValues()
+        r_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.right_back_hip.value).GetValues()
+        l_hip_f = acq.GetPoint(self._configs.MARKER_MAPPING.left_front_hip.value).GetValues()
+        r_hip_f = acq.GetPoint(self._configs.MARKER_MAPPING.right_front_hip.value).GetValues()
         return (l_hip_b + r_hip_b + l_hip_f + r_hip_f) / 4
 
 
 class MLcMoSModeller(BaseOutputModeller):
 
-    def __init__(self, configs: MarkerModelConfig, dominant_leg_length: float, belt_speed: float):
+    def __init__(self, configs: ConfigProvider, dominant_leg_length: float, belt_speed: float):
         self._configs = configs
         self._dominant_leg_length = dominant_leg_length
         self._belt_speed = belt_speed
@@ -50,20 +50,20 @@ class MLcMoSModeller(BaseOutputModeller):
 
     def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
         freq = acq.GetPointFrequency()
-        com = acq.GetPoint(self._configs.get_com()).GetValues()
-        l_grf = acq.GetPoint(self._configs.get_ground_reaction_force(GaitEventContext.LEFT)).GetValues()
-        r_grf = acq.GetPoint(self._configs.get_ground_reaction_force(GaitEventContext.RIGHT)).GetValues()
-        l_lat_malleoli = acq.GetPoint(self._configs.get_lateral_malleoli(GaitEventContext.LEFT)).GetValues()
-        r_lat_malleoli = acq.GetPoint(self._configs.get_lateral_malleoli(GaitEventContext.RIGHT)).GetValues()
-        l_med_malleoli = acq.GetPoint(self._configs.get_medial_malleoli(GaitEventContext.LEFT)).GetValues()
-        r_med_malleoli = acq.GetPoint(self._configs.get_medial_malleoli(GaitEventContext.RIGHT)).GetValues()
-        l_meta_2 = acq.GetPoint(self._configs.get_meta_2(GaitEventContext.LEFT)).GetValues()
-        r_meta_2 = acq.GetPoint(self._configs.get_meta_2(GaitEventContext.RIGHT)).GetValues()
-        l_meta_5 = acq.GetPoint(self._configs.get_meta_5(GaitEventContext.LEFT)).GetValues()
-        r_meta_5 = acq.GetPoint(self._configs.get_meta_5(GaitEventContext.RIGHT)).GetValues()
-        l_heel = acq.GetPoint(self._configs.get_heel(GaitEventContext.LEFT)).GetValues()
-        r_heel = acq.GetPoint(self._configs.get_heel(GaitEventContext.RIGHT)).GetValues()
-        self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli, l_med_malleoli,
+        com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
+        l_grf = acq.GetPoint(self._configs.MODEL_MAPPING.GRF_left.value).GetValues()
+        r_grf = acq.GetPoint(self._configs.MODEL_MAPPING.GRF_right.value).GetValues()
+        l_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_lateral_malleoli.value).GetValues()
+        r_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_lateral_malleoli.value).GetValues()
+        l_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_medial_malleoli.value).GetValues()
+        r_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_medial_malleoli.value).GetValues()
+        l_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_2.value).GetValues()
+        r_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_2.value).GetValues()
+        l_meta_5 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_5.value).GetValues()
+        r_meta_5 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_5.value).GetValues()
+        l_heel = acq.GetPoint(self._configs.MARKER_MAPPING.left_heel.value).GetValues()
+        r_heel = acq.GetPoint(self._configs.MARKER_MAPPING.right_heel.value).GetValues()
+        return self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli, l_med_malleoli,
                      r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
                      self._belt_speed)
 

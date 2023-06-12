@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 
 from gait_analysis.utils import c3d, config
 from gait_analysis.event.detection import ZenisGaitEventDetector, ForcePlateEventDetection
-from gait_analysis.utils.config import MarkerModelConfig
+from gait_analysis.utils.config import ConfigProvider
 
 # This is an example pipeline #
 ###############################
@@ -23,7 +23,8 @@ def get_args() -> Namespace:
 
 def main():
     # load file into memory
-    configs = MarkerModelConfig()
+    configs = ConfigProvider()
+
     configs.read_configs(SETTINGS_FILE)
 
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")

@@ -2,30 +2,36 @@ from __future__ import annotations
 
 import csv
 from abc import ABC, abstractmethod
+from enum import Enum
 from typing import Dict
 
 import numpy as np
 from btk import btkAcquisition
 from pandas import DataFrame
 
-from gait_analysis.cycle.builder import GaitCycleList, GaitCycle, define_key
-from gait_analysis.event.utils import GaitEventContext
-from gait_analysis.utils.c3d import AxesNames, PointDataType
-from gait_analysis.utils.config import MarkerModelConfig
+from gait_analysis.cycle.builder import GaitCycleList, GaitCycle
+from gait_analysis.utils.c3d import AxesNames, PointDataType, GaitEventContext
+from gait_analysis.utils.config import ConfigProvider
 
 
-def define_key(configs: MarkerModelConfig, label: str, point_type: PointDataType, direction: AxesNames,
+def define_key(label: str, translated_label: Enum, point_type: PointDataType, direction: AxesNames,
                side: GaitEventContext) -> str:
-    return f"{label}.{point_type.name}.{direction.name}.{side.value}"
+    if translated_label is not None:
+        key = f"{translated_label.name}.{point_type.name}.{direction.name}.{side.value}"
+    else:
+        key = f"{label}.{point_type.name}.{direction.name}.{side.value}"
+
+    return key
 
 
 class BasicCyclePoint(ABC):
     EVENT_FRAME_NUMBER = "events_between"
     CYCLE_NUMBER = "cycle_number"
 
-    def __init__(self, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
+    def __init__(self, label: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
         self._event_frames = None
         self._label = label
+        self._translated_label = translated_label
         self._direction = direction
         self._context = context
         self._data_type = data_type
@@ -63,6 +69,14 @@ class BasicCyclePoint(ABC):
         self._label = value
 
     @property
+    def translated_label(self) -> Enum:
+        return self._translated_label
+
+    @translated_label.setter
+    def translated_label(self, value: Enum):
+        self._translated_label = value
+
+    @property
     def event_frames(self) -> DataFrame:
         return self._event_frames
 
@@ -96,7 +110,7 @@ class BasicCyclePoint(ABC):
         pass
 
     @abstractmethod
-    def from_csv(self, path: str, filename: str) -> BasicCyclePoint:
+    def from_csv(self, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
         pass
 
 
@@ -105,8 +119,16 @@ class RawCyclePoint(BasicCyclePoint):
     Stores data cuts of all cycles with label of the point, axes of the point, context of the event and events in cycles
     """
 
-    def __init__(self, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
-        super().__init__(label, direction, data_type, context)
+    def __init__(self, configs: ConfigProvider, label: str, direction: AxesNames, data_type: PointDataType, context: GaitEventContext):
+        try:
+            if data_type == PointDataType.Marker:
+                translated_label = configs.MARKER_MAPPING(label)
+            else:
+                translated_label = configs.MODEL_MAPPING(f"{label}.{direction.name}")
+        except ValueError as e:
+            translated_label = None
+
+        super().__init__(label, translated_label, direction, data_type, context)
         self._data = {}
 
     @property
@@ -121,7 +143,7 @@ class RawCyclePoint(BasicCyclePoint):
         self._data[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
-        key = define_key(self.label, self.data_type, self.direction, self.context)
+        key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
         with open(f'{path}/{prefix}_{key}_raw.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             field = ["cycle_number", "event_between"]
@@ -133,9 +155,9 @@ class RawCyclePoint(BasicCyclePoint):
                 writer.writerow(row)
 
     @classmethod
-    def from_csv(cls, path: str, filename: str) -> BasicCyclePoint:
+    def from_csv(cls, configs, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
-        point = RawCyclePoint(label, direction, data_type, context)
+        point = RawCyclePoint(configs, label, direction, data_type, context)
         with open(f'{path}/{filename}', 'r') as file:
             reader = csv.reader(file)
             next(reader)
@@ -150,7 +172,7 @@ class RawCyclePoint(BasicCyclePoint):
 
 
 class CycleDataExtractor:
-    def __init__(self, configs: MarkerModelConfig):
+    def __init__(self, configs: ConfigProvider):
         self._configs = configs
 
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, RawCyclePoint]:
@@ -162,17 +184,18 @@ class CycleDataExtractor:
                 self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
         return data_list
 
-    @staticmethod
-    def _extract_cycle(data_list, point, cycle: GaitCycle):
+    def _extract_cycle(self, data_list, point, cycle: GaitCycle):
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
         for direction_index in range(0, len(raw_data[0])):
             label = point.GetLabel()
-            direction = AxesNames.get_axes_by_index(direction_index)
-            data_type = PointDataType.get_type_by_index(point.GetType())
+            direction = AxesNames(direction_index)
+            data_type = PointDataType(point.GetType())
+            translated_label = self._configs.get_translated_label(label, direction, data_type)
 
-            key = define_key(label, data_type, direction, cycle.context)
+            key = define_key(label, translated_label, data_type, direction, cycle.context)
             if key not in data_list:
                 data_list[key] = RawCyclePoint(
+                    self._configs,
                     label,
                     direction,
                     data_type,

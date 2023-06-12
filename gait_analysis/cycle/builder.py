@@ -3,7 +3,8 @@ from abc import ABC, abstractmethod
 from btk import btkAcquisition, btkEvent
 
 from gait_analysis.event.anomaly import EventAnomalyChecker
-from gait_analysis.event.utils import GaitEventLabel, GaitEventContext, find_next_event
+from gait_analysis.event.utils import GaitEventLabel, find_next_event
+from gait_analysis.utils.c3d import GaitEventContext
 
 
 class GaitCycle:

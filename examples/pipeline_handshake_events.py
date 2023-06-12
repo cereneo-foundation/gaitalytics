@@ -4,6 +4,7 @@ import re
 
 from gait_analysis.utils import c3d, config
 from gait_analysis.event.detection import ZenisGaitEventDetector
+from gait_analysis.utils.config import ConfigProvider
 
 # This is an example pipeline #
 ###############################
@@ -22,7 +23,8 @@ def get_args() -> Namespace:
 
 
 def main():
-    configs = config.read_configs(SETTINGS_FILE)
+    configs = ConfigProvider()
+    configs.read_configs(SETTINGS_FILE)
     for root, sub_folder, file_name in os.walk(DATA_PATH):
         r = re.compile("S.*\.3\.c3d")
         filtered_files = list(filter(r.match, file_name))

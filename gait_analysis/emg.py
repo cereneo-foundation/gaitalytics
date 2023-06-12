@@ -70,9 +70,9 @@ class EMGCoherenceAnalysis:
         # Extract swing phase segments from both signals
         emg_channel_1 = [acq.GetAnalog(self._emg_channel_1_index).GetValues()[start:end] for start, end in self._segments]
         emg_channel_2 = [acq.GetAnalog(self._emg_channel_2_index).GetValues()[start:end] for start, end in self._segments]
-
+        signal.windows.hann
         # Coherence calculation
-        f, coh_segments = sp.signal.coherence(emg_channel_1, emg_channel_2, fs=acq.GetAnalogFrequency(), window='hann', nperseg=None, noverlap=None)
+        f, coh_segments = signal.coherence(emg_channel_1, emg_channel_2, fs=acq.GetAnalogFrequency(), window='hann', nperseg=None, noverlap=None)
         mean_coherence = coh_segments.mean(axis=0)
 
         return f, mean_coherence

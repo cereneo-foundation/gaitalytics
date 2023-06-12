@@ -14,22 +14,6 @@ class PointDataType(Enum):
     Scalar = 5
     Reaction = 6
 
-    @classmethod
-    def get_type_by_index(cls, index):
-        if index == 0:
-            return cls.Marker
-        elif index == 1:
-            return cls.Angles
-        elif index == 2:
-            return cls.Forces
-        elif index == 3:
-            return cls.Moments
-        elif index == 4:
-            return cls.Power
-        elif index == 5:
-            return cls.Scalar
-        elif index == 6:
-            return cls.Reaction
 
 
 class AxesNames(Enum):
@@ -37,14 +21,23 @@ class AxesNames(Enum):
     y = 1
     z = 2
 
+
+class GaitEventContext(Enum):
+    LEFT = "Left"
+    RIGHT = "Right"
+
     @classmethod
-    def get_axes_by_index(cls, index):
-        if index == 0:
-            return cls.x
-        elif index == 1:
-            return cls.y
-        elif index == 2:
-            return cls.z
+    def get_contrary_context(cls, context: str):
+        if context == cls.LEFT.value:
+            return cls.RIGHT
+        return cls.LEFT
+
+    @classmethod
+    def get_context(cls, context: str):
+        if context == cls.LEFT.value:
+            return cls.LEFT
+        else:
+            return cls.RIGHT
 
 
 def sort_events(acq):

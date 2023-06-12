@@ -6,16 +6,15 @@ from typing import Dict, Set
 import numpy as np
 import pandas
 import pandas as pd
-from btk import btkPoint
 
 from gait_analysis.cycle.extraction import RawCyclePoint, BasicCyclePoint, define_key
-from gait_analysis.utils.c3d import AxesNames, PointDataType
+from gait_analysis.utils.c3d import PointDataType
 
 
 class NormalisedCyclePoint(BasicCyclePoint):
 
     def __init__(self, raw_point: RawCyclePoint):
-        super().__init__(raw_point.label, raw_point.direction, raw_point.data_type, raw_point.context)
+        super().__init__(raw_point.label, raw_point.translated_label, raw_point.direction, raw_point.data_type, raw_point.context)
         self._data_table = None
 
     @property
@@ -70,9 +69,6 @@ class TimeNormalisationAlgorithm(ABC):
         self._number_frames = number_frames
         self._data_type_fiter = data_type_filter
 
-    @classmethod
-    def _define_key(cls, point: btkPoint, direction_index: int) -> str:
-        return f"{point.GetLabel()}.{AxesNames.get_axes_by_index(direction_index).name}"
 
     def normalise(self, r_data_list: Dict[str, RawCyclePoint]) -> Dict[str, NormalisedCyclePoint]:
         n_data_list = {}

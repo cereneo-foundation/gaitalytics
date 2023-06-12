@@ -4,9 +4,9 @@ import numpy as np
 from btk import btkAcquisition, btkEvent
 from scipy import signal
 
-from gait_analysis.event.utils import GaitEventLabel, GaitEventContext
-from gait_analysis.utils import utils, config, c3d
-from gait_analysis.utils.config import MarkerModelConfig
+from gait_analysis.event.utils import GaitEventLabel
+from gait_analysis.utils import utils, c3d
+from gait_analysis.utils.config import ConfigProvider
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 
@@ -18,7 +18,7 @@ class AbstractGaitEventDetector(ABC):
         pass
 
     @staticmethod
-    def _create_event(acq, frame: int, event_label: GaitEventLabel, event_context: GaitEventContext):
+    def _create_event(acq, frame: int, event_label: GaitEventLabel, event_context: c3d.GaitEventContext):
         frequency = acq.GetPointFrequency()
         event = btkEvent()
         event.SetLabel(event_label.value)
@@ -35,7 +35,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, configs: MarkerModelConfig, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, configs: ConfigProvider, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
@@ -51,10 +51,10 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         :param acq: loaded and filtered acquisition
         """
 
-        right_heel = acq.GetPoint(self._config.get_heel(GaitEventContext.RIGHT)).GetValues()
-        left_heel = acq.GetPoint(self._config.get_heel(GaitEventContext.LEFT)).GetValues()
-        right_hip = acq.GetPoint(self._config.get_back_hip(GaitEventContext.RIGHT)).GetValues()
-        left_hip = acq.GetPoint(self._config.get_back_hip(GaitEventContext.LEFT)).GetValues()
+        right_heel = acq.GetPoint(self._config.MARKER_MAPPING.right_heel.value).GetValues()
+        left_heel = acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues()
+        right_hip = acq.GetPoint(self._config.MARKER_MAPPING.right_back_hip.value).GetValues()
+        left_hip = acq.GetPoint(self._config.MARKER_MAPPING.left_back_hip.value).GetValues()
 
         sacrum = (right_hip + left_hip) / 2.0
         right_diff_heel = right_heel - sacrum
@@ -62,20 +62,19 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         right_diff_toe = right_heel - sacrum
         left_diff_toe = left_heel - sacrum
 
-        self._create_events(acq, left_diff_toe, GaitEventLabel.FOOT_OFF, GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_toe, GaitEventLabel.FOOT_OFF, GaitEventContext.RIGHT)
-        self._create_events(acq, left_diff_heel, GaitEventLabel.FOOT_STRIKE, GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_heel, GaitEventLabel.FOOT_STRIKE, GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_toe, GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_toe, GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_heel, GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_heel, GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.RIGHT)
 
-     #   c3d.sort_events(acq)
+    #   c3d.sort_events(acq)
 
-    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: GaitEventContext):
+    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: c3d.GaitEventContext):
         peak_function = np.less if event_label == GaitEventLabel.FOOT_STRIKE else np.greater
         extremes = signal.argrelextrema(diff[:, c3d.AxesNames.y.value], peak_function)
         extremes = extremes[0]
-        # self._plot(diff[0:2000, c3d.AxesNames.y.value], extremes)
         for frame in extremes:
-           acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
+            acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):
@@ -100,7 +99,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         :param acq: loaded and filtered acquisition
         """
 
-        for context in GaitEventContext:
+        for context in c3d.GaitEventContext:
             force_down_sample = utils.force_plate_down_sample(acq, self._mapped_force_plate[context.value])
             detection = utils.detect_onset(force_down_sample, threshold=self._weight_threshold)
             sequence = self._detect_gait_event_type(force_down_sample, detection)

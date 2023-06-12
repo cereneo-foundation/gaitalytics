@@ -7,6 +7,7 @@ from gait_analysis.cycle.extraction import CycleDataExtractor, RawCyclePoint
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
 from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.utils import c3d
+from gait_analysis.utils.config import ConfigProvider
 
 # This is an example pipeline #
 ###############################
@@ -25,27 +26,24 @@ def get_args() -> Namespace:
 
 
 def main():
+    configs = ConfigProvider()
+    configs.read_configs(SETTINGS_FILE)
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
     cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
 
     cycles = cycle_builder.build_cycles(acq_trial)
 
-    cycle_data = CycleDataExtractor().extract_data(cycles, acq_trial)
-    for cycle in cycle_data.values():
-        cycle.to_csv("out", "test")
-
-    point = RawCyclePoint.from_csv("out", "test_LASIS.Marker.x.Right_raw.csv")
+    cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
+    for key in cycle_data:
+        cycle_data[key].to_csv("out", "out")
 
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
-    for norm in normalised_data.values():
-        norm.to_csv("out", "test")
-
     desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
-    desc_results.to_csv("plots/desc.csv", index=False)
+    desc_results.to_csv("out/desc.csv", index=False)
 
     joint_angles_results = JointAnglesAnalysis(cycle_data).analyse()
-    joint_angles_results.to_csv("plots/joint_angles.csv", index=False)
+    joint_angles_results.to_csv("out/joint_angles.csv", index=False)
 
 
 # Using the special variable
