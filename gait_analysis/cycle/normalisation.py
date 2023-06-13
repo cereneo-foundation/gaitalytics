@@ -8,7 +8,7 @@ import numpy as np
 import pandas
 import pandas as pd
 
-from gait_analysis.cycle.extraction import RawCyclePoint, BasicCyclePoint, define_key
+from gait_analysis.cycle.extraction import RawCyclePoint, BasicCyclePoint
 from gait_analysis.utils.c3d import PointDataType, AxesNames, GaitEventContext
 from gait_analysis.utils.config import ConfigProvider
 
@@ -47,14 +47,14 @@ class NormalisedCyclePoint(BasicCyclePoint):
             self.data_table.loc[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
-        key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
+        key = ConfigProvider.define_key(self.translated_label, self.data_type, self.direction, self.context)
         output = pd.merge(self.event_frames, self.data_table, on="cycle_number")
         output.to_csv(f"{path}/{prefix}-{key}-normalised.csv")
 
     @classmethod
     def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
-        translated = configs.get_translated_label(label, direction, data_type)
+        translated = configs.get_translated_label(label, data_type)
         label = label if translated is None else translated.value
         point = NormalisedCyclePoint(label, translated, data_type, direction, context)
         data_table = pandas.read_csv(f"{path}/{filename}", index_col="cycle_number")

@@ -14,16 +14,6 @@ from gait_analysis.utils.c3d import AxesNames, PointDataType, GaitEventContext
 from gait_analysis.utils.config import ConfigProvider
 
 
-def define_key(label: str, translated_label: Enum, point_type: PointDataType, direction: AxesNames,
-               side: GaitEventContext) -> str:
-    if translated_label is not None:
-        key = f"{translated_label.name}.{point_type.name}.{direction.name}.{side.value}"
-    else:
-        key = f"{label}.{point_type.name}.{direction.name}.{side.value}"
-
-    return key
-
-
 class BasicCyclePoint(ABC):
     EVENT_FRAME_NUMBER = "events_between"
     CYCLE_NUMBER = "cycle_number"
@@ -122,13 +112,8 @@ class RawCyclePoint(BasicCyclePoint):
 
     def __init__(self, configs: ConfigProvider, label: str, direction: AxesNames, data_type: PointDataType,
                  context: GaitEventContext):
-        try:
-            if data_type == PointDataType.Marker:
-                translated_label = configs.MARKER_MAPPING(label)
-            else:
-                translated_label = configs.MODEL_MAPPING(f"{label}.{direction.name}")
-        except ValueError as e:
-            translated_label = None
+
+        translated_label = configs.get_translated_label(label, data_type)
 
         super().__init__(label, translated_label, direction, data_type, context)
         self._data = {}
@@ -145,7 +130,7 @@ class RawCyclePoint(BasicCyclePoint):
         self._data[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
-        key = define_key(self.label, self.translated_label, self.data_type, self.direction, self.context)
+        key = ConfigProvider.define_key(self.translated_label, self.data_type, self.direction, self.context)
         with open(f'{path}/{prefix}-{key}-raw.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             field = ["cycle_number", "event_between"]
@@ -159,7 +144,7 @@ class RawCyclePoint(BasicCyclePoint):
     @classmethod
     def from_csv(cls, configs, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context] = cls._get_meta_data_filename(filename)
-        translation = configs.get_translated_label(label, direction, data_type)
+        translation = configs.get_translated_label(label, data_type)
         label = label if translation is None else translation.value
         point = RawCyclePoint(configs, label, direction, data_type, context)
         with open(f'{path}/{filename}', 'r') as file:
@@ -196,17 +181,17 @@ class CycleDataExtractor:
             label = point.GetLabel()
             direction = AxesNames(direction_index)
             data_type = PointDataType(point.GetType())
-            translated_label = self._configs.get_translated_label(label, direction, data_type)
-
-            key = define_key(label, translated_label, data_type, direction, cycle.context)
-            if key not in data_list:
-                data_list[key] = RawCyclePoint(
-                    self._configs,
-                    label,
-                    direction,
-                    data_type,
-                    cycle.context)
-            data_list[key].add_cycle_data(
-                raw_data[:, direction_index], cycle.number)
-            data_list[key].add_event_frame(
-                cycle.unused_event.GetFrame() - cycle.start_frame, cycle.number)
+            translated_label = self._configs.get_translated_label(label, data_type)
+            if translated_label is not None:
+                key = ConfigProvider.define_key(translated_label, data_type, direction, cycle.context)
+                if key not in data_list:
+                    data_list[key] = RawCyclePoint(
+                        self._configs,
+                        label,
+                        direction,
+                        data_type,
+                        cycle.context)
+                data_list[key].add_cycle_data(
+                    raw_data[:, direction_index], cycle.number)
+                data_list[key].add_event_frame(
+                    cycle.unused_event.GetFrame() - cycle.start_frame, cycle.number)
