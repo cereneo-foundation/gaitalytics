@@ -1,5 +1,22 @@
+from statistics import mean
+
 import numpy as np
 from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
+
+from gait_analysis.utils.c3d import AxesNames
+
+
+def min_max_norm(data):
+    scale_min = -1
+    scale_max = 1
+    max_data = max(data)
+    min_data = min(data)
+    diff = max_data - min_data
+    return [((entry - min_data) * (scale_max - scale_min) / diff) + scale_min for entry in data]
+
+
+def is_progression_axes_flip(left_heel, left_toe):
+    return 0 < mean(left_toe[AxesNames.y.value] - left_heel[AxesNames.y.value])
 
 
 def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list:

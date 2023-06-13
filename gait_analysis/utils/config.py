@@ -22,7 +22,7 @@ class ConfigProvider:
             if point_type == PointDataType.Marker:
                 return self.MARKER_MAPPING(label)
             else:
-                return self.MODEL_MAPPING(f"{label}.{direction}")
+                return self.MODEL_MAPPING(f"{label}.{direction.name}")
         except ValueError as e:
             return None
 

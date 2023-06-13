@@ -184,8 +184,10 @@ class CycleDataExtractor:
         for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
             for point_index in range(0, acq.GetPointNumber()):
                 point = acq.GetPoint(point_index)
-                self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number])
-                self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
+                if len(cycles.right_cycles) + 1 > cycle_number:
+                    self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number])
+                if len(cycles.left_cycles) + 1 > cycle_number:
+                    self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
         return data_list
 
     def _extract_cycle(self, data_list, point, cycle: GaitCycle):

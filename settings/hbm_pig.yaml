@@ -3,20 +3,40 @@ environment_setting:
   progression_values: negativ
 ## Zenis settings
 marker_set_mapping:
+  left_back_hip: LASIS
+  right_back_hip: RASIS
+  left_front_hip: LPSIS
+  right_front_hip: RPSIS
+
+  left_lat_upper_leg: LLTHI
+  right_lat_upper_leg: RLTHI
+
+  left_lat_knee: LLEK
+  right_lat_knee: RLEK
+  left_med_knee: LMEK
+  right_med_knee: RMEK
+
+  left_lat_lower_leg: LLSHA
+  right_lat_lower_leg: RLSHA
+
+  left_lat_malleoli: LLM
+  right_lat_malleoli: RLM
+  left_med_malleoli: LMM
+  right_med_malleoli: RMM
+
   right_heel: RHEE
   left_heel: LHEE
   right_meta_2: RMT2
   left_meta_2: LMT2
   right_meta_5: RMT5
   left_meta_5: LMT5
-  right_front_hip: RPSIS
-  left_front_hip: LPSIS
-  right_back_hip: RASIS
-  left_back_hip: LASIS
-  left_lat_malleoli: LLM
-  right_lat_malleoli: RLM
-  left_med_malleoli: LMM
-  right_med_malleoli: RMM
+
+  neck: C7
+  back: T10
+  jugularis: JN
+  xyphoideus: XIPH
+
+
   com: COM
 
 model_mapping:

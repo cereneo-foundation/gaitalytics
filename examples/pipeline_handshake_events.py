@@ -32,12 +32,13 @@ def main():
             print(f"{root}/{filtered_file}")
             event_added_file = filtered_file.replace("3.c3d", "4.c3d")
             if os.path.exists(f"{root}/{event_added_file}"):
-                os.remove(f"{root}/{event_added_file}")
+             #   os.remove(f"{root}/{event_added_file}")
                 print("existing file deleted")
-            print(f"add events")
-            acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-            ZenisGaitEventDetector(configs).detect_events(acq_trial)
-            c3d.write_btk(acq_trial, f"{root}/{event_added_file}")
+            else:
+                print(f"add events")
+                acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
+                ZenisGaitEventDetector(configs).detect_events(acq_trial)
+                c3d.write_btk(acq_trial, f"{root}/{event_added_file}")
 
 
 # Using the special variable

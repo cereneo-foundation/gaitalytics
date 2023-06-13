@@ -18,18 +18,20 @@ class BaseRawAnalysis(ABC):
     def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
         pass
 
-    def _filter_keys(self, key: str) -> bool:
+    def _filter_keys(self, key: str, ) -> bool:
+        """ Check if its the right point data """
         return f".{self._point_data_type.name}." in key
 
     def analyse(self) -> DataFrame:
         results = None
-        for key in self._data_list:
+        for key in self._data_list:# TODO change quick fix
             if self._filter_keys(key):
                 raw_point = self._data_list[key]
                 data = raw_point.data
                 result = self._do_analysis(data)
                 result['metric'] = key
                 result['data_type'] = raw_point.data_type
+
                 if results is None:
                     results = result
                 else:
@@ -100,6 +102,13 @@ class JointAnglesAnalysis(BaseRawAnalysis):
     def __init__(self, data_list: Dict[str, RawCyclePoint]):
         super().__init__(data_list, PointDataType.Angles)
 
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
+
+
     def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
         max_rom = np.zeros(len(data))
         min_rom = np.zeros(len(data))
@@ -110,9 +119,9 @@ class JointAnglesAnalysis(BaseRawAnalysis):
         amplitude_rom = max_rom - min_rom
 
         raw_results = DataFrame({"cycle_number": data.keys()})
-        raw_results['min'] = min_rom
-        raw_results['max'] = max_rom
-        raw_results['amplitude'] = amplitude_rom
+        raw_results['rom_min'] = min_rom
+        raw_results['rom_max'] = max_rom
+        raw_results['rom_amplitude'] = amplitude_rom
         return raw_results
 
 
@@ -120,6 +129,12 @@ class JointAngularVelocityAnalysis(BaseRawAnalysis):
 
     def __init__(self, data_list: Dict[str, RawCyclePoint]):
         super().__init__(data_list, PointDataType.Angles)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
 
     def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
         max_rom = np.zeros(len(data))
@@ -129,6 +144,6 @@ class JointAngularVelocityAnalysis(BaseRawAnalysis):
 
         raw_results = DataFrame({"cycle_number": data.keys()})
 
-        raw_results['max'] = max_rom
+        raw_results['angle_velo_max'] = max_rom
 
         return raw_results
