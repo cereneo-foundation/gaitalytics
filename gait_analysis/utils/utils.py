@@ -1,3 +1,4 @@
+import re
 from statistics import mean
 from typing import Dict
 
@@ -130,29 +131,25 @@ def create_matrix_padded(matrix, max_length):
     return matx
 
 
-def define_cycle_point_file_name(cycle_point, prefix: str) -> str:
+def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
     key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
                                     cycle_point.context)
-
-    if "Raw" in cycle_point.__class__.__name__:
-        postfix = POSTFIX_RAW
-    else:
-        postfix = POSTFIX_NORM
 
     return f"{prefix}{FILENAME_DELIMITER}{key}{FILENAME_DELIMITER}{postfix}.csv"
 
 
-def get_key_from_filename(filename: str) -> str:
-    return filename.split(FILENAME_DELIMITER)[1]
+def get_key_from_filename(filename: str) -> [str, str, str]:
+    return filename.split(FILENAME_DELIMITER)
 
 
-def get_meta_data_filename(filename: str) -> [str, PointDataType, AxesNames, GaitEventContext]:
-    meta_data = get_key_from_filename(filename).split(".")
+def get_meta_data_filename(filename: str) -> [str, PointDataType, AxesNames, GaitEventContext, str, str]:
+    prefix, key, postfix = get_key_from_filename(filename)
+    meta_data = key.split(".")
     label = meta_data[0]
     data_type = PointDataType[meta_data[1]]
     direction = AxesNames[meta_data[2]]
     context = GaitEventContext(meta_data[3])
-    return [label, data_type, direction, context]
+    return [label, data_type, direction, context, postfix, prefix]
 
 
 def cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
@@ -160,6 +157,4 @@ def cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
         cycle_data[key].to_csv(dir_path, prefix)
 
 
-POSTFIX_RAW = "raw"
-POSTFIX_NORM = "normalised"
 FILENAME_DELIMITER = "-"

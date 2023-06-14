@@ -15,7 +15,7 @@ class BaseRawCycleAnalysis(ABC):
         self._point_data_type = data_type
 
     @abstractmethod
-    def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
         pass
 
     def _filter_keys(self, key: str, ) -> bool:
@@ -27,7 +27,7 @@ class BaseRawCycleAnalysis(ABC):
         for key in self._data_list:  # TODO change quick fix
             if self._filter_keys(key):
                 raw_point = self._data_list[key]
-                data = raw_point.data
+                data = raw_point.data_table
                 result = self._do_analysis(data)
                 result['metric'] = key
                 result['data_type'] = raw_point.data_type
@@ -50,23 +50,22 @@ class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
             return splits[3].lower() in splits[0]
         return False
 
-    def _do_analysis(self, data: Dict[int, np.array]) -> DataFrame:
-        max_rom = np.zeros(len(data))
-        min_rom = np.zeros(len(data))
-        for cycle_number in data:
-            max_rom[cycle_number - 1] = max(data[cycle_number])
-            min_rom[cycle_number - 1] = min(data[cycle_number])
-            angular_velocity = np.diff(data[cycle_number])
-            max_rom[cycle_number - 1] = max(angular_velocity)
-
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        cycle_number = data.index.to_series()
+        max_rom = data.max(axis=1)
+        min_rom = data.min(axis=1)
+        sd_rom = data.std(axis=1)
+        velocity = data.diff(axis=1)
+        max_velo = velocity.max(axis=1)
+        min_velo = velocity.min(axis=1)
+        sd_velo = velocity.std(axis=1)
         amplitude_rom = max_rom - min_rom
+        prep_dict = {"cycle_number": cycle_number, "rom_max": max_rom, "rom_min": min_rom,
+                     "rom_sd": sd_rom, "rom_amplitude": amplitude_rom, "angel_velocity_max": max_velo,
+                     "angel_velocity_min": min_velo, "angel_velocity_sd": sd_velo}
 
-        raw_results = DataFrame({"cycle_number": data.keys()})
-        raw_results['rom_min'] = min_rom
-        raw_results['rom_max'] = max_rom
-        raw_results['rom_amplitude'] = amplitude_rom
-        raw_results['angle_velo_max'] = max_rom
-        return raw_results
+        results = DataFrame(prep_dict)
+        return results
 
 
 class SpatioTemporalAnalysis(BaseRawCycleAnalysis):

@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from statistics import mean
+
 
 import numpy as np
 
@@ -21,7 +21,7 @@ class BaseNormalisedAnalysis(ABC):
             table = self.data_list[key].data_table
             result = self._do_analysis(table)
             result['metric'] = key
-            result['event_frame'] = self.data_list[key].get_event_frame()
+            result['event_frame'] = self.data_list[key].get_mean_event_frame()
             result['data_type'] = self.data_list[key].data_type
             if results is None:
                 results = result

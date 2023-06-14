@@ -1,31 +1,43 @@
 from __future__ import annotations
 
 import csv
-from abc import ABC, abstractmethod
+
 from enum import Enum
 from typing import Dict
 
 import numpy as np
 from btk import btkAcquisition
-from pandas import DataFrame
+from pandas import DataFrame, concat, read_csv
 
-import gait_analysis.utils.utils
+from gait_analysis.utils.utils import define_cycle_point_file_name, get_meta_data_filename
 from gait_analysis.cycle.builder import GaitCycleList, GaitCycle
 from gait_analysis.utils.c3d import AxesNames, PointDataType, GaitEventContext
 from gait_analysis.utils.config import ConfigProvider
 
 
-class BasicCyclePoint(ABC):
+class BasicCyclePoint:
     EVENT_FRAME_NUMBER = "events_between"
     CYCLE_NUMBER = "cycle_number"
+    TYPE_RAW = "raw"
+    TYPE_NORM = "normalised"
 
-    def __init__(self, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
+    def __init__(self, cycle_point_type: str,  translated_label: Enum, direction: AxesNames, data_type: PointDataType,
                  context: GaitEventContext):
+        self._cycle_point_type = cycle_point_type
+        self._data_table: DataFrame = None
         self._event_frames = None
         self._translated_label = translated_label
         self._direction = direction
         self._context = context
         self._data_type = data_type
+
+    @property
+    def cycle_point_type(self) -> str:
+        return self._cycle_point_type
+
+    @cycle_point_type.setter
+    def cycle_point_type(self, cycle_point_type: str):
+        self._cycle_point_type = cycle_point_type
 
     @property
     def data_type(self) -> PointDataType:
@@ -75,98 +87,78 @@ class BasicCyclePoint(ABC):
         else:
             self.event_frames.loc[cycle_number] = event_frame
 
-    @abstractmethod
-    def add_cycle_data(self, data: np.array, cycle_number: int):
-        pass
-
-    @abstractmethod
-    def to_csv(self, path: str, prefix: str):
-        pass
-
-    @abstractmethod
-    def from_csv(self, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
-        pass
-
-
-class RawCyclePoint(BasicCyclePoint):
-    """
-    Stores data cuts of all cycles with label of the point, axes of the point, context of the event and events in cycles
-    """
-
-    def __init__(self, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
-                 context: GaitEventContext):
-        super().__init__(translated_label, direction, data_type, context)
-        self._data = {}
+    def get_mean_event_frame(self) -> int:
+        return self.event_frames.mean(axis=1)
 
     @property
-    def data(self) -> Dict[int, np.array]:
-        return self._data
+    def data_table(self) -> DataFrame:
+        return self._data_table
 
-    @data.setter
-    def data(self, data: Dict[int, np.array]):
-        self._data = data
+    @data_table.setter
+    def data_table(self, value: DataFrame):
+        self._data_table = value
 
     def add_cycle_data(self, data: np.array, cycle_number: int):
-        self._data[cycle_number] = data
+
+        if self.data_table is None:
+            self.data_table = self._create_table(data, cycle_number)
+        else:
+            if self.cycle_point_type == self.TYPE_RAW:
+                self.data_table = concat([self.data_table, self._create_table(data, cycle_number)], axis=0)
+            else:
+                self.data_table.loc[cycle_number] = data
+
+    def _create_table(self, data: np.array, cycle_number: int):
+        df = DataFrame.from_dict({cycle_number: data}, orient="index")
+        df.index.name = self.CYCLE_NUMBER
+        return df
 
     def to_csv(self, path: str, prefix: str):
-        filename = gait_analysis.utils.utils.define_cycle_point_file_name(self, prefix)
-        with open(f"{path}/{filename}", 'w', newline='') as file:
-            writer = csv.writer(file)
-            field = ["cycle_number", "event_between"]
-            writer.writerow(field)
-            for cycle_number in self._data:
-                event_frame = self.event_frames.loc[cycle_number]
-                row = np.array([cycle_number, event_frame[self.EVENT_FRAME_NUMBER]])
-                row = np.concatenate((row.T, self._data[cycle_number]))
-                writer.writerow(row)
+        output = self.event_frames.merge(self.data_table, on=self.CYCLE_NUMBER)
+        filename = define_cycle_point_file_name(self, prefix, self.cycle_point_type)
+        output.to_csv(f"{path}/{filename}")
 
     @classmethod
-    def from_csv(cls, configs, path: str, filename: str) -> BasicCyclePoint:
-        [label, data_type, direction, context] = gait_analysis.utils.utils.get_meta_data_filename(filename)
-        translation = configs.get_translated_label(label, data_type)
-        point = RawCyclePoint(translation, direction, data_type, context)
-        with open(f'{path}/{filename}', 'r') as file:
-            reader = csv.reader(file)
-            next(reader)
-            for row in reader:
-                cycle_number = int(float(row[0]))
-                event_between = int(float(row[1]))
-                data = [float(row[index]) for index in range(2, len(row)) if row]
-                point.add_event_frame(event_between, cycle_number)
-                point.add_cycle_data(data, cycle_number)
+    def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
+        [label, data_type, direction, context, cycle_point_type, prefix] = get_meta_data_filename(filename)
+        translated = configs.get_translated_label(label, data_type)
+        point = BasicCyclePoint(cycle_point_type, translated, data_type, direction, context)
+        data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
+        point.event_frames = DataFrame(data_table[cls.EVENT_FRAME_NUMBER])
+        data_table = data_table.drop(cls.EVENT_FRAME_NUMBER, axis=1)
+        point.data_table = data_table
 
         return point
 
 
-class BufferedRawCyclePoint(RawCyclePoint):
+class BufferedCyclePoint(BasicCyclePoint):
     def __init__(self, configs: ConfigProvider, path: str, filename: str):
         self._configs = configs
         self._filename = filename
         self._path = path
         self._loaded = False
 
-
     def _load_file(self):
         if not self._loaded:
-            point = RawCyclePoint.from_csv(self._configs, self._path, self._filename)
+            point = BasicCyclePoint.from_csv(self._configs, self._path, self._filename)
+            self._cycle_point_type = point.cycle_point_type
             self._event_frames = point.event_frames
             self._translated_label = point.translated_label
             self._direction = point.direction
             self._context = point.context
             self._data_type = point.data_type
-            self._data = point.data
+            self._data_table = point.data_table
             self._loaded = True
 
     @property
-    def data(self) -> Dict[int, np.array]:
+    def data_table(self) -> DataFrame:
         self._load_file()
-        return super().data
+        return super().data_table
 
-    @data.setter
-    def data(self, data: Dict[int, np.array]):
+    @data_table.setter
+    def data_table(self, data_table: DataFrame):
         self._load_file()
-        super().data = data
+        super().data_table = data_table
 
     def add_cycle_data(self, data: np.array, cycle_number: int):
         self._load_file()
@@ -256,7 +248,8 @@ class CycleDataExtractor:
             if translated_label is not None:
                 key = ConfigProvider.define_key(translated_label, data_type, direction, cycle.context)
                 if key not in data_list:
-                    data_list[key] = RawCyclePoint(
+                    data_list[key] = BasicCyclePoint(
+                        BasicCyclePoint.TYPE_RAW,
                         translated_label,
                         direction,
                         data_type,
