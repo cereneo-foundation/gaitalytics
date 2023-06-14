@@ -34,9 +34,7 @@ class NormalisedCyclePoint(BasicCyclePoint):
         return mean(self.event_frames[self.EVENT_FRAME_NUMBER])
 
     def _create_table(self, data: np.array):
-        column_names = []
-        for index in range(0, len(data)):
-            column_names.append(index)
+        column_names = [i for i in range(1, len(data)+1)]
         df = pd.DataFrame(data=[data], columns=np.array(column_names))
         df.index.name = self.CYCLE_NUMBER
         return df
@@ -48,7 +46,7 @@ class NormalisedCyclePoint(BasicCyclePoint):
             self.data_table.loc[cycle_number] = data
 
     def to_csv(self, path: str, prefix: str):
-        output = pd.merge(self.event_frames, self.data_table, on=cls.CYCLE_NUMBER)
+        output = pd.merge(self.event_frames, self.data_table, on=self.CYCLE_NUMBER)
         filename = define_cycle_point_file_name(self, prefix)
         output.to_csv(f"{path}/{filename}")
 

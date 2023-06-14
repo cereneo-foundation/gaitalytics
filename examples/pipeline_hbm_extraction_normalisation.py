@@ -1,3 +1,4 @@
+from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
 from gait_analysis.cycle.extraction import CycleDataExtractor
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
@@ -26,6 +27,9 @@ def main():
 
     normalised_data = LinearTimeNormalisation().normalise(cycle_data)
     cycle_points_to_csv(normalised_data, "out", "baseline")
+
+    desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
+    desc_results.to_csv("out/desc.csv", index=False)
 
 
 # Using the special variable
