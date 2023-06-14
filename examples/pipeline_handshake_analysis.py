@@ -3,16 +3,19 @@ import re
 from argparse import ArgumentParser, Namespace
 
 from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis
-from gait_analysis.cycle.extraction import CycleDataExtractor
-from gait_analysis.utils import c3d
-
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
+from gait_analysis.cycle.extraction import CycleDataExtractor
 from gait_analysis.event.anomaly import BasicContextChecker
-from pandas import DataFrame
+from gait_analysis.utils import c3d
 from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.utils.io import CyclePointLoader
+from gait_analysis.utils.utils import cycle_points_to_csv
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "C:/ViconData/Handshake/"
+DATA_OUTPUT_BASE = "//192.168.102.50/studyRepository/StimuLoop/Handshake_semantics"
+DATA_OUTPUT_CYCLES = "/cycle_outputs"
+DATA_OUTPUT_METRICS = "/metrics"
 
 
 def get_args() -> Namespace:
@@ -29,16 +32,21 @@ def main():
         r = re.compile("S0.*\.4\.c3d")
         filtered_files = list(filter(r.match, file_name))
         for filtered_file in filtered_files:
-            filename = filtered_file.replace(".4.c3d", "_joint_angles")
-            if not os.path.exists(f"out/{filename}.csv"):
-                print(f"{root}/{filtered_file}")
+            print(f"{root}/{filtered_file}")
+            subject = filtered_file.replace(".4.c3d", "")
+            cycle_path = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_CYCLES}/{subject}"
+            if not os.path.exists(cycle_path):
                 acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
                 cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
                 cycles = cycle_builder.build_cycles(acq_trial)
                 cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
-                results = JointAnglesCycleAnalysis(cycle_data).analyse()
-                results.to_csv(f"out/{filename}.csv", index=False)
-
+                os.mkdir(cycle_path)
+                cycle_points_to_csv(cycle_data, cycle_path, subject)
+            else:
+                cycle_data = CyclePointLoader(configs, cycle_path).get_raw_cycle_points()
+            filename_base = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_METRICS}/{subject}"
+            results = JointAnglesCycleAnalysis(cycle_data).analyse()
+            results.to_csv(f"{filename_base}_joint_angles.csv", index=False)
 
 
 # Using the special variable
