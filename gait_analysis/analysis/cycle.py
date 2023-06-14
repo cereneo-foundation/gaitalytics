@@ -4,14 +4,13 @@ from typing import Dict
 import numpy as np
 from pandas import DataFrame, concat
 
-from gait_analysis.cycle.extraction import RawCyclePoint
 from gait_analysis.utils.c3d import PointDataType, AxesNames, GaitEventContext
 from gait_analysis.utils.config import ConfigProvider
 
 
 class BaseRawCycleAnalysis(ABC):
 
-    def __init__(self, data_list: Dict[str, RawCyclePoint], data_type: PointDataType):
+    def __init__(self, data_list: Dict, data_type: PointDataType):
         self._data_list = data_list
         self._point_data_type = data_type
 
@@ -42,7 +41,7 @@ class BaseRawCycleAnalysis(ABC):
 
 class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
 
-    def __init__(self, data_list: Dict[str, RawCyclePoint]):
+    def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Angles)
 
     def _filter_keys(self, key: str) -> bool:
@@ -72,7 +71,7 @@ class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
 
 class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
 
-    def __init__(self, configs: ConfigProvider, data_list: Dict[str, RawCyclePoint], frequency: int = 100):
+    def __init__(self, configs: ConfigProvider, data_list: Dict, frequency: int = 100):
         super().__init__(data_list, PointDataType.Angles)
         self._configs = configs
         self._frequency = frequency

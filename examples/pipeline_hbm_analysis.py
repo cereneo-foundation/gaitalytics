@@ -1,13 +1,7 @@
-from argparse import ArgumentParser, Namespace
-
+from gait_analysis.analysis.cycle import SpatioTemporalAnalysis, JointAnglesCycleAnalysis
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
-from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis, SpatioTemporalAnalysis
-from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.cycle.extraction import CycleDataExtractor, RawCyclePoint
-from gait_analysis.cycle.normalisation import LinearTimeNormalisation, NormalisedCyclePoint
-from gait_analysis.event.anomaly import BasicContextChecker
-from gait_analysis.utils import c3d
 from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.utils.io import CyclePointLoader
 
 # This is an example pipeline #
 ###############################
@@ -21,35 +15,16 @@ TEST_EVENTS_FILE_NAME = "Baseline.4.c3d"
 def main():
     configs = ConfigProvider()
     configs.read_configs(SETTINGS_FILE)
-    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    loader = CyclePointLoader(configs, "out")
+    cycle_data = loader.get_raw_cycle_points()
+    norm_data = loader.get_norm_cycle_points()
 
-    cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
+    desc_results = DescriptiveNormalisedAnalysis(norm_data).analyse()
+    desc_results.to_csv("out/desc.csv", index=False)
 
-    cycles = cycle_builder.build_cycles(acq_trial)
+    joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
+    joint_angles_results.to_csv("out/joint_angles.csv", index=False)
 
-    cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
-    """
-    for key in cycle_data:
-        cycle_data[key].to_csv("out", "out")
-
-    RawCyclePoint.from_csv(configs, "out", "out-neck.Marker.x.Left-raw.csv")
-    """
-
-  #  normalised_data = LinearTimeNormalisation().normalise(cycle_data)
-
-    """
-    for key in normalised_data:
-        normalised_data[key].to_csv("out", "out")
-    NormalisedCyclePoint.from_csv(configs, "out", "out-left_ankle_angles.Angles.x.Left-normalised.csv")
-    """
-
-   # desc_results = DescriptiveNormalisedAnalysis(normalised_data).analyse()
-   # desc_results.to_csv("out/desc.csv", index=False)
-
-    #joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
-    #joint_angles_results.to_csv("out/joint_angles.csv", index=False)
-    spatio_temp = SpatioTemporalAnalysis(configs, cycle_data).analyse()
-    spatio_temp.to_csv("out/spatio_temp.csv", index=False)
 
 
 # Using the special variable
