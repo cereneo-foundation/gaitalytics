@@ -1,8 +1,6 @@
 from abc import ABC, abstractmethod
 
-
 import numpy as np
-
 from pandas import DataFrame, concat
 
 
@@ -34,7 +32,8 @@ class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
 
     def _do_analysis(self, table: DataFrame) -> DataFrame:
         frame_number = np.arange(1, 101, 1)  # Could be something like myRange = range(1,1000,1)
-        result = DataFrame({"frame_number": frame_number})
+        result = DataFrame(index=frame_number)
+        result.index.name = "frame_number"
         result['mean'] = table.mean(axis=0).to_list()
         result['sd'] = table.std(axis=0).to_list()
         result['max'] = table.max(axis=0).to_list()
@@ -43,5 +42,3 @@ class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
         result['sd_up'] = result.apply(lambda row: row['mean'] + row['sd'], axis=1)
         result['sd_down'] = result.apply(lambda row: row['mean'] - row['sd'], axis=1)
         return result
-
-

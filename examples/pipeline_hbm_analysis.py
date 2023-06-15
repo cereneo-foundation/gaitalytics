@@ -1,3 +1,5 @@
+import pandas as np
+
 from gait_analysis.analysis.cycle import SpatioTemporalAnalysis, JointAnglesCycleAnalysis
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.utils.config import ConfigProvider
@@ -20,10 +22,13 @@ def main():
     norm_data = loader.get_norm_cycle_points()
 
     desc_results = DescriptiveNormalisedAnalysis(norm_data).analyse()
-    desc_results.to_csv("out/desc.csv", index=False)
+    desc_results.to_csv("out/desc.csv")
 
     joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
-    joint_angles_results.to_csv("out/joint_angles.csv", index=False)
+    joint_angles_results.to_csv("out/joint_angles.csv")
+
+    spatio_results = SpatioTemporalAnalysis(configs, cycle_data, 100).analyse()
+    joint_angles_results.to_csv("out/spatio.csv")
 
 
 
