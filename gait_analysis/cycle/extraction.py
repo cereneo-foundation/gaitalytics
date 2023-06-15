@@ -122,7 +122,7 @@ class BasicCyclePoint:
     def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context, cycle_point_type, prefix] = get_meta_data_filename(filename)
         translated = configs.get_translated_label(label, data_type)
-        point = BasicCyclePoint(cycle_point_type, translated, data_type, direction, context)
+        point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context)
         data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
         point.event_frames = DataFrame(data_table[cls.EVENT_FRAME_NUMBER])
         data_table = data_table.drop(cls.EVENT_FRAME_NUMBER, axis=1)

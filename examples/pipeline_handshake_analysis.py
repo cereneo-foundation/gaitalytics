@@ -2,9 +2,9 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis
+from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis, SpatioTemporalAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.cycle.extraction import CycleDataExtractor
+from gait_analysis.cycle.extraction import CycleDataExtractor, BasicCyclePoint
 from gait_analysis.event.anomaly import BasicContextChecker
 from gait_analysis.utils import c3d
 from gait_analysis.utils.config import ConfigProvider
@@ -44,9 +44,11 @@ def main():
                 cycle_points_to_csv(cycle_data, cycle_path, subject)
             else:
                 cycle_data = CyclePointLoader(configs, cycle_path).get_raw_cycle_points()
+
+            joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
+            spatio_results = SpatioTemporalAnalysis(configs, cycle_data, 100).analyse()
             filename_base = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_METRICS}/{subject}"
-            results = JointAnglesCycleAnalysis(cycle_data).analyse()
-            results.to_csv(f"{filename_base}_joint_angles.csv", index=False)
+            joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER).to_csv(f"{filename_base}_metrics.csv")
 
 
 # Using the special variable
