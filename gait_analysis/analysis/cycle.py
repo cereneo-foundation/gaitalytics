@@ -54,9 +54,12 @@ class JointMomentsCycleAnalysis(BaseRawCycleAnalysis):
         results = DataFrame(index=data.index)
         rom_max = data.max(axis=1)
         rom_min = data.min(axis=1)
+        rom_mean = data.mean(axis=1)
+        results['moments_mean'] = rom_mean
         results['moments_max'] = rom_max
         results['moments_min'] = rom_min
         results['moments_sd'] = data.std(axis=1)
+        results['power_amplitude'] = rom_max - rom_min
         return results
 
 
@@ -76,9 +79,12 @@ class JointPowerCycleAnalysis(BaseRawCycleAnalysis):
         results = DataFrame(index=data.index)
         rom_max = data.max(axis=1)
         rom_min = data.min(axis=1)
+        rom_mean = data.mean(axis=1)
+        results['power_mean'] = rom_mean
         results['power_max'] = rom_max
         results['power_min'] = rom_min
         results['power_sd'] = data.std(axis=1)
+        results['power_amplitude'] = rom_max - rom_min
         return results
 
 
@@ -97,10 +103,12 @@ class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
         results = DataFrame(index=data.index)
         rom_max = data.max(axis=1)
         rom_min = data.min(axis=1)
+        rom_mean = data.mean(axis=1)
+        results['rom_mean'] = rom_mean
         results['rom_max'] = rom_max
         results['rom_min'] = rom_min
         results['rom_sd'] = data.std(axis=1)
-        results['rom_amplitude'] = amplitude_rom = rom_max - data.min(axis=1)
+        results['rom_amplitude'] = rom_max - rom_min
         velocity = data.diff(axis=1)
         results['angle_velocity_max'] = velocity.max(axis=1)
         results['angle_velocity_min'] = velocity.min(axis=1)
