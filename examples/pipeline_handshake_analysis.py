@@ -2,7 +2,8 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis, SpatioTemporalAnalysis
+from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis, SpatioTemporalAnalysis, JointMomentsCycleAnalysis, \
+    JointPowerCycleAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
 from gait_analysis.cycle.extraction import CycleDataExtractor, BasicCyclePoint
 from gait_analysis.event.anomaly import BasicContextChecker
@@ -47,8 +48,13 @@ def main():
 
             joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
             spatio_results = SpatioTemporalAnalysis(configs, cycle_data, 100).analyse()
+            moments_angles_results = JointMomentsCycleAnalysis(cycle_data).analyse()
+            powers_angles_results = JointPowerCycleAnalysis(cycle_data).analyse()
+            results = joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER)
+            results = results.merge(moments_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
+            results = results.merge(powers_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
             filename_base = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_METRICS}/{subject}"
-            joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER).to_csv(f"{filename_base}_metrics.csv")
+            results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER).to_csv(f"{filename_base}_metrics.csv")
 
 
 # Using the special variable

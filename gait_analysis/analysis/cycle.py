@@ -39,6 +39,49 @@ class BaseRawCycleAnalysis(ABC):
         return results.pivot(columns="metric")
 
 
+class JointMomentsCycleAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, PointDataType.Moments)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        results['moments_max'] = rom_max
+        results['moments_min'] = rom_min
+        results['moments_sd'] = data.std(axis=1)
+        return results
+
+
+class JointPowerCycleAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, PointDataType.Power)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            if splits[3].lower() in splits[0]:
+                return AxesNames.z.name is splits[2]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        results['power_max'] = rom_max
+        results['power_min'] = rom_min
+        results['power_sd'] = data.std(axis=1)
+        return results
+
+
 class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
 
     def __init__(self, data_list: Dict):
@@ -67,7 +110,7 @@ class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
 
 class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
 
-    def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float, frequency: int = 100):
+    def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
         super().__init__(data_list, PointDataType.Angles)
         self._configs = configs
         self._frequency = frequency
@@ -183,15 +226,10 @@ class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
             ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
                                       GaitEventContext.LEFT)]
 
-        step_length_right = self._side_step_length_calculation(right_heel_progression_right,
-                                                               left_heel_progression_right, "step_length_right")
-        step_length_left = self._side_step_length_calculation(left_heel_progression_left,
-                                                              right_heel_progression_left, "step_length_left")
-        left = DataFrame(index=left_heel_progression_left.data_table.index)
-        left["step_length_left"] = step_length_left
-
-        right = DataFrame(index=right_heel_progression_right.data_table.index)
-        right["step_length_right"] = step_length_right
+        right = self._side_step_length_calculation(right_heel_progression_right,
+                                                   left_heel_progression_right, "right")
+        left = self._side_step_length_calculation(left_heel_progression_left,
+                                                  right_heel_progression_left, "left")
 
         results = concat([left, right], axis=1)
         results['stride_length'] = results["step_length_right"] + results["step_length_left"]
@@ -200,18 +238,19 @@ class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
 
     @staticmethod
     def _side_step_length_calculation(context_heel_progression: DataFrame,
-                                      contra_heel_progression: DataFrame, column_name: str) -> np.array:
-        step_length = DataFrame(index=context_heel_progression.data_table.index, columns=[column_name])
+                                      contra_heel_progression: DataFrame, side: str) -> np.array:
+        s_len_label = f"step_length_{side}"
+        step_length = DataFrame(index=context_heel_progression.data_table.index, columns=[s_len_label, ])
 
         for cycle_number in context_heel_progression.data_table.index.to_series():
             context_hs_pos = context_heel_progression.data_table.loc[cycle_number][1]
             contra_hs_pos = contra_heel_progression.data_table.loc[cycle_number][1]
-            step_length.loc[cycle_number][column_name] = abs(context_hs_pos - contra_hs_pos)
+            step_length.loc[cycle_number][f"step_length{side}"] = abs(context_hs_pos - contra_hs_pos)
 
         return step_length
 
     def _do_analysis(self, data: Dict[int, np.array], key: str):
-       pass
+        pass
 
 # drag_duration_gc = np.zeros(len(data))  # %GC
 # drag_duration_swing = np.zeros(len(data))  # %swing

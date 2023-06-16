@@ -1,6 +1,6 @@
-import pandas as pd
 
-from gait_analysis.analysis.cycle import SpatioTemporalAnalysis, JointAnglesCycleAnalysis
+from gait_analysis.analysis.cycle import SpatioTemporalAnalysis, JointAnglesCycleAnalysis, JointMomentsCycleAnalysis, \
+    JointPowerCycleAnalysis
 from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.cycle.extraction import BasicCyclePoint
 from gait_analysis.utils.config import ConfigProvider
@@ -26,8 +26,13 @@ def main():
     desc_results.to_csv("out/desc.csv")
 
     joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
-    spatio_results = SpatioTemporalAnalysis(configs, cycle_data, 100).analyse()
-    joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER).to_csv("out/nice.csv")
+    spatio_results = SpatioTemporalAnalysis(configs, cycle_data).analyse()
+    moments_angles_results = JointMomentsCycleAnalysis(cycle_data).analyse()
+    powers_angles_results = JointPowerCycleAnalysis(cycle_data).analyse()
+    results = joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER)
+    results = results.merge(moments_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
+    results = results.merge(powers_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
+    results.to_csv("out/nice.csv")
 
 
 
