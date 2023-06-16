@@ -28,14 +28,13 @@ def main():
         for filtered_file in filtered_files:
             print(f"{root}/{filtered_file}")
             acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-            detected, anomalies = BasicContextChecker(
-                EventNormalSequenceInterContextChecker(EventSpacingChecker())).check_events(acq_trial)
+            detected, anomalies = BasicContextChecker(EventSpacingChecker()).check_events(acq_trial)
             if detected:
                 print(f"detected")
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")
                 f = open(f"./out/{event_anomaly}", "w")
                 for anomaly in anomalies:
-                    print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']}", file=f)
+                    print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']} - {anomaly['Anomaly']}", file=f)
 
                 f.close()
 

@@ -51,8 +51,8 @@ class MLcMoSModeller(BaseOutputModeller):
     def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
         freq = acq.GetPointFrequency()
         com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
-        l_grf = acq.GetPoint(self._configs.MODEL_MAPPING.GRF_left.value).GetValues()
-        r_grf = acq.GetPoint(self._configs.MODEL_MAPPING.GRF_right.value).GetValues()
+        l_grf = acq.GetPoint(self._configs.MODEL_MAPPING.left_GRF.value).GetValues()
+        r_grf = acq.GetPoint(self._configs.MODEL_MAPPING.right_GRF.value).GetValues()
         l_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_lateral_malleoli.value).GetValues()
         r_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_lateral_malleoli.value).GetValues()
         l_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_medial_malleoli.value).GetValues()

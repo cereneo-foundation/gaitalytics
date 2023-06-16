@@ -3,383 +3,92 @@ environment_setting:
   progression_values: negativ
 ## Zenis settings
 marker_set_mapping:
+  left_back_hip: LASIS
+  right_back_hip: RASIS
+  left_front_hip: LPSIS
+  right_front_hip: RPSIS
+
+  left_lat_upper_leg: LLTHI
+  right_lat_upper_leg: RLTHI
+
+  left_lat_knee: LLEK
+  right_lat_knee: RLEK
+  left_med_knee: LMEK
+  right_med_knee: RMEK
+
+  left_lat_lower_leg: LLSHA
+  right_lat_lower_leg: RLSHA
+
+  left_lat_malleoli: LLM
+  right_lat_malleoli: RLM
+  left_med_malleoli: LMM
+  right_med_malleoli: RMM
+
   right_heel: RHEE
   left_heel: LHEE
   right_meta_2: RMT2
   left_meta_2: LMT2
   right_meta_5: RMT5
   left_meta_5: LMT5
-  right_front_hip: RPSIS
-  left_front_hip: LPSIS
-  right_back_hip: RASIS
-  left_back_hip: LASIS
-  left_lat_malleoli: LLM
-  right_lat_malleoli: RLM
-  left_med_malleoli: LMM
-  right_med_malleoli: RMM
+
+  neck: C7
+  back: T10
+  jugularis: JN
+  xyphoideus: XIPH
+
+
   com: COM
 
 model_mapping:
-  GRF_left: LGroundReactionForce
-  GRF_right: RGroundReactionForce
   #Angles
-  left_thorax_forward_tilt: LSpineAngles.y
-  right_thorax_forward_tilt: RSpineAngles.y
-  left_thorax_backward_tilt: LThoraxAngles.y
-  right_thorax_backward_tilt: RThoraxAngles.y
-  left_thorax_tilt: LSpineAngles.x
-  right_thorax_tilt: RSpineAngles.x
-  #left_thorax_tilt: LThoraxAngles.x
-  #right_thorax_right_tilt: RThoraxAngles.x
-  left_thorax_rotation: LSpineAngles.z
-  right_thorax_rotation: RSpineAngles.z
-  left_pelvis_anterior_tilt: LPelvisAngles.y
-  right_pelvis_anterior_tilt: RPelvisAngles.y
-  left_pelvis_upward_obliquity: LPelvisAngles.x
-  right_pelvis_upward_obliquity: RPelvisAngles.x
-  left_pelvis_internal_rotation: LPelvisAngles.z
-  right_pelvis_internal_rotation: RPelvisAngles.z
-  left_hip_flex: LHipAngles.y
-  right_hip_flex: RLHipAngles.y
-  left_hip_add: LHipAngles.x
-  right_hip_add: RHipAngles.x
-  left_hip_ir: LHipAngles.z
-  right_hip_ir: RHipAngles.z
-  left_knee_flex: LKneeAngles.y
-  right_knee_flex: RKneeAngles.y
-  left_knee_add: LKneeAngles.x
-  right_knee_add: RKneeAngles.x
-  left_knee_ir: LKneeAngles.z
-  right_knee_ir: RKneeAngles.z
-  left_ankle_dorsi_flex: LAnkleAngles.y
-  right_ankle_dorsi_flex: RAnkleAngles.y
-  left_ankle_add: LAnkleAngles.x
-  right_ankle_add: RAnkleAngles.x
-  left_ankle_ir: LAnkleAngles.z
-  right_ankle_ir: RAnkleAngles.z
-  left_foot_internal_rotation: LFootProgressAngles.z
-  right_foot_internal_rotation: RFootProgressAngles.z
+  left_thorax_angles: LThoraxAngles
+  right_thorax_angles: RThoraxAngles
+  left_spine_angles: LSpineAngles
+  right_spine_angles: RSpineAngles
+  left_pelvis_angles: LPelvisAngles
+  right_pelvis_angles: RPelvisAngles
+  left_foot_progression_angles: LFootProgressAngles
+  right_foot_progression_angles: RFootProgressAngles
+  left_hip_angles: LHipAngles
+  right_hip_angles: RHipAngles
+  left_knee_angles: LKneeAngles
+  right_knee_angles: RKneeAngles
+  left_ankle_angles: LAnkleAngles
+  right_ankle_angles: RAnkleAngles
 
-  ### Forces
-  left_waist_force: LWaistForce.z
-  right_waist_force: RWaistForce.z
-  left_hip_flex_force: LHipForce.y
-  right_hip_flex_force: RHipForce.y
-  left_hip_add_force: LHipForce.x
-  right_hip_add_force: RHipForce.x
-  left_hip_ir_force: LHipForce.z
-  right_hip_ir_force: RHipForce.z
-  left_knee_flex_force: LKneeForce.y
-  right_knee_flex_force: RKneeForce.y
-  left_knee_add_force: LKneeForce.x
-  right_knee_add_force: RKneeForce.x
-  left_knee_ir_force: LKneeForce.x
-  right_knee_ir_force: RKneeForce.x
-  left_ankle_flex_force: LAnkleForce.y
-  right_ankle_flex_force: RAnkleForce.y
-  left_ankle_add_force: LAnkleForce.x
-  right_ankle_add_force: RAnkleForce.x
-  left_ankle_ir_force: LAnkleForce.z
-  right_ankle_ir_force: RAnkleForce.z
+  #Forces
+  left_GRF: LGroundReactionForce
+  right_GRF: RGroundReactionForce
+  left_nGRF: LNormalisedGRF
+  right_nGRF: RNormalisedGRF
+  left_waist_force: LWaistForce
+  right_waist_force: RWaistForce
+  left_hip_force: LHipForce
+  right_hip_force: RHipForce
+  left_knee_force: LKneeForce
+  right_knee_force: RKneeForce
+  left_ankle_force: LAnkleForce
+  right_ankle_force: RAnkleForce
 
-  ### Moments
-  left_hip_flex_moment: LHipMoment.y
-  right_hip_flex_moment: RHipMoment.y
-  left_hip_add_moment: LHipMoment.x
-  right_hip_add_moment: RHipMoment.x
-  left_hip_ir_moment: LHipMoment.z
-  right_hip_ir_moment: RHipMoment.z
-  left_knee_flex_moment: LKneeMoment.y
-  right_knee_flex_moment: RKneeMoment.y
-  left_knee_add_moment: LKneeMoment.x
-  right_knee_add_moment: RKneeMoment.x
-  left_knee_ir_moment: LKneeMoment.x
-  right_knee_ir_moment: RKneeMoment.x
-  left_ankle_flex_moment: LAnkleMoment.y
-  right_ankle_flex_moment: RAnkleMoment.y
-  left_ankle_add_moment: LAnkleMoment.x
-  right_ankle_add_moment: LRAnkleMoment.x
-  left_ankle_ir_moment: LAnkleMoment.z
-  right_ankle_ir_moment: RAnkleMoment.z
+  #Moments
+  left_GRM: LGroundReactionMoment
+  right_GRM: RGroundReactionMoment
+  left_waist_moment: LWaistMoment
+  right_waist_moment: RWaistMoment
+  left_hip_moment: LHipMoment
+  right_hip_moment: RHipMoment
+  left_knee_moment: LKneeMoment
+  right_knee_moment: RKneeMoment
+  left_ankle_moment: LAnkleMoment
+  right_ankle_moment: RAnkleMoment
 
-  ## Powers
-  left_knee_power: LKneePower.z
-  right_knee_power: RKneePower.z
-  left_hip_power: LHipPower.z
-  right_hip_power: RHipPower.z
-  left_ankle_power: LAnklePower.z
-  right_ankle_power: LAnklePower.z
-
-  ##Ground reaction forces
-  left_gr_force: LGroundReactionForce.z
-  right_gr_force: RGroundReactionForce.z
-  left_ngr_force: LNormalisedGRF.z
-  right_ngr_force: RNormalisedGRF.z
-  left_gr_ap_force: LGroundReactionForce.y
-  right_gr_ap_force: RGroundReactionForce.y
-  left_ngr_ap_force: LNormalisedGRF.y
-  right_ngr_ap_force: RNormalisedGRF.y
-  left_gr_ml_force: LGroundReactionForce.x
-  right_gr_ml_force: RGroundReactionForce.x
-  left_ngr_ml_force: LNormalisedGRF.x
-  right_ngr_ml_force: RNormalisedGRF.x
-
-
-
-
-## Plot settings
-model_mapping_plot:
-  data_types:
-    1:
-      y_label: Angle (deg)
-    2:
-      y_label: Force (N/kg)
-    3:
-      y_label: Moment (N.mm/kg)
-    4:
-      y_label: Power (W/kg)
-
-  plots:
-    ### Angles
-    thorax_forward_tilt:
-      modelled_name: SpineAngles.y
-      plot_name: Thorax Forward Tilt
-      group: Kinematics
-
-    thorax_backward_tilt:
-      modelled_name: ThoraxAngles.y
-      plot_name: Thorax Backward Tilt
-      group: Kinematics
-
-    thorax_left_tilt:
-      modelled_name: SpineAngles.x
-      plot_name: Thorax Left Tilt
-      group: Kinematics
-
-    thorax_right_tilt:
-      modelled_name: ThoraxAngles.x
-      plot_name: Thorax Right Tilt
-      group: Kinematics
-
-    thorax_left_rotation:
-      modelled_name: SpineAngles.z
-      plot_name: Thorax Left Rotation
-      group: Kinematics
-
-    thorax_right_rotation:
-      modelled_name: ThoraxAngles.z
-      plot_name: Thorax Right Rotation
-      group: Kinematics
-
-    pelvis_anterior_tilt:
-      modelled_name: PelvisAngles.y
-      plot_name:  Pelvis Anterior Tilt
-      group: Kinematics
-
-    pelvis_upward_obliquity:
-      modelled_name: PelvisAngles.x
-      plot_name: Pelvis Upward Obliquity
-      group: Kinematics
-
-    pelvis_internal_rotation:
-      modelled_name: PelvisAngles.z
-      plot_name: Pelvis Internal Rotation
-      group: Kinematics
-
-    hip_flex:
-      modelled_name: HipAngles.y
-      plot_name: Hip Flexion
-      group: Kinematics
-
-    hip_add:
-      modelled_name: HipAngles.x
-      plot_name: Hip Adduction
-      group: Kinematics
-
-    hip_ir:
-      modelled_name: HipAngles.z
-      plot_name: Hip Internal Rotation
-      group: Kinematics
-
-    knee_flex:
-      modelled_name: KneeAngles.y
-      plot_name: Knee Flexion
-      group: Kinematics
-
-    knee_add:
-      modelled_name: KneeAngles.x
-      plot_name: Knee Adduction
-      group: Kinematics
-
-    knee_ir:
-      modelled_name: KneeAngles.z
-      plot_name: Knee Internal Rotation
-      group: Kinematics
-
-    ankle_dorsi_flex:
-      modelled_name: AnkleAngles.y
-      plot_name: Foot Dorsiflexion
-      group: Kinematics
-
-    ankle_add:
-      modelled_name: AnkleAngles.x
-      plot_name: Ankle Adduction
-      group: Kinematics
-
-    ankle_ir:
-      modelled_name: AnkleAngles.z
-      plot_name: Ankle Internal Rotation
-      group: Kinematics
-
-    foot_internal_rotation:
-      modelled_name: FootProgressAngles.z
-      plot_name: Foot Internal Rotation
-      group: Kinematics
-
-    ### Forces
-    waist_force:
-      modelled_name: WaistForce.z
-      plot_name: Waist Force
-      group: Foo
-
-    hip_flex_force:
-      modelled_name: HipForce.y
-      plot_name: Hip Flexion Force
-      group: Foo
-
-    hip_add_force:
-      modelled_name: HipForce.x
-      plot_name: Hip Adduction Force
-      group: Foo
-
-    hip_ir_force:
-      modelled_name: HipForce.z
-      plot_name: Hip Adduction Force
-      group: Foo
-
-    knee_flex_force:
-      modelled_name: KneeForce.y
-      plot_name: Knee Flexion Force
-      group: Foo
-
-    knee_add_force:
-      modelled_name: KneeForce.x
-      plot_name: Knee Adduction Force
-      group: Foo
-
-    knee_ir_force:
-      modelled_name: KneeForce.x
-      plot_name: Knee Internal Rotation Force
-      group: Foo
-
-    ankle_flex_force:
-      modelled_name: AnkleForce.y
-      plot_name:  Ankle Dorsiflexion Force
-      group: Foo
-
-    ankle_add_force:
-      modelled_name: AnkleForce.x
-      plot_name: Ankle Adduction Force
-      group: Foo
-
-    ankle_ir_force:
-      modelled_name: AnkleForce.z
-      plot_name: Ankle Internal Rotation Force
-      group: Foo
-
-
-
-    ### Kinetics
-    hip_flex_moment:
-      modelled_name: HipMoment.y
-      plot_name: Hip Flexion Moment
-      group: Kinetics
-
-    hip_add_moment:
-      modelled_name: HipMoment.x
-      plot_name: Hip Adduction Moment
-      group: Kinetics
-
-    hip_ir_moment:
-      modelled_name: HipMoment.z
-      plot_name: Hip Adduction Moment
-      group: Kinetics
-
-    hip_power:
-      modelled_name: HipPower.z
-      plot_name: Hip Power
-      group: Kinetics
-
-    knee_flex_moment:
-      modelled_name: KneeMoment.y
-      plot_name: Knee Flexion Moment
-      group: Kinetics
-
-    knee_add_moment:
-      modelled_name: KneeMoment.x
-      plot_name: Knee Adduction Moment
-      group: Kinetics
-
-    knee_ir_moment:
-      modelled_name: KneeMoment.x
-      plot_name: Knee Internal Rotation Moment
-      group: Kinetics
-
-    knee_power:
-      modelled_name: KneePower.z
-      plot_name: Knee Power
-      group: Kinetics
-
-    ankle_flex_moment:
-      modelled_name: AnkleMoment.y
-      plot_name: Ankle Dorsiflexion Moment
-      group: Kinetics
-
-    ankle_add_moment:
-      modelled_name: AnkleMoment.x
-      plot_name: Ankle Adduction Moment
-      group: Kinetics
-
-    ankle_ir_moment:
-      modelled_name: AnkleMoment.z
-      plot_name: Ankle Internal Rotation Moment
-      group: Kinetics
-
-    ankle_power:
-      modelled_name: AnklePower.z
-      plot_name: Ankle Power
-      group: Kinetics
-
-    gr_force:
-      modelled_name: GroundReactionForce.z
-      plot_name: GroundReaction Force
-      group: Kinetics
-
-    ngr_force:
-      modelled_name: NormalisedGRF.z
-      plot_name: Normalised GroundReaction Force
-      group: Kinetics
-
-    gr_ap_force:
-      modelled_name: GroundReactionForce.y
-      plot_name: GroundReaction Force AP
-      group: Kinetics
-
-    ngr_ap_force:
-      modelled_name: NormalisedGRF.y
-      plot_name: Normalised GroundReaction Force AP
-      group: Kinetics
-
-    gr_ml_force:
-      modelled_name: GroundReactionForce.x
-      plot_name: GroundReaction Force ML
-      group: Kinetics
-
-    ngr_ml_force:
-      modelled_name: NormalisedGRF.x
-      plot_name: Normalised GroundReaction Force ML
-      group: Kinetics
-
-
-
+  #Powers
+  left_waist_power: LWaistPower
+  right_waist_power: RWaistPower
+  left_hip_power: LHipPower
+  right_hip_power: RHipPower
+  left_knee_power: LKneePower
+  right_knee_power: RKneePower
+  left_ankle_power: LAnklePower
+  right_ankle_power: RAnklePower
 

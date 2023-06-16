@@ -15,6 +15,7 @@ class PointDataType(Enum):
     Reaction = 6
 
 
+
 class AxesNames(Enum):
     x = 0
     y = 1

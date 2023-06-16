@@ -2,11 +2,13 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from btk import btkAcquisition, btkEvent
+from matplotlib import pyplot as plt
 from scipy import signal
 
 from gait_analysis.event.utils import GaitEventLabel
 from gait_analysis.utils import utils, c3d
 from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.utils.utils import min_max_norm, is_progression_axes_flip
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
 
@@ -22,7 +24,7 @@ class AbstractGaitEventDetector(ABC):
         frequency = acq.GetPointFrequency()
         event = btkEvent()
         event.SetLabel(event_label.value)
-        event.SetFrame(int(frame))
+        #  event.SetFrame(int(frame))
         event.SetId(GaitEventLabel.get_type_id(event_label.value))
         event.SetDetectionFlags(btkEvent.Automatic)
         event.SetContext(event_context.value)
@@ -69,10 +71,26 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
 
     #   c3d.sort_events(acq)
 
-    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: c3d.GaitEventContext):
-        peak_function = np.less if event_label == GaitEventLabel.FOOT_STRIKE else np.greater
-        extremes = signal.argrelextrema(diff[:, c3d.AxesNames.y.value], peak_function)
-        extremes = extremes[0]
+    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: c3d.GaitEventContext,
+                       min_distance: int = 100,
+                       show_plot: bool = False):
+        data = diff[:, c3d.AxesNames.y.value]
+        if is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
+                                    acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
+            data = data * -1
+        data = min_max_norm(data)
+
+        if GaitEventLabel.FOOT_STRIKE == event_label:
+            data = [entry * -1 for entry in data]
+
+        extremes, foo = signal.find_peaks(data, height=[0, 1], distance=min_distance)
+        if show_plot:
+            plt.plot(data)
+            for i in extremes:
+                plt.plot(i, data[i], 'ro')
+            plt.plot()
+            plt.show()
+
         for frame in extremes:
             acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
 

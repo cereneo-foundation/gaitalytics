@@ -1,5 +1,25 @@
+import re
+from statistics import mean
+from typing import Dict
+
 import numpy as np
 from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
+
+from gait_analysis.utils.c3d import AxesNames, PointDataType, GaitEventContext
+from gait_analysis.utils.config import ConfigProvider
+
+
+def min_max_norm(data):
+    scale_min = -1
+    scale_max = 1
+    max_data = max(data)
+    min_data = min(data)
+    diff = max_data - min_data
+    return [((entry - min_data) * (scale_max - scale_min) / diff) + scale_min for entry in data]
+
+
+def is_progression_axes_flip(left_heel, left_toe):
+    return 0 < mean(left_toe[AxesNames.y.value] - left_heel[AxesNames.y.value])
 
 
 def force_plate_down_sample(acq: btkAcquisition, force_plate_index: int) -> list:
@@ -109,3 +129,32 @@ def create_matrix_padded(matrix, max_length):
             array_pad = np.pad(array[:, 0], (0, to_pad), 'constant', constant_values=0)
         matx.append(array_pad)
     return matx
+
+
+def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
+    key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
+                                    cycle_point.context)
+
+    return f"{prefix}{FILENAME_DELIMITER}{key}{FILENAME_DELIMITER}{postfix}.csv"
+
+
+def get_key_from_filename(filename: str) -> [str, str, str]:
+    return filename.split(FILENAME_DELIMITER)
+
+
+def get_meta_data_filename(filename: str) -> [str, PointDataType, AxesNames, GaitEventContext, str, str]:
+    prefix, key, postfix = get_key_from_filename(filename)
+    meta_data = key.split(".")
+    label = meta_data[0]
+    data_type = PointDataType[meta_data[1]]
+    direction = AxesNames[meta_data[2]]
+    context = GaitEventContext(meta_data[3])
+    return [label, data_type, direction, context, postfix, prefix]
+
+
+def cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
+    for key in cycle_data:
+        cycle_data[key].to_csv(dir_path, prefix)
+
+
+FILENAME_DELIMITER = "-"

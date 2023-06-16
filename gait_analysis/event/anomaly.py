@@ -90,7 +90,7 @@ class EventSpacingChecker(EventAnomalyChecker):
             for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
                 next_event = acq_walk.GetEvent(next_event_index)
                 if next_event.GetContext() == context:
-                    if next_event.GetFrame() - current_event.GetFrame() > self._frame_threshold:
+                    if next_event.GetFrame() - current_event.GetFrame() < self._frame_threshold:
                         abnormal_event_frames.append({"Context": context, "Start-Frame": current_event.GetFrame(),
                                                       "End-Frame": next_event.GetFrame(),
                                                       "Anomaly": "Abnormal time spacing"})

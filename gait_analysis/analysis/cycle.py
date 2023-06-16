@@ -1,0 +1,265 @@
+from abc import ABC, abstractmethod
+from typing import Dict
+
+import numpy as np
+from pandas import DataFrame, concat
+
+from gait_analysis.cycle.extraction import BasicCyclePoint
+from gait_analysis.utils.c3d import PointDataType, AxesNames, GaitEventContext
+from gait_analysis.utils.config import ConfigProvider
+
+
+class BaseRawCycleAnalysis(ABC):
+
+    def __init__(self, data_list: Dict, data_type: PointDataType):
+        self._data_list: Dict[str, BasicCyclePoint] = data_list
+        self._point_data_type = data_type
+
+    @abstractmethod
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        pass
+
+    def _filter_keys(self, key: str, ) -> bool:
+        """ Check if its the right point data """
+        return f".{self._point_data_type.name}." in key
+
+    def analyse(self) -> DataFrame:
+        results = None
+        for key in self._data_list:  # TODO change quick fix
+            if self._filter_keys(key):
+                raw_point = self._data_list[key]
+                data = raw_point.data_table
+                result = self._do_analysis(data)
+                result['metric'] = key
+
+                if results is None:
+                    results = result
+                else:
+                    results = concat([results, result])
+        return results.pivot(columns="metric")
+
+
+class JointMomentsCycleAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, PointDataType.Moments)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        results['moments_max'] = rom_max
+        results['moments_min'] = rom_min
+        results['moments_sd'] = data.std(axis=1)
+        return results
+
+
+class JointPowerCycleAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, PointDataType.Power)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            if splits[3].lower() in splits[0]:
+                return AxesNames.z.name is splits[2]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        results['power_max'] = rom_max
+        results['power_min'] = rom_min
+        results['power_sd'] = data.std(axis=1)
+        return results
+
+
+class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, PointDataType.Angles)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        results['rom_max'] = rom_max
+        results['rom_min'] = rom_min
+        results['rom_sd'] = data.std(axis=1)
+        results['rom_amplitude'] = amplitude_rom = rom_max - data.min(axis=1)
+        velocity = data.diff(axis=1)
+        results['angle_velocity_max'] = velocity.max(axis=1)
+        results['angle_velocity_min'] = velocity.min(axis=1)
+        results['angle_velocity_sd'] = velocity.std(axis=1)
+        return results
+
+
+class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
+
+    def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
+        super().__init__(data_list, PointDataType.Angles)
+        self._configs = configs
+        self._frequency = frequency
+        self._body_height = body_height
+
+    def analyse(self) -> DataFrame:
+        step_length = self._calculate_length()
+        durations = self._calculate_durations()
+
+        step_height = self._calculate_step_height()
+        step_width = self._calculate_step_width()
+        result = step_length.merge(durations, on="cycle_number")
+        result = result.merge(step_height, on="cycle_number")
+        result = result.merge(step_width, on="cycle_number")
+        result['metric'] = "Spatiotemporal"
+        return result.pivot(columns="metric")
+
+    def _calculate_step_width(self) -> DataFrame:
+        right_heel_x_right = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                       PointDataType.Marker,
+                                                                       AxesNames.x,
+                                                                       GaitEventContext.RIGHT)].data_table
+        left_heel_x_right = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                      PointDataType.Marker,
+                                                                      AxesNames.x,
+                                                                      GaitEventContext.RIGHT)].data_table
+        right_heel_x_left = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                      PointDataType.Marker,
+                                                                      AxesNames.x,
+                                                                      GaitEventContext.LEFT)].data_table
+        left_heel_x_left = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                     PointDataType.Marker,
+                                                                     AxesNames.x,
+                                                                     GaitEventContext.LEFT)].data_table
+
+        right = self._calculate_step_width_side(right_heel_x_right, left_heel_x_right, "right")
+        left = self._calculate_step_width_side(left_heel_x_left, right_heel_x_left, "left")
+
+        return concat([left, right], axis=1)
+
+    @staticmethod
+    def _calculate_step_width_side(context_heel_x: DataFrame, contra_heel_x: DataFrame, side: str) -> DataFrame:
+        column_label = f"step_width_{side}"
+        width = DataFrame(index=context_heel_x.index, columns=[column_label])
+        for cycle_number in context_heel_x.index.to_series():
+            width_c = abs(context_heel_x.loc[cycle_number][1] - contra_heel_x.loc[cycle_number][1])
+            width.loc[cycle_number][column_label] = width_c
+        return width
+
+    def _calculate_step_height(self) -> DataFrame:
+        right_heel_z = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                 PointDataType.Marker,
+                                                                 AxesNames.z,
+                                                                 GaitEventContext.RIGHT)].data_table
+        left_heel_z = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                PointDataType.Marker,
+                                                                AxesNames.z,
+                                                                GaitEventContext.LEFT)].data_table
+
+        right = self._calculate_step_height_side(right_heel_z, "right")
+        left = self._calculate_step_height_side(left_heel_z, "left")
+        return concat([left, right], axis=1)
+
+    @staticmethod
+    def _calculate_step_height_side(heel_z: DataFrame, side: str) -> DataFrame:
+        column_label = f"step_height_{side}"
+        height = DataFrame(index=heel_z.index, columns=[column_label])
+        height[column_label] = heel_z.max(axis=1) - heel_z.min(axis=1)
+        return height
+
+    def _calculate_durations(self):
+        right_heel_progression = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.RIGHT)]
+        left_heel_progression = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.LEFT)]
+        right_durations = self._side_duration_calculation(right_heel_progression, "right")
+        left_durations = self._side_duration_calculation(left_heel_progression, "left")
+
+        return concat([left_durations, right_durations], axis=1)
+
+    def _side_duration_calculation(self, progression: DataFrame, side: str) -> DataFrame:
+        c_dur_label = f"cycle_duration_s_{side}"
+        s_dur_label = f"step_duration_s_{side}"
+        sw_dur_label = f"swing_duration_p_{side}"
+        st_dur_label = f"stance_duration_p_{side}"
+        columns = [c_dur_label, s_dur_label, sw_dur_label, st_dur_label]
+        durations = DataFrame(index=progression.data_table.index, columns=columns)
+        for cycle_number in progression.data_table.index.to_series():
+            toe_off = progression.event_frames.loc[cycle_number][BasicCyclePoint.EVENT_FRAME_NUMBER]
+            cycle_data = progression.data_table.loc[cycle_number][~progression.data_table.loc[cycle_number].isna()]
+
+            durations.loc[cycle_number][c_dur_label] = len(cycle_data) / self._frequency
+            durations.loc[cycle_number][s_dur_label] = len(cycle_data[toe_off: -1]) / self._frequency
+        swing_percent = durations[s_dur_label] / durations[c_dur_label]
+        durations[sw_dur_label] = swing_percent
+        durations[st_dur_label] = 100 - durations[sw_dur_label]
+        return durations
+
+    def _calculate_length(self) -> DataFrame:
+        right_heel_progression_right = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.RIGHT)]
+        left_heel_progression_right = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.RIGHT)]
+
+        left_heel_progression_left = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.LEFT)]
+        right_heel_progression_left = self._data_list[
+            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
+                                      GaitEventContext.LEFT)]
+
+        right = self._side_step_length_calculation(right_heel_progression_right,
+                                                   left_heel_progression_right, "right")
+        left = self._side_step_length_calculation(left_heel_progression_left,
+                                                  right_heel_progression_left, "left")
+
+        results = concat([left, right], axis=1)
+        results['stride_length'] = results["step_length_right"] + results["step_length_left"]
+
+        return results
+
+    @staticmethod
+    def _side_step_length_calculation(context_heel_progression: DataFrame,
+                                      contra_heel_progression: DataFrame, side: str) -> np.array:
+        s_len_label = f"step_length_{side}"
+        step_length = DataFrame(index=context_heel_progression.data_table.index, columns=[s_len_label, ])
+
+        for cycle_number in context_heel_progression.data_table.index.to_series():
+            context_hs_pos = context_heel_progression.data_table.loc[cycle_number][1]
+            contra_hs_pos = contra_heel_progression.data_table.loc[cycle_number][1]
+            step_length.loc[cycle_number][f"step_length{side}"] = abs(context_hs_pos - contra_hs_pos)
+
+        return step_length
+
+    def _do_analysis(self, data: Dict[int, np.array], key: str):
+        pass
+
+# drag_duration_gc = np.zeros(len(data))  # %GC
+# drag_duration_swing = np.zeros(len(data))  # %swing
+# single_stance_duration = np.zeros(len(data))  # %GC
+# double_stance_duration = np.zeros(len(data))  # %GC
+# stride_speed = np.zeros(len(data))  # m/s
+# stride_length_com = np.zeros(len(data))  # %BH
+# stride_speed_com = np.zeros(len(data))  # m/s
+# length_foot_trajectory = np.zeros(len(data))  # %BH
+# length_com_trajectory = np.zeros(len(data))  # %BH
+# lateral_movement_during_swing = np.zeros(len(data))  # BH%
+# max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
