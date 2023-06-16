@@ -1,4 +1,3 @@
-from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
 from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
 from gait_analysis.cycle.extraction import CycleDataExtractor
 from gait_analysis.cycle.normalisation import LinearTimeNormalisation
