@@ -2,8 +2,8 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis.utils import c3d
-from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker, EventSpacingChecker
+from gait_analysis import c3d
+from gait_analysis.events import ContextPatternChecker, EventSpacingChecker
 
 # This is an example pipeline #
 ###############################
@@ -28,7 +28,7 @@ def main():
         for filtered_file in filtered_files:
             print(f"{root}/{filtered_file}")
             acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-            detected, anomalies = BasicContextChecker(EventSpacingChecker()).check_events(acq_trial)
+            detected, anomalies = ContextPatternChecker(EventSpacingChecker()).check_events(acq_trial)
             if detected:
                 print(f"detected")
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")

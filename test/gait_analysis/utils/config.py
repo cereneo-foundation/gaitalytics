@@ -1,6 +1,6 @@
 import unittest
 
-from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.api import ConfigProvider
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 

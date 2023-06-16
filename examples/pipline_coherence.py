@@ -1,8 +1,7 @@
 
 
 from gait_analysis.emg import EMGCoherenceAnalysis
-from gait_analysis.utils import c3d
-
+from gait_analysis import c3d
 
 # This is an example pipeline #
 ###############################

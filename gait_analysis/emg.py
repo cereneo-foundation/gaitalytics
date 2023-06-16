@@ -1,9 +1,8 @@
 from btk import btkAcquisition
-import scipy as sp
 from scipy import signal
 
-import gait_analysis.utils.c3d
-from gait_analysis.utils.c3d import ANALOG_VOLTAGE_PREFIX_LABEL
+import gait_analysis.c3d
+from gait_analysis.c3d import ANALOG_VOLTAGE_PREFIX_LABEL
 
 class EMGCoherenceAnalysis:
 

@@ -1,18 +1,61 @@
 from __future__ import annotations
 
-import csv
-
+import os
+import re
 from enum import Enum
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
-from btk import btkAcquisition
+import yaml
+from btk import btkEvent
 from pandas import DataFrame, concat, read_csv
 
-from gait_analysis.utils.utils import define_cycle_point_file_name, get_meta_data_filename
-from gait_analysis.cycle.builder import GaitCycleList, GaitCycle
-from gait_analysis.utils.c3d import AxesNames, PointDataType, GaitEventContext
-from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.c3d import GaitEventContext, AxesNames, PointDataType
+
+
+class GaitCycle:
+
+    def __init__(self, number: int, context: GaitEventContext, start_frame: int, end_frame: int,
+                 unused_event: btkEvent):
+        self.number = number
+        self.context = context
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.unused_event = unused_event
+
+
+class GaitCycleList:
+
+    def __init__(self):
+        self._left_cycles = {}
+        self._right_cycles = {}
+
+    def add_cycle(self, cycle: GaitCycle):
+        if cycle.context == GaitEventContext.LEFT:
+            self._left_cycles[cycle.number] = cycle
+        else:
+            self._right_cycles[cycle.number] = cycle
+
+    @property
+    def left_cycles(self) -> {int: GaitCycle}:
+        return self._left_cycles
+
+    @left_cycles.setter
+    def left_cycles(self, cycles: {int: GaitCycle}):
+        self._left_cycles = cycles
+
+    @property
+    def right_cycles(self) -> {int: GaitCycle}:
+        return self._right_cycles
+
+    @right_cycles.setter
+    def right_cycles(self, cycles: {int: GaitCycle}):
+        self._right_cycles = cycles
+
+    def get_number_of_cycles(self) -> int:
+        l_num = list(self._left_cycles.keys())[-1]
+        r_num = list(self._left_cycles.keys())[-1]
+        return l_num if l_num >= r_num else r_num
 
 
 class BasicCyclePoint:
@@ -21,7 +64,7 @@ class BasicCyclePoint:
     TYPE_RAW = "raw"
     TYPE_NORM = "normalised"
 
-    def __init__(self, cycle_point_type: str,  translated_label: Enum, direction: AxesNames, data_type: PointDataType,
+    def __init__(self, cycle_point_type: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
                  context: GaitEventContext):
         self._cycle_point_type = cycle_point_type
         self._data_table: DataFrame = None
@@ -112,15 +155,22 @@ class BasicCyclePoint:
         df = DataFrame.from_dict({cycle_number: data}, orient="index")
         df.index.name = self.CYCLE_NUMBER
         return df
+    @staticmethod
+    def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
+        key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
+                                        cycle_point.context)
 
+        return f"{prefix}{CyclePointLoader.FILENAME_DELIMITER}{key}{CyclePointLoader.FILENAME_DELIMITER}{postfix}.csv"
     def to_csv(self, path: str, prefix: str):
         output = self.event_frames.merge(self.data_table, on=self.CYCLE_NUMBER)
-        filename = define_cycle_point_file_name(self, prefix, self.cycle_point_type)
+        filename = self.define_cycle_point_file_name(self, prefix, self.cycle_point_type)
         output.to_csv(f"{path}/{filename}")
 
     @classmethod
     def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
-        [label, data_type, direction, context, cycle_point_type, prefix] = get_meta_data_filename(filename)
+        [label, data_type, direction, context, cycle_point_type,
+         prefix] = CyclePointLoader.get_meta_data_filename(filename)
+
         translated = configs.get_translated_label(label, data_type)
         point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context)
         data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
@@ -223,38 +273,104 @@ class BufferedCyclePoint(BasicCyclePoint):
         super().to_csv(path, prefix)
 
 
-class CycleDataExtractor:
-    def __init__(self, configs: ConfigProvider):
-        self._configs = configs
+class GaitEventLabel(Enum):
+    FOOT_STRIKE = "Foot Strike"
+    FOOT_OFF = "Foot Off"
 
-    def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, RawCyclePoint]:
-        data_list = {}
-        for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
-            for point_index in range(0, acq.GetPointNumber()):
-                point = acq.GetPoint(point_index)
-                if len(cycles.right_cycles) + 1 > cycle_number:
-                    self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number])
-                if len(cycles.left_cycles) + 1 > cycle_number:
-                    self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
-        return data_list
+    @classmethod
+    def get_contrary_event(cls, event_label: str):
+        if event_label == cls.FOOT_STRIKE.value:
+            return cls.FOOT_OFF
+        return cls.FOOT_STRIKE
 
-    def _extract_cycle(self, data_list, point, cycle: GaitCycle):
-        raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
-        for direction_index in range(0, len(raw_data[0])):
-            label = point.GetLabel()
-            direction = AxesNames(direction_index)
-            data_type = PointDataType(point.GetType())
-            translated_label = self._configs.get_translated_label(label, data_type)
-            if translated_label is not None:
-                key = ConfigProvider.define_key(translated_label, data_type, direction, cycle.context)
-                if key not in data_list:
-                    data_list[key] = BasicCyclePoint(
-                        BasicCyclePoint.TYPE_RAW,
-                        translated_label,
-                        direction,
-                        data_type,
-                        cycle.context)
-                data_list[key].add_cycle_data(
-                    raw_data[:, direction_index], cycle.number)
-                data_list[key].add_event_frame(
-                    cycle.unused_event.GetFrame() - cycle.start_frame, cycle.number)
+    @classmethod
+    def get_type_id(cls, event_label: str):
+        if event_label == cls.FOOT_STRIKE.value:
+            return 1
+        return 2
+
+
+class ConfigProvider:
+    _MARKER_MAPPING = "marker_set_mapping"
+    _MODEL_MAPPING = "model_mapping"
+
+    def __init__(self):
+        self._config = None
+        self.MARKER_MAPPING: Enum = None
+        self.MODEL_MAPPING: Enum = None
+
+    def get_translated_label(self, label: str, point_type: PointDataType):
+        try:
+            if point_type == PointDataType.Marker:
+                return self.MARKER_MAPPING(label)
+            else:
+                return self.MODEL_MAPPING(label)
+        except ValueError as e:
+            return None
+
+    def read_configs(self, file_path: str):
+        with open(file_path, 'r') as f:
+            self._config = yaml.safe_load(f)
+        self.MARKER_MAPPING = Enum('MarkerMapping', self._config[self._MARKER_MAPPING])
+        self.MODEL_MAPPING = Enum('ModelMapping', self._config[self._MODEL_MAPPING])
+
+    @staticmethod
+    def define_key(translated_label: Enum, point_type: PointDataType, direction: AxesNames,
+                   side: GaitEventContext) -> str:
+        if translated_label is not None:
+            return f"{translated_label.name}.{point_type.name}.{direction.name}.{side.value}"
+
+
+class CyclePointLoader:
+    FILENAME_DELIMITER = "-"
+
+    def __init__(self, configs: ConfigProvider, dir_path: str):
+        self._raw_cycle_data = {}
+        self._norm_cycle_data = {}
+        file_names = os.listdir(dir_path)
+        postfix = BasicCyclePoint.TYPE_RAW
+        raw_file_names = self._filter_filenames(file_names, postfix)
+
+        self._raw_cycle_data = self._init_buffered_points(configs, dir_path, raw_file_names)
+
+        postfix = BasicCyclePoint.TYPE_NORM
+        norm_file_names = self._filter_filenames(file_names, postfix)
+        self._norm_cycle_data = self._init_buffered_points(configs, dir_path, norm_file_names)
+
+    def _init_buffered_points(self, configs, dir_path, file_names) -> Dict[str, BasicCyclePoint]:
+        cycle_data: Dict[str, BasicCyclePoint] = {}
+        for file_name in file_names:
+            point = BufferedCyclePoint(configs, dir_path, file_name)
+            foo, key, foo = self.get_key_from_filename(file_name)
+            cycle_data[key] = point
+        return cycle_data
+
+    @classmethod
+    def get_key_from_filename(cls, filename: str) -> [str, str, str]:
+        return filename.split(cls.FILENAME_DELIMITER)
+
+    @classmethod
+    def get_meta_data_filename(cls, filename: str) -> [str, PointDataType, AxesNames, GaitEventContext, str, str]:
+        prefix, key, postfix = cls.get_key_from_filename(filename)
+        meta_data = key.split(".")
+        label = meta_data[0]
+        data_type = PointDataType[meta_data[1]]
+        direction = AxesNames[meta_data[2]]
+        context = GaitEventContext(meta_data[3])
+        return [label, data_type, direction, context, postfix, prefix]
+
+    @classmethod
+    def _filter_filenames(cls, file_names, postfix) -> List[str]:
+        r = re.compile(f".*{cls.FILENAME_DELIMITER}{postfix}.*\.csv")
+        return list(filter(r.match, file_names))
+
+    def get_raw_cycle_points(self) -> Dict[str, BasicCyclePoint]:
+        return self._raw_cycle_data
+
+    def get_norm_cycle_points(self) -> Dict[str, BasicCyclePoint]:
+        return self._norm_cycle_data
+
+
+def cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
+    for key in cycle_data:
+        cycle_data[key].to_csv(dir_path, prefix)

@@ -3,9 +3,8 @@ from abc import ABC, abstractmethod
 import numpy as np
 from btk import btkAcquisition, btkPoint
 
-
-from gait_analysis.utils.c3d import PointDataType, GaitEventContext
-from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.c3d import PointDataType
+from gait_analysis.api import ConfigProvider
 
 
 class BaseOutputModeller(ABC):

@@ -1,10 +1,6 @@
-
-from gait_analysis.analysis.cycle import SpatioTemporalAnalysis, JointAnglesCycleAnalysis, JointMomentsCycleAnalysis, \
-    JointPowerCycleAnalysis
-from gait_analysis.analysis.normalised import DescriptiveNormalisedAnalysis
-from gait_analysis.cycle.extraction import BasicCyclePoint
-from gait_analysis.utils.config import ConfigProvider
-from gait_analysis.utils.io import CyclePointLoader
+from gait_analysis.analysis import JointMomentsCycleAnalysis, JointPowerCycleAnalysis, JointAnglesCycleAnalysis, \
+    SpatioTemporalAnalysis, DescriptiveNormalisedAnalysis
+from gait_analysis.api import BasicCyclePoint, ConfigProvider, CyclePointLoader
 
 # This is an example pipeline #
 ###############################

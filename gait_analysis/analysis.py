@@ -4,12 +4,11 @@ from typing import Dict
 import numpy as np
 from pandas import DataFrame, concat
 
-from gait_analysis.cycle.extraction import BasicCyclePoint
-from gait_analysis.utils.c3d import PointDataType, AxesNames, GaitEventContext
-from gait_analysis.utils.config import ConfigProvider
+from gait_analysis.api import BasicCyclePoint, ConfigProvider
+from gait_analysis.c3d import PointDataType, AxesNames, GaitEventContext
 
 
-class BaseRawCycleAnalysis(ABC):
+class BaseCycleAnalysis(ABC):
 
     def __init__(self, data_list: Dict, data_type: PointDataType):
         self._data_list: Dict[str, BasicCyclePoint] = data_list
@@ -39,7 +38,7 @@ class BaseRawCycleAnalysis(ABC):
         return results.pivot(columns="metric")
 
 
-class JointMomentsCycleAnalysis(BaseRawCycleAnalysis):
+class JointMomentsCycleAnalysis(BaseCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Moments)
@@ -63,7 +62,7 @@ class JointMomentsCycleAnalysis(BaseRawCycleAnalysis):
         return results
 
 
-class JointPowerCycleAnalysis(BaseRawCycleAnalysis):
+class JointPowerCycleAnalysis(BaseCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Power)
@@ -88,7 +87,7 @@ class JointPowerCycleAnalysis(BaseRawCycleAnalysis):
         return results
 
 
-class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
+class JointAnglesCycleAnalysis(BaseCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Angles)
@@ -116,7 +115,7 @@ class JointAnglesCycleAnalysis(BaseRawCycleAnalysis):
         return results
 
 
-class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
+class SpatioTemporalAnalysis(BaseCycleAnalysis):
 
     def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
         super().__init__(data_list, PointDataType.Angles)
@@ -260,14 +259,54 @@ class SpatioTemporalAnalysis(BaseRawCycleAnalysis):
     def _do_analysis(self, data: Dict[int, np.array], key: str):
         pass
 
-# drag_duration_gc = np.zeros(len(data))  # %GC
-# drag_duration_swing = np.zeros(len(data))  # %swing
-# single_stance_duration = np.zeros(len(data))  # %GC
-# double_stance_duration = np.zeros(len(data))  # %GC
-# stride_speed = np.zeros(len(data))  # m/s
-# stride_length_com = np.zeros(len(data))  # %BH
-# stride_speed_com = np.zeros(len(data))  # m/s
-# length_foot_trajectory = np.zeros(len(data))  # %BH
-# length_com_trajectory = np.zeros(len(data))  # %BH
-# lateral_movement_during_swing = np.zeros(len(data))  # BH%
-# max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
+
+class BaseNormalisedAnalysis(ABC):
+
+    def __init__(self, data_list: {}):
+        self.data_list = data_list
+
+    @abstractmethod
+    def _do_analysis(self, table: DataFrame) -> DataFrame:
+        pass
+
+    def analyse(self) -> DataFrame:
+        results = None
+        for key in self.data_list:
+            table = self.data_list[key].data_table
+            result = self._do_analysis(table)
+            result['metric'] = key
+            result['event_frame'] = self.data_list[key].get_mean_event_frame()
+            result['data_type'] = self.data_list[key].data_type
+            if results is None:
+                results = result
+            else:
+                results = concat([results, result])
+        return results
+
+    # drag_duration_gc = np.zeros(len(data))  # %GC
+    # drag_duration_swing = np.zeros(len(data))  # %swing
+    # single_stance_duration = np.zeros(len(data))  # %GC
+    # double_stance_duration = np.zeros(len(data))  # %GC
+    # stride_speed = np.zeros(len(data))  # m/s
+    # stride_length_com = np.zeros(len(data))  # %BH
+    # stride_speed_com = np.zeros(len(data))  # m/s
+    # length_foot_trajectory = np.zeros(len(data))  # %BH
+    # length_com_trajectory = np.zeros(len(data))  # %BH
+    # lateral_movement_during_swing = np.zeros(len(data))  # BH%
+    # max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
+
+
+class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
+
+    def _do_analysis(self, table: DataFrame) -> DataFrame:
+        frame_number = np.arange(1, 101, 1)  # Could be something like myRange = range(1,1000,1)
+        result = DataFrame(index=frame_number)
+        result.index.name = "frame_number"
+        result['mean'] = table.mean(axis=0).to_list()
+        result['sd'] = table.std(axis=0).to_list()
+        result['max'] = table.max(axis=0).to_list()
+        result['min'] = table.min(axis=0).to_list()
+        result['median'] = table.median(axis=0).to_list()
+        result['sd_up'] = result.apply(lambda row: row['mean'] + row['sd'], axis=1)
+        result['sd_down'] = result.apply(lambda row: row['mean'] - row['sd'], axis=1)
+        return result

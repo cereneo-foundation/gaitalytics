@@ -1,8 +1,8 @@
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis.utils import c3d, config
-from gait_analysis.event.detection import ZenisGaitEventDetector, ForcePlateEventDetection
-from gait_analysis.utils.config import ConfigProvider
+from gait_analysis import c3d
+from gait_analysis.events import ZenisGaitEventDetector
+from gait_analysis.api import ConfigProvider
 
 # This is an example pipeline #
 ###############################

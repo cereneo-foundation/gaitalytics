@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -8,7 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
-from gait_analysis.utils.c3d import PointDataType
+from gait_analysis.c3d import PointDataType
 from gait_analysis.utils import config
 from gait_analysis.utils.config import MarkerModelConfig
 
@@ -32,20 +34,20 @@ class BasicPlotter(ABC):
 
     def _get_valid_data_keys(self, plot_group: PlotGroup) -> List[str]:
         keys = []
-        for key in self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS]:
-            if self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['group'] == plot_group.value:
+        for key in self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_PLOTS]:
+            if self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_PLOTS][key]['group'] == plot_group.value:
                 keys.append(key)
         return keys
 
     def _plot_side_by_side_figure(self, ax, key, results):
         ax.set_title(
-            self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['plot_name'],
+            self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_PLOTS][key]['plot_name'],
             fontsize=self.MEDIUM_SIZE)
         left = results[(
-                results.metric == f"L{self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
+                results.metric == f"L{self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
         left.plot(x="frame_number", y=['mean'], yerr='sd', kind='line', color="red", ax=ax)
         right = results[(
-                results.metric == f"R{self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
+                results.metric == f"R{self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_PLOTS][key]['modelled_name']}")]
         right.plot(x="frame_number", y=['mean'], yerr='sd', kind='line', color="green", ax=ax)
         ymin, ymax = ax.get_ylim()
         ax.vlines(x=max(left['event_frame']),
@@ -64,7 +66,7 @@ class BasicPlotter(ABC):
                   label='_nolegend_')
         ax.set_xlabel("")
         ax.set_ylabel(
-            self.configs[config.KEY_PLOT_MAPPING][config.KEY_PLOT_MAPPING_DATA_TYPE][
+            self.configs[KEY_PLOT_MAPPING][KEY_PLOT_MAPPING_DATA_TYPE][
                 max(left['data_type'])]['y_label'],
             fontsize=self.SMALL_SIZE)
         ax.legend(['Left', 'Right'])
@@ -152,3 +154,8 @@ class PdfPlotter(BasicPlotter):
                 page_num += 1
             ax.legend().remove()
         return figures
+
+
+KEY_PLOT_MAPPING_DATA_TYPE = 'data_types'
+KEY_PLOT_MAPPING_PLOTS = 'plots'
+KEY_PLOT_MAPPING = 'model_mapping_plot'

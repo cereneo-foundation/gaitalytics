@@ -2,15 +2,12 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis.analysis.cycle import JointAnglesCycleAnalysis, SpatioTemporalAnalysis, JointMomentsCycleAnalysis, \
-    JointPowerCycleAnalysis
-from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.cycle.extraction import CycleDataExtractor, BasicCyclePoint
-from gait_analysis.event.anomaly import BasicContextChecker
-from gait_analysis.utils import c3d
-from gait_analysis.utils.config import ConfigProvider
-from gait_analysis.utils.io import CyclePointLoader
-from gait_analysis.utils.utils import cycle_points_to_csv
+from gait_analysis.analysis import JointMomentsCycleAnalysis, JointPowerCycleAnalysis, JointAnglesCycleAnalysis, \
+    SpatioTemporalAnalysis
+from gait_analysis.cycle_extraction import HeelStrikeToHeelStrikeCycleBuilder, CycleDataExtractor
+from gait_analysis.api import BasicCyclePoint, ConfigProvider, CyclePointLoader, cycle_points_to_csv
+from gait_analysis.events import ContextPatternChecker
+from gait_analysis import c3d
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "C:/ViconData/Handshake/"
@@ -38,7 +35,7 @@ def main():
             cycle_path = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_CYCLES}/{subject}"
             if not os.path.exists(cycle_path):
                 acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-                cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(BasicContextChecker())
+                cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(ContextPatternChecker())
                 cycles = cycle_builder.build_cycles(acq_trial)
                 cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
                 os.mkdir(cycle_path)

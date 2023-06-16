@@ -1,12 +1,8 @@
 from argparse import ArgumentParser, Namespace
 
-import configparser
-from gait_analysis.utils import c3d
+from gait_analysis import c3d
 
-
-from gait_analysis.cycle.builder import HeelStrikeToHeelStrikeCycleBuilder
-from gait_analysis.event.anomaly import BasicContextChecker, EventNormalSequenceInterContextChecker, EventSpacingChecker
-from gait_analysis.cycle.normalisation import LinearTimeNormalisation
+from gait_analysis.events import ContextPatternChecker, EventSpacingChecker
 
 # This is an example pipeline #
 ###############################
@@ -31,7 +27,7 @@ def main():
 
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
-    event_checker = EventSpacingChecker(BasicContextChecker(EventNormalSequenceInterContextChecker()))
+    event_checker = EventSpacingChecker(ContextPatternChecker())
     detected, anomalies = event_checker.check_events(acq_trial)
     for anomaly in anomalies:
         print(anomaly)
