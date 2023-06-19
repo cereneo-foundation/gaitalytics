@@ -9,3 +9,4 @@ dependencies:
   - pandas
   - matplotlib
   - pyyaml
+  - ezc3d
