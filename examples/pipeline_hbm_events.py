@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis import c3d
+from gait_analysis.c3d import C3dAcquistion
 from gait_analysis.events import ZenisGaitEventDetector
 from gait_analysis.api import ConfigProvider
 
@@ -27,13 +27,13 @@ def main():
 
     configs.read_configs(SETTINGS_FILE)
 
-    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
+    acq_trial = C3dAcquistion.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
 
     # detect gait events #
     ######################
-    ZenisGaitEventDetector(configs).detect_events(acq_trial)
+    ZenisGaitEventDetector(configs).detect_events(acq_trial.acq)
 
-    c3d.write_btk(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    acq_trial.write_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
 
 

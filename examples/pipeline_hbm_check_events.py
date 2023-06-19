@@ -1,6 +1,6 @@
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis import c3d
+from gait_analysis.c3d import C3dAcquistion
 
 from gait_analysis.events import ContextPatternChecker, EventSpacingChecker
 
@@ -25,10 +25,10 @@ def main():
 
     # load file into memory
 
-    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    acq_trial = C3dAcquistion.read_btk(f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
 
     event_checker = EventSpacingChecker(ContextPatternChecker())
-    detected, anomalies = event_checker.check_events(acq_trial)
+    detected, anomalies = event_checker.check_events(acq_trial.acq)
     for anomaly in anomalies:
         print(anomaly)
 

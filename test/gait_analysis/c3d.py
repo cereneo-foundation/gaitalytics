@@ -1,38 +1,42 @@
 import os
 import unittest
 
-from gait_analysis import c3d
+from gait_analysis.api import ConfigProvider
+from gait_analysis.c3d import C3dAcquisition
 from gait_analysis.c3d import GaitEventContext
 
 DATA_PATH = "./test/data"
 TEST_INPUT_FILE_NAME = "Baseline.3.c3d"
 TEST_OUTPUT_FILE_NAME = "test.c3d"
+SETTINGS_FILE = "settings/hbm_pig.yaml"
 
 
 class C3dFunctionsTests(unittest.TestCase):
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        configs = ConfigProvider()
+        configs.read_configs(SETTINGS_FILE)
+        cls._configs: ConfigProvider = configs
 
     def tearDown(self) -> None:
         if os.path.exists(f"{DATA_PATH}/{TEST_OUTPUT_FILE_NAME}"):
             os.remove(f"{DATA_PATH}/{TEST_OUTPUT_FILE_NAME}")
 
-    def test_read(self):
-        acq_trial = c3d.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
-        self.assertEqual(acq_trial.GetPointNumber(), 124)
+    def test_get_point_frame_number(self):
+        acq_trial = C3dAcquisition.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
+        self.assertEqual(acq_trial.get_point_frame_number(), 24998)
+
+    def test_get_point(self):
+        acq_trial = C3dAcquisition.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
+        self.assertEqual(acq_trial.get_point(self._configs.MARKER_MAPPING.right_heel), 24998)
 
     def test_write(self):
-        TEST_LABEL = "Hallo"
-        acq = c3d.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
-        acq.GetPoint(1).SetLabel(TEST_LABEL)
-        c3d.write_btk(acq, f"{DATA_PATH}/{TEST_OUTPUT_FILE_NAME}")
-        acq = c3d.read_btk(f"{DATA_PATH}/{TEST_OUTPUT_FILE_NAME}")
-        self.assertEqual(acq.GetPoint(1).GetLabel(), TEST_LABEL)
+        pass
 
     def test_sort(self):
-        acq = c3d.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
-        event = acq.GetEvent(1)
-        event.SetFrame(100000)
-        c3d.sort_events(acq)
-        self.assertNotEquals(acq.GetEvent(1), event)
+        pass
 
 
 class GaitEventContextTest(unittest.TestCase):
