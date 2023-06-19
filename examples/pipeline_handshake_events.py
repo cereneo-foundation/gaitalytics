@@ -2,7 +2,7 @@ from argparse import ArgumentParser, Namespace
 import os
 import re
 
-from gait_analysis.c3d import C3dAcquistion
+from gait_analysis import c3d
 from gait_analysis.events import ZenisGaitEventDetector
 from gait_analysis.api import ConfigProvider
 
@@ -36,9 +36,9 @@ def main():
                 print("existing file deleted")
             else:
                 print(f"add events")
-                acq_trial = C3dAcquistion.read_btk(f"{root}/{filtered_file}")
-                ZenisGaitEventDetector(configs).detect_events(acq_trial.acq)
-                acq_trial.write_btk(f"{root}/{event_added_file}")
+                acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
+                ZenisGaitEventDetector(configs).detect_events(acq_trial)
+                c3d.write_btk(acq_trial, f"{root}/{event_added_file}")
 
 
 # Using the special variable
