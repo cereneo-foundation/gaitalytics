@@ -221,17 +221,17 @@ class SpatioTemporalAnalysis(BaseCycleAnalysis):
     def _calculate_length(self) -> DataFrame:
         right_heel_progression_right = self._data_list[
             ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.RIGHT)]
+                                      GaitEventContext.RIGHT)].data_table
         left_heel_progression_right = self._data_list[
             ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.RIGHT)]
+                                      GaitEventContext.RIGHT)].data_table
 
         left_heel_progression_left = self._data_list[
             ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.LEFT)]
+                                      GaitEventContext.LEFT)].data_table
         right_heel_progression_left = self._data_list[
             ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.LEFT)]
+                                      GaitEventContext.LEFT)].data_table
 
         right = self._side_step_length_calculation(right_heel_progression_right,
                                                    left_heel_progression_right, "right")
@@ -247,12 +247,12 @@ class SpatioTemporalAnalysis(BaseCycleAnalysis):
     def _side_step_length_calculation(context_heel_progression: DataFrame,
                                       contra_heel_progression: DataFrame, side: str) -> np.array:
         s_len_label = f"step_length_{side}"
-        step_length = DataFrame(index=context_heel_progression.data_table.index, columns=[s_len_label, ])
+        step_length = DataFrame(index=context_heel_progression.index, columns=[s_len_label ])
 
-        for cycle_number in context_heel_progression.data_table.index.to_series():
-            context_hs_pos = context_heel_progression.data_table.loc[cycle_number][1]
-            contra_hs_pos = contra_heel_progression.data_table.loc[cycle_number][1]
-            step_length.loc[cycle_number][f"step_length{side}"] = abs(context_hs_pos - contra_hs_pos)
+        for cycle_number in context_heel_progression.index.to_series():
+            context_hs_pos = context_heel_progression.loc[cycle_number][1]
+            contra_hs_pos = contra_heel_progression.loc[cycle_number][1]
+            step_length.loc[cycle_number][s_len_label] = abs(context_hs_pos - contra_hs_pos)
 
         return step_length
 

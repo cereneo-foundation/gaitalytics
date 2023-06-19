@@ -261,7 +261,7 @@ def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) 
         for event_index in range(start_index + 1, acq.GetEventNumber()):
             event = acq.GetEvent(event_index)
             if event.GetContext() == context:
-                if not event.GetLabel() == label:
+                if event.GetLabel() == label:
                     return [event, unused_event]
                 else:
                     unused_event = event
