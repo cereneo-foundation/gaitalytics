@@ -3,6 +3,7 @@ from typing import Dict
 
 import numpy as np
 from pandas import DataFrame, concat
+from scipy import signal
 
 from . import utils, cycle, c3d
 
@@ -303,11 +304,45 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
 class MinimalClearingDifference(AbstractAnalysis):
 
-    def __int__(self, data_list: Dict[str, cycle.BasicCyclePoint]):
+    def __init__(self, data_list: Dict[str, cycle.BasicCyclePoint], configs: utils.ConfigProvider):
         super().__init__(data_list)
+        self._configs = configs
 
     def analyse(self) -> DataFrame:
-        pass
+        right_toe = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_meta_2,
+                                                                    c3d.PointDataType.Marker,
+                                                                    c3d.AxesNames.z,
+                                                                    c3d.GaitEventContext.RIGHT)]
+        left_toe = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_meta_2,
+                                                                   c3d.PointDataType.Marker,
+                                                                   c3d.AxesNames.z,
+                                                                   c3d.GaitEventContext.LEFT)]
+
+        right = self._calculate_minimal_clearance(right_toe.data_table, right_toe.event_frames, "right")
+        left = self._calculate_minimal_clearance(left_toe.data_table, left_toe.event_frames, "left")
+        result = concat([left, right], axis=1)
+        result['metric'] = "MinimalToeClearance"
+        return result.pivot(columns="metric")
+
+    @staticmethod
+    def _calculate_minimal_clearance(toe: DataFrame, event_frames: DataFrame, side: str) -> DataFrame:
+        s_mtc_label = f"minimal_toe_clearance_{side}"
+        s_mtc_cycle_label = f"minimal_toe_clearance_swing_p_{side}"
+        s_tc_hs_label = f"toe_clearance_heel_strike_{side}"
+        toe_clearance = DataFrame(index=toe.index, columns=[s_mtc_label, s_mtc_cycle_label, s_tc_hs_label])
+        for cycle_number in toe.index.to_series():
+            toe_off_frame = event_frames.loc[cycle_number][cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
+            swing_phase_data = toe.loc[cycle_number][toe_off_frame: -1]
+            mid_swing_index = round(len(swing_phase_data) / 2)
+            peaks = signal.find_peaks(swing_phase_data[0:mid_swing_index], distance=len(swing_phase_data))
+            toe_clear_min = min(swing_phase_data[peaks[0][0]:-1])
+            tc_percent = np.where(swing_phase_data[peaks[0][0]:-1] == toe_clear_min)[0] / len(swing_phase_data)
+            tc_clear_hs = max(swing_phase_data[mid_swing_index:-1])
+            toe_clearance.loc[cycle_number][s_mtc_label] = toe_clear_min
+            toe_clearance.loc[cycle_number][s_mtc_cycle_label] = tc_percent
+            toe_clearance.loc[cycle_number][s_tc_hs_label] = tc_clear_hs
+        return toe_clearance
+
 
 class AbstractNormalisedAnalysis(ABC):
 

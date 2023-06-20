@@ -25,11 +25,11 @@ class C3dFunctionsTests(unittest.TestCase):
             os.remove(f"{DATA_PATH}/{TEST_OUTPUT_FILE_NAME}")
 
     def test_get_point_frame_number(self):
-        acq_trial = C3dAcquisition.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
-        self.assertEqual(acq_trial.get_point_frame_number(), 24998)
+        acq_trial = C3dAcquisition(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
+        self.assertEqual(acq_trial., 24998)
 
     def test_get_point(self):
-        acq_trial = C3dAcquisition.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
+        acq_trial = BtkAcquisition.read_btk(f"{DATA_PATH}/{TEST_INPUT_FILE_NAME}")
         self.assertEqual(acq_trial.get_point(self._configs.MARKER_MAPPING.right_heel), 24998)
 
     def test_write(self):

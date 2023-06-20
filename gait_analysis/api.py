@@ -26,12 +26,14 @@ ANALYSIS_MOMENTS = "moments"
 ANALYSIS_ANGLES = "angles"
 ANALYSIS_POWERS = "powers"
 ANALYSIS_FORCES = "forces"
+ANALYSIS_TOE_CLEARANCE = "toe_clearance"
 ANALYSIS_SPATIO_TEMP = "spatiotemporal"
 ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_ANGLES,
                  ANALYSIS_POWERS,
                  ANALYSIS_FORCES,
-                 ANALYSIS_SPATIO_TEMP)
+                 ANALYSIS_SPATIO_TEMP,
+                 ANALYSIS_TOE_CLEARANCE)
 
 
 def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
@@ -57,6 +59,8 @@ def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
         methods.append(analysis.JointPowerCycleAnalysis(cycle_data))
     if ANALYSIS_SPATIO_TEMP in methode:
         methods.append(analysis.SpatioTemporalAnalysis(config, cycle_data))
+    if ANALYSIS_TOE_CLEARANCE in methode:
+        methods.append(analysis.MinimalClearingDifference(cycle_data, config))
 
     results = None
     for methode in methods:
