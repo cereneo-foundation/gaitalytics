@@ -301,6 +301,14 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
     # max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
 
 
+class MinimalClearingDifference(AbstractAnalysis):
+
+    def __int__(self, data_list: Dict[str, cycle.BasicCyclePoint]):
+        super().__init__(data_list)
+
+    def analyse(self) -> DataFrame:
+        pass
+
 class AbstractNormalisedAnalysis(ABC):
 
     def __init__(self, data_list: {}):

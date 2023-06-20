@@ -72,7 +72,7 @@ class MLcMoSModeller(BaseOutputModeller):
                 Second_Meta_Head_Marker_Left, Fifth_Meta_Head_Marker_Right, Fifth_Meta_Head_Marker_Left,
                 Heel_Marker_Right, Heel_Marker_Left, Marker_freq, dominant_leg_length, belt_speed,
                 show=False) -> np.ndarray:
-        # TODO Cyrille: Do your magic
+        # TODO Adam: Do your magic
         """MLcMoS estimation.
 
         This function estimates and plot the continuous mediolateral margin of stability from processed (i.e., reconstructed, filled, filtered, ...)
