@@ -4,8 +4,10 @@ from argparse import ArgumentParser, Namespace
 
 from gait_analysis.analysis import JointMomentsCycleAnalysis, JointPowerCycleAnalysis, JointAnglesCycleAnalysis, \
     SpatioTemporalAnalysis
-from gait_analysis.cycle_extraction import HeelStrikeToHeelStrikeCycleBuilder, CycleDataExtractor
-from gait_analysis.api import BasicCyclePoint, ConfigProvider, CyclePointLoader, cycle_points_to_csv
+from gait_analysis.cycle import HeelStrikeToHeelStrikeCycleBuilder, CycleDataExtractor, BasicCyclePoint, \
+    CyclePointLoader
+from gait_analysis.api import _cycle_points_to_csv
+from gait_analysis.utils import ConfigProvider
 from gait_analysis.events import ContextPatternChecker
 from gait_analysis import c3d
 
@@ -39,7 +41,7 @@ def main():
                 cycles = cycle_builder.build_cycles(acq_trial)
                 cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
                 os.mkdir(cycle_path)
-                cycle_points_to_csv(cycle_data, cycle_path, subject)
+                _cycle_points_to_csv(cycle_data, cycle_path, subject)
             else:
                 cycle_data = CyclePointLoader(configs, cycle_path).get_raw_cycle_points()
 

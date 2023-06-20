@@ -1,44 +1,16 @@
-from argparse import ArgumentParser, Namespace
-
-from gait_analysis import c3d
-from gait_analysis.events import ZenisGaitEventDetector
-from gait_analysis.api import ConfigProvider
-
-# This is an example pipeline #
-###############################
-
-# Define paths
-SETTINGS_FILE = "settings/hbm_pig.yaml"
-DATA_PATH = "./test/data/"
-TEST_ORIGIN_FILE_NAME = "Baseline.3.c3d"
-TEST_EVENTS_FILE_NAME = "Baseline.4.c3d"
-
-
-def get_args() -> Namespace:
-    parser = ArgumentParser(description='Event Adder')
-    parser.add_argument('--path', dest='path', type=str, help='Path to data')
-    parser.add_argument('--file', dest='file', type=str, help='Trial file name')
-    return parser.parse_args()
+from gait_analysis import api, utils
 
 
 def main():
-    # load file into memory
-    configs = ConfigProvider()
+    settings_file = "settings/hbm_pig.yaml"
+    file_path = "./test/data/Baseline.3.c3d"
+    out_path = "./test/data/"
 
-    configs.read_configs(SETTINGS_FILE)
+    # load configs
+    configs = utils.ConfigProvider(settings_file)
 
-    acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
-
-    # detect gait events #
-    ######################
-    ZenisGaitEventDetector(configs).detect_events(acq_trial)
-
-    c3d.write_btk(acq_trial, f"{DATA_PATH}{TEST_EVENTS_FILE_NAME}")
+    api.detect_gait_events(file_path, out_path, configs)
 
 
-
-
-# Using the special variable
-# __name__
 if __name__ == "__main__":
     main()

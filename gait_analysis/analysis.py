@@ -4,13 +4,12 @@ from typing import Dict
 import numpy as np
 from pandas import DataFrame, concat
 
-from gait_analysis.api import BasicCyclePoint, ConfigProvider
-from gait_analysis.c3d import PointDataType, AxesNames, GaitEventContext
+from . import utils, cycle, c3d
 
 
 class AbstractAnalysis(ABC):
-    def __init__(self, data_list: Dict[str, BasicCyclePoint]):
-        self._data_list: Dict[str, BasicCyclePoint] = data_list
+    def __init__(self, data_list: Dict[str, cycle.BasicCyclePoint]):
+        self._data_list: Dict[str, cycle.BasicCyclePoint] = data_list
 
     def analyse(self) -> DataFrame:
         pass
@@ -18,7 +17,7 @@ class AbstractAnalysis(ABC):
 
 class AbstractCycleAnalysis(AbstractAnalysis, ABC):
 
-    def __init__(self, data_list: Dict[str, BasicCyclePoint], data_type: PointDataType):
+    def __init__(self, data_list: Dict[str, cycle.BasicCyclePoint], data_type: c3d.PointDataType):
         super().__init__(data_list)
         self._point_data_type = data_type
 
@@ -43,7 +42,7 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
                     standing = data.copy()
                     swinging = data.copy()
                     for row in range(len(data)):
-                        event_frame = raw_point.event_frames.iloc[row][BasicCyclePoint.EVENT_FRAME_NUMBER]
+                        event_frame = raw_point.event_frames.iloc[row][cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
                         swinging.iloc[row, 1:event_frame] = float("Nan")
                         standing.iloc[row, event_frame + 1: -1] = float("Nan")
                     result1 = self._do_analysis(standing)
@@ -62,7 +61,7 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
 class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
-        super().__init__(data_list, PointDataType.Moments)
+        super().__init__(data_list, c3d.PointDataType.Moments)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -86,13 +85,13 @@ class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
 class JointPowerCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
-        super().__init__(data_list, PointDataType.Power)
+        super().__init__(data_list, c3d.PointDataType.Power)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
             splits = key.split(".")
             if splits[3].lower() in splits[0]:
-                return AxesNames.z.name is splits[2]
+                return c3d.AxesNames.z.name is splits[2]
         return False
 
     def _do_analysis(self, data: DataFrame) -> DataFrame:
@@ -111,7 +110,7 @@ class JointPowerCycleAnalysis(AbstractCycleAnalysis):
 class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
-        super().__init__(data_list, PointDataType.Angles)
+        super().__init__(data_list, c3d.PointDataType.Angles)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -138,7 +137,7 @@ class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
 
 class SpatioTemporalAnalysis(AbstractAnalysis):
 
-    def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
+    def __init__(self, configs: utils.ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
         super().__init__(data_list)
         self._configs = configs
         self._frequency = frequency
@@ -157,22 +156,22 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         return result.pivot(columns="metric")
 
     def _calculate_step_width(self) -> DataFrame:
-        right_heel_x_right = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                       PointDataType.Marker,
-                                                                       AxesNames.x,
-                                                                       GaitEventContext.RIGHT)].data_table
-        left_heel_x_right = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                      PointDataType.Marker,
-                                                                      AxesNames.x,
-                                                                      GaitEventContext.RIGHT)].data_table
-        right_heel_x_left = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                      PointDataType.Marker,
-                                                                      AxesNames.x,
-                                                                      GaitEventContext.LEFT)].data_table
-        left_heel_x_left = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                     PointDataType.Marker,
-                                                                     AxesNames.x,
-                                                                     GaitEventContext.LEFT)].data_table
+        right_heel_x_right = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                             c3d.PointDataType.Marker,
+                                                                             c3d.AxesNames.x,
+                                                                             c3d.GaitEventContext.RIGHT)].data_table
+        left_heel_x_right = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                            c3d.PointDataType.Marker,
+                                                                            c3d.AxesNames.x,
+                                                                            c3d.GaitEventContext.RIGHT)].data_table
+        right_heel_x_left = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                            c3d.PointDataType.Marker,
+                                                                            c3d.AxesNames.x,
+                                                                            c3d.GaitEventContext.LEFT)].data_table
+        left_heel_x_left = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                           c3d.PointDataType.Marker,
+                                                                           c3d.AxesNames.x,
+                                                                           c3d.GaitEventContext.LEFT)].data_table
 
         right = self._calculate_step_width_side(right_heel_x_right, left_heel_x_right, "right")
         left = self._calculate_step_width_side(left_heel_x_left, right_heel_x_left, "left")
@@ -189,14 +188,14 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         return width
 
     def _calculate_step_height(self) -> DataFrame:
-        right_heel_z = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                 PointDataType.Marker,
-                                                                 AxesNames.z,
-                                                                 GaitEventContext.RIGHT)].data_table
-        left_heel_z = self._data_list[ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                PointDataType.Marker,
-                                                                AxesNames.z,
-                                                                GaitEventContext.LEFT)].data_table
+        right_heel_z = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                                       c3d.PointDataType.Marker,
+                                                                       c3d.AxesNames.z,
+                                                                       c3d.GaitEventContext.RIGHT)].data_table
+        left_heel_z = self._data_list[utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                                      c3d.PointDataType.Marker,
+                                                                      c3d.AxesNames.z,
+                                                                      c3d.GaitEventContext.LEFT)].data_table
 
         right = self._calculate_step_height_side(right_heel_z, "right")
         left = self._calculate_step_height_side(left_heel_z, "left")
@@ -211,11 +210,15 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
     def _calculate_durations(self):
         right_heel_progression = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.RIGHT)]
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.RIGHT)]
         left_heel_progression = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.LEFT)]
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.LEFT)]
         right_durations = self._side_duration_calculation(right_heel_progression, "right")
         left_durations = self._side_duration_calculation(left_heel_progression, "left")
 
@@ -229,7 +232,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         columns = [c_dur_label, s_dur_label, sw_dur_label, st_dur_label]
         durations = DataFrame(index=progression.data_table.index, columns=columns)
         for cycle_number in progression.data_table.index.to_series():
-            toe_off = progression.event_frames.loc[cycle_number][BasicCyclePoint.EVENT_FRAME_NUMBER]
+            toe_off = progression.event_frames.loc[cycle_number][cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
             cycle_data = progression.data_table.loc[cycle_number][~progression.data_table.loc[cycle_number].isna()]
 
             durations.loc[cycle_number][c_dur_label] = len(cycle_data) / self._frequency
@@ -241,18 +244,26 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
     def _calculate_length(self) -> DataFrame:
         right_heel_progression_right = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.RIGHT)].data_table
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.RIGHT)].data_table
         left_heel_progression_right = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.RIGHT)].data_table
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.RIGHT)].data_table
 
         left_heel_progression_left = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.LEFT)].data_table
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.LEFT)].data_table
         right_heel_progression_left = self._data_list[
-            ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel, PointDataType.Marker, AxesNames.y,
-                                      GaitEventContext.LEFT)].data_table
+            utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                            c3d.PointDataType.Marker,
+                                            c3d.AxesNames.y,
+                                            c3d.GaitEventContext.LEFT)].data_table
 
         right = self._side_step_length_calculation(right_heel_progression_right,
                                                    left_heel_progression_right, "right")

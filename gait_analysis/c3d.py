@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from enum import Enum
 from statistics import mean
 
@@ -127,3 +129,20 @@ def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
     rfmh_dist = rfmh_point.GetValue(frame_number - 1, 1) - rfmh_point.GetValue(frame_number, 1)
     rhee_dist = rhee_point.GetValue(frame_number - 1, 1) - rhee_point.GetValue(frame_number, 1)
     return np.min([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])
+
+
+class GaitEventLabel(Enum):
+    FOOT_STRIKE = "Foot Strike"
+    FOOT_OFF = "Foot Off"
+
+    @classmethod
+    def get_contrary_event(cls, event_label: str):
+        if event_label == cls.FOOT_STRIKE.value:
+            return cls.FOOT_OFF
+        return cls.FOOT_STRIKE
+
+    @classmethod
+    def get_type_id(cls, event_label: str):
+        if event_label == cls.FOOT_STRIKE.value:
+            return 1
+        return 2

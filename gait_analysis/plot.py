@@ -11,8 +11,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
 from gait_analysis.c3d import PointDataType
-from gait_analysis.utils import config
-from gait_analysis.utils.config import MarkerModelConfig
+
 
 
 class PlotGroup(Enum):

@@ -1,7 +1,7 @@
 import os
 import unittest
 
-from gait_analysis.api import ConfigProvider
+from gait_analysis.utils import ConfigProvider
 from gait_analysis.c3d import C3dAcquisition
 from gait_analysis.c3d import GaitEventContext
 

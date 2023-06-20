@@ -1,380 +1,252 @@
 from __future__ import annotations
 
 import os
-import re
-from enum import Enum
 from typing import Dict, List
 
-import numpy as np
-import yaml
-from btk import btkEvent
-from pandas import DataFrame, concat, read_csv
+from pandas import DataFrame
 
-from gait_analysis.c3d import GaitEventContext, AxesNames, PointDataType
+from . import c3d, cycle, events, utils, analysis
+
+CYCLE_METHOD_HEEL_STRIKE = "HS"
+CYCLE_METHOD_TOE_OFF = "TO"
+
+NORMALISE_METHODE_LINEAR = "linear"
+NORMALISE_METHODE_LIST = (NORMALISE_METHODE_LINEAR)
+
+GAIT_EVENT_METHODE_MARKER = "Marker"
+GAIT_EVENT_METHODE_FP = "Forceplate"
+GAIT_EVENT_METHODE_LIST = (GAIT_EVENT_METHODE_MARKER, GAIT_EVENT_METHODE_FP)
+
+GAIT_EVENT_CHECKER_CONTEXT = "context"
+GAIT_EVENT_CHECKER_SPACING = "spacing"
+GAIT_EVENT_CHECKER_LIST = (GAIT_EVENT_CHECKER_CONTEXT, GAIT_EVENT_CHECKER_SPACING)
+
+ANALYSIS_MOMENTS = "moments"
+ANALYSIS_ANGLES = "angles"
+ANALYSIS_POWERS = "powers"
+ANALYSIS_FORCES = "forces"
+ANALYSIS_SPATIO_TEMP = "spatiotemporal"
+ANALYSIS_LIST = (ANALYSIS_MOMENTS,
+                 ANALYSIS_ANGLES,
+                 ANALYSIS_POWERS,
+                 ANALYSIS_FORCES,
+                 ANALYSIS_SPATIO_TEMP)
 
 
-class GaitCycle:
+def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
+                 config: utils.ConfigProvider,
+                 methode: List[str] = ANALYSIS_LIST) -> DataFrame:
+    """
+    runs specified analysis and concatenates into one frame
+    :param cycle_data: unnormalised cycle data
+    :param config: configs from marker and model mapping
+    :param methode: list of methods, 'moments' api.ANALYSIS_MOMENTS, 'angles' api.ANALYSIS_ANGLES,
+        'powers' api.ANALYSIS_POWERS, 'forces' api.ANALYSIS_FORCES, 'spatiotemporal' api.ANALYSIS_SPATIO_TEMP
+    :return: results of analysis
+    """
+    if not all(item in ANALYSIS_LIST for item in methode):
+        raise KeyError(f"{methode} are not a valid anomaly checker")
 
-    def __init__(self, number: int, context: GaitEventContext, start_frame: int, end_frame: int,
-                 unused_event: btkEvent):
-        self.number = number
-        self.context = context
-        self.start_frame = start_frame
-        self.end_frame = end_frame
-        self.unused_event = unused_event
+    methods: List[analysis.AbstractAnalysis] = []
+    if ANALYSIS_ANGLES in methode:
+        methods.append(analysis.JointAnglesCycleAnalysis(cycle_data))
+    if ANALYSIS_MOMENTS in methode:
+        methods.append(analysis.JointMomentsCycleAnalysis(cycle_data))
+    if ANALYSIS_POWERS in methode:
+        methods.append(analysis.JointPowerCycleAnalysis(cycle_data))
+    if ANALYSIS_SPATIO_TEMP in methode:
+        methods.append(analysis.SpatioTemporalAnalysis(config, cycle_data))
 
-
-class GaitCycleList:
-
-    def __init__(self):
-        self._left_cycles = {}
-        self._right_cycles = {}
-
-    def add_cycle(self, cycle: GaitCycle):
-        if cycle.context == GaitEventContext.LEFT:
-            self._left_cycles[cycle.number] = cycle
+    results = None
+    for methode in methods:
+        result = methode.analyse()
+        if results is None:
+            results = result
         else:
-            self._right_cycles[cycle.number] = cycle
-
-    @property
-    def left_cycles(self) -> {int: GaitCycle}:
-        return self._left_cycles
-
-    @left_cycles.setter
-    def left_cycles(self, cycles: {int: GaitCycle}):
-        self._left_cycles = cycles
-
-    @property
-    def right_cycles(self) -> {int: GaitCycle}:
-        return self._right_cycles
-
-    @right_cycles.setter
-    def right_cycles(self, cycles: {int: GaitCycle}):
-        self._right_cycles = cycles
-
-    def get_number_of_cycles(self) -> int:
-        l_num = list(self._left_cycles.keys())[-1]
-        r_num = list(self._left_cycles.keys())[-1]
-        return l_num if l_num >= r_num else r_num
-
-
-class BasicCyclePoint:
-    EVENT_FRAME_NUMBER = "events_between"
-    EVENT_LABEL = "events_label"
-    CYCLE_NUMBER = "cycle_number"
-    TYPE_RAW = "raw"
-    TYPE_NORM = "normalised"
-
-    def __init__(self, cycle_point_type: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
-                 context: GaitEventContext):
-        self._cycle_point_type = cycle_point_type
-        self._data_table: DataFrame = None
-        self._event_frames = None
-        self._translated_label = translated_label
-        self._direction = direction
-        self._context = context
-        self._data_type = data_type
-
-    @property
-    def cycle_point_type(self) -> str:
-        return self._cycle_point_type
-
-    @cycle_point_type.setter
-    def cycle_point_type(self, cycle_point_type: str):
-        self._cycle_point_type = cycle_point_type
-
-    @property
-    def data_type(self) -> PointDataType:
-        return self._data_type
-
-    @data_type.setter
-    def data_type(self, value: PointDataType):
-        self._data_type = value
-
-    @property
-    def context(self) -> GaitEventContext:
-        return self._context
-
-    @context.setter
-    def context(self, value: GaitEventContext):
-        self._context = value
-
-    @property
-    def direction(self) -> AxesNames:
-        return self._direction
-
-    @direction.setter
-    def direction(self, value: AxesNames):
-        self._direction = value
-
-    @property
-    def translated_label(self) -> Enum:
-        return self._translated_label
-
-    @translated_label.setter
-    def translated_label(self, value: Enum):
-        self._translated_label = value
-
-    @property
-    def event_frames(self) -> DataFrame:
-        return self._event_frames
-
-    @event_frames.setter
-    def event_frames(self, event_frames: DataFrame):
-        self._event_frames = event_frames
-
-    def add_event_frame(self, event_frame: int, cycle_number: int, event_label: str):
-        if self.event_frames is None:
-            prep_dict = {cycle_number: [event_frame, event_label]}
-            self.event_frames = DataFrame.from_dict(data=prep_dict, orient="index",
-                                                    columns=[self.EVENT_FRAME_NUMBER, self.EVENT_LABEL])
-            self.event_frames.index.name = self.CYCLE_NUMBER
-        else:
-            self.event_frames.loc[cycle_number] = [event_frame, event_label]
-
-    def get_mean_event_frame(self) -> float:
-        return self.event_frames[self.EVENT_FRAME_NUMBER].mean()
-
-    @property
-    def data_table(self) -> DataFrame:
-        return self._data_table
-
-    @data_table.setter
-    def data_table(self, value: DataFrame):
-        self._data_table = value
-
-    def add_cycle_data(self, data: np.array, cycle_number: int):
-
-        if self.data_table is None:
-            self.data_table = self._create_table(data, cycle_number)
-        else:
-            if self.cycle_point_type == self.TYPE_RAW:
-                self.data_table = concat([self.data_table, self._create_table(data, cycle_number)], axis=0)
-            else:
-                self.data_table.loc[cycle_number] = data
-
-    def _create_table(self, data: np.array, cycle_number: int):
-        df = DataFrame.from_dict({cycle_number: data}, orient="index")
-        df.index.name = self.CYCLE_NUMBER
-        return df
-
-    @staticmethod
-    def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
-        key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
-                                        cycle_point.context)
-
-        return f"{prefix}{CyclePointLoader.FILENAME_DELIMITER}{key}{CyclePointLoader.FILENAME_DELIMITER}{postfix}.csv"
-
-    def to_csv(self, path: str, prefix: str):
-        output = self.event_frames.merge(self.data_table, on=self.CYCLE_NUMBER)
-        filename = self.define_cycle_point_file_name(self, prefix, self.cycle_point_type)
-        output.to_csv(f"{path}/{filename}")
-
-    @classmethod
-    def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
-        [label, data_type, direction, context, cycle_point_type,
-         prefix] = CyclePointLoader.get_meta_data_filename(filename)
-
-        translated = configs.get_translated_label(label, data_type)
-        point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context)
-        data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
-        point.event_frames = DataFrame([data_table[cls.EVENT_FRAME_NUMBER], data_table[cls.EVENT_LABEL]]).T
-        data_table = data_table.drop([cls.EVENT_FRAME_NUMBER, cls.EVENT_LABEL], axis=1)
-        point.data_table = data_table
-
-        return point
-
-
-class BufferedCyclePoint(BasicCyclePoint):
-    def __init__(self, configs: ConfigProvider, path: str, filename: str):
-        self._configs = configs
-        self._filename = filename
-        self._path = path
-        self._loaded = False
-
-    def _load_file(self):
-        if not self._loaded:
-            point = BasicCyclePoint.from_csv(self._configs, self._path, self._filename)
-            self._cycle_point_type = point.cycle_point_type
-            self._event_frames = point.event_frames
-            self._translated_label = point.translated_label
-            self._direction = point.direction
-            self._context = point.context
-            self._data_type = point.data_type
-            self._data_table = point.data_table
-            self._loaded = True
-
-    @property
-    def data_table(self) -> DataFrame:
-        self._load_file()
-        return super().data_table
-
-    @data_table.setter
-    def data_table(self, data_table: DataFrame):
-        self._load_file()
-        super().data_table = data_table
-
-    def add_cycle_data(self, data: np.array, cycle_number: int):
-        self._load_file()
-        super().add_cycle_data(data, cycle_number)
-
-    @property
-    def data_type(self) -> PointDataType:
-        self._load_file()
-        return super().data_type
-
-    @data_type.setter
-    def data_type(self, value: PointDataType):
-        self._load_file()
-        super().data_type = value
-
-    @property
-    def context(self) -> GaitEventContext:
-        self._load_file()
-        return super().context
-
-    @context.setter
-    def context(self, value: GaitEventContext):
-        self._load_file()
-        super().context = value
-
-    @property
-    def direction(self) -> AxesNames:
-        self._load_file()
-        return super().direction
-
-    @direction.setter
-    def direction(self, value: AxesNames):
-        self._load_file()
-        super().direction = value
-
-    @property
-    def translated_label(self) -> Enum:
-        self._load_file()
-        return super().translated_label
-
-    @translated_label.setter
-    def translated_label(self, value: Enum):
-        self._load_file()
-        super().translated_label = value
-
-    @property
-    def event_frames(self) -> DataFrame:
-        self._load_file()
-        return super().event_frames
-
-    @event_frames.setter
-    def event_frames(self, value: DataFrame):
-        self._load_file()
-        super().event_frames = value
-
-    def add_event_frame(self, event_frame: int, cycle_number: int):
-        self._load_file()
-        super().add_event_frame(event_frame, cycle_number)
-
-    def to_csv(self, path: str, prefix: str):
-        self._load_file()
-        super().to_csv(path, prefix)
-
-
-class GaitEventLabel(Enum):
-    FOOT_STRIKE = "Foot Strike"
-    FOOT_OFF = "Foot Off"
-
-    @classmethod
-    def get_contrary_event(cls, event_label: str):
-        if event_label == cls.FOOT_STRIKE.value:
-            return cls.FOOT_OFF
-        return cls.FOOT_STRIKE
-
-    @classmethod
-    def get_type_id(cls, event_label: str):
-        if event_label == cls.FOOT_STRIKE.value:
-            return 1
-        return 2
-
-
-class ConfigProvider:
-    _MARKER_MAPPING = "marker_set_mapping"
-    _MODEL_MAPPING = "model_mapping"
-
-    def __init__(self):
-        self._config = None
-        self.MARKER_MAPPING: Enum = None
-        self.MODEL_MAPPING: Enum = None
-
-    def get_translated_label(self, label: str, point_type: PointDataType):
-        try:
-            if point_type == PointDataType.Marker:
-                return self.MARKER_MAPPING(label)
-            else:
-                return self.MODEL_MAPPING(label)
-        except ValueError as e:
-            return None
-
-    def read_configs(self, file_path: str):
-        with open(file_path, 'r') as f:
-            self._config = yaml.safe_load(f)
-        self.MARKER_MAPPING = Enum('MarkerMapping', self._config[self._MARKER_MAPPING])
-        self.MODEL_MAPPING = Enum('ModelMapping', self._config[self._MODEL_MAPPING])
-
-    @staticmethod
-    def define_key(translated_label: Enum, point_type: PointDataType, direction: AxesNames,
-                   side: GaitEventContext) -> str:
-        if translated_label is not None:
-            return f"{translated_label.name}.{point_type.name}.{direction.name}.{side.value}"
-
-
-class CyclePointLoader:
-    FILENAME_DELIMITER = "-"
-
-    def __init__(self, configs: ConfigProvider, dir_path: str):
-        self._raw_cycle_data = {}
-        self._norm_cycle_data = {}
-        file_names = os.listdir(dir_path)
-        postfix = BasicCyclePoint.TYPE_RAW
-        raw_file_names = self._filter_filenames(file_names, postfix)
-
-        self._raw_cycle_data = self._init_buffered_points(configs, dir_path, raw_file_names)
-
-        postfix = BasicCyclePoint.TYPE_NORM
-        norm_file_names = self._filter_filenames(file_names, postfix)
-        self._norm_cycle_data = self._init_buffered_points(configs, dir_path, norm_file_names)
-
-    def _init_buffered_points(self, configs, dir_path, file_names) -> Dict[str, BasicCyclePoint]:
-        cycle_data: Dict[str, BasicCyclePoint] = {}
-        for file_name in file_names:
-            point = BufferedCyclePoint(configs, dir_path, file_name)
-            foo, key, foo = self.get_key_from_filename(file_name)
-            cycle_data[key] = point
-        return cycle_data
-
-    @classmethod
-    def get_key_from_filename(cls, filename: str) -> [str, str, str]:
-        return filename.split(cls.FILENAME_DELIMITER)
-
-    @classmethod
-    def get_meta_data_filename(cls, filename: str) -> [str, PointDataType, AxesNames, GaitEventContext, str, str]:
-        prefix, key, postfix = cls.get_key_from_filename(filename)
-        meta_data = key.split(".")
-        label = meta_data[0]
-        data_type = PointDataType[meta_data[1]]
-        direction = AxesNames[meta_data[2]]
-        context = GaitEventContext(meta_data[3])
-        return [label, data_type, direction, context, postfix, prefix]
-
-    @classmethod
-    def _filter_filenames(cls, file_names, postfix) -> List[str]:
-        r = re.compile(f".*{cls.FILENAME_DELIMITER}{postfix}.*\.csv")
-        return list(filter(r.match, file_names))
-
-    def get_raw_cycle_points(self) -> Dict[str, BasicCyclePoint]:
-        return self._raw_cycle_data
-
-    def get_norm_cycle_points(self) -> Dict[str, BasicCyclePoint]:
-        return self._norm_cycle_data
-
-
-def cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
+            results = results.merge(result, on=cycle.BasicCyclePoint.CYCLE_NUMBER)
+
+    return results
+
+
+
+def detect_gait_events(c3d_file_path: str,
+                       output_path: str,
+                       configs: utils.ConfigProvider,
+                       methode: str = GAIT_EVENT_METHODE_MARKER,
+                       anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST):
+    """
+    Adds gait events to c3d file and saves it in output_path with a '.4.c3d' extension. Checks events aditionally
+    with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
+    :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
+    :param output_path: path to dir to store c3d file with events
+    :param configs: configs from marker and model mapping
+    :param methode: methode to detect events 'Marker' api.GAIT_EVENT_METHODE_MARKER or
+        'Forceplate' api.GAIT_EVENT_METHODE_FP
+    :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
+        "spacing" api.GAIT_EVENT_CHECKER_SPACING
+    """
+    if not os.path.isfile(c3d_file_path):
+        raise FileExistsError(f"{c3d_file_path} does not exists")
+    if not os.path.isdir(output_path):
+        raise FileExistsError(f"{output_path} does not exists")
+    if methode not in GAIT_EVENT_METHODE_LIST:
+        raise KeyError(f"{methode} is not a valid methode")
+    if not all(item in GAIT_EVENT_CHECKER_LIST for item in anomaly_checker):
+        raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
+
+    # read c3d
+    acq_trial = c3d.read_btk(c3d_file_path)
+
+    # define output name
+    filename = os.path.basename(c3d_file_path).replace(".3.c3d", ".4.c3d")
+    out_path = os.path.join(output_path, filename)
+
+    if methode == GAIT_EVENT_METHODE_FP:
+        methode = events.ForcePlateEventDetection()
+    elif methode == GAIT_EVENT_METHODE_MARKER:
+        methode = events.ZenisGaitEventDetector(configs)
+
+    methode.detect_events(acq_trial)
+
+    # write events c3d
+    c3d.write_btk(acq_trial, out_path)
+
+    # read c3d
+    acq_trial = c3d.read_btk(c3d_file_path)
+
+    # get anomaly detection
+    checker = _get_anomaly_checker(anomaly_checker)
+    detected, anomalies = checker.check_events(acq_trial)
+
+    # write anomalies to file
+    if detected:
+        filename = os.path.basename(c3d_file_path).replace(".3.c3d", "_anomalies.txt")
+        out_path = os.path.join(output_path, filename)
+        f = open(out_path, "w")
+        for anomaly in anomalies:
+            print(anomaly)
+        f.close()
+
+
+def _get_anomaly_checker(anomaly_checker: List[str]) -> events.AbstractEventAnomalyChecker:
+    """
+    defines checker by list of inputs
+    :param anomaly_checker: list of checker name
+    :return: checker object
+    """
+    checker = None
+    if GAIT_EVENT_CHECKER_CONTEXT in anomaly_checker:
+        checker = events.ContextPatternChecker()
+    if GAIT_EVENT_CHECKER_SPACING in anomaly_checker:
+        checker = events.EventSpacingChecker(checker)
+    return checker
+
+
+def extract_cycles_buffered(buffer_output_path: str, configs: utils.ConfigProvider) -> cycle.CyclePointLoader:
+    """
+    gets normalised and unnormalised data from buffered folder. It is needed to run api.extract_cycles as
+    api.normalise_cycles with given buffer_output_path once to use this function
+    :param buffer_output_path: path to folder
+    :param configs: configs from marker and model mapping
+    :return: object containing normalised and unnormalised data lists
+    """
+    if not os.path.isdir(buffer_output_path):
+        raise FileExistsError(f"{buffer_output_path} does not exists")
+
+    # load cycles
+    loader = cycle.CyclePointLoader(configs, buffer_output_path)
+    return loader
+
+
+def extract_cycles(c3d_file_path: str,
+                   configs: utils.ConfigProvider,
+                   methode: str = CYCLE_METHOD_HEEL_STRIKE,
+                   buffer_output_path: str = None,
+                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[str, cycle.BasicCyclePoint]:
+    """
+    extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
+    csv file. Do not edit files and structure.
+    :param c3d_file_path: path of c3d file with foot_off and foot_strike events '*.4.c3d'
+    :param configs: configs from marker and model mapping
+    :param methode: method to cut gait cycles either "HS" api.CYCLE_METHOD_HEEL_STRIKE or "TO" api.CYCLE_METHOD_TOE_OFF
+    :param buffer_output_path: if buffering needed path to folder
+    :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
+        "spacing" api.GAIT_EVENT_CHECKER_SPACING
+    :return: extracted gait cycles
+    """
+    # check params for validity
+    if not os.path.isfile(c3d_file_path):
+        raise FileExistsError(f"{c3d_file_path} does not exists")
+    if methode not in [CYCLE_METHOD_HEEL_STRIKE, CYCLE_METHOD_TOE_OFF]:
+        raise KeyError(f"{methode} is not a valid methode")
+    if buffer_output_path:
+        if not os.path.isdir(buffer_output_path):
+            raise FileExistsError(f"{buffer_output_path} does not exists")
+    if not all(item in GAIT_EVENT_CHECKER_LIST for item in anomaly_checker):
+        raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
+
+    # read c3d
+    acq_trial = c3d.read_btk(c3d_file_path)
+
+    # get anomaly detection
+    checker = _get_anomaly_checker(anomaly_checker)
+
+    # choose cut method
+    cycle_builder = None
+    if methode == CYCLE_METHOD_TOE_OFF:
+        cycle_builder = cycle.ToeOffToToeOffCycleBuilder(checker)
+    elif methode == CYCLE_METHOD_HEEL_STRIKE:
+        cycle_builder = cycle.HeelStrikeToHeelStrikeCycleBuilder(checker)
+
+    # get cycles
+    cycles = cycle_builder.build_cycles(acq_trial)
+
+    # extract cycles
+    cycle_data = cycle.CycleDataExtractor(configs).extract_data(cycles, acq_trial)
+
+    # buffer cycles
+    if buffer_output_path:
+        prefix = os.path.basename(c3d_file_path).replace(".4.c3d", "")
+        _cycle_points_to_csv(cycle_data, buffer_output_path, prefix)
+
+    return cycle_data
+
+
+def normalise_cycles(c3d_file_path: str,
+                     cycle_data: Dict[str, cycle.BasicCyclePoint],
+                     method: str = NORMALISE_METHODE_LINEAR,
+                     buffer_output_path: str = None) -> Dict[str, cycle.BasicCyclePoint]:
+    """
+    normalise and returns cycles
+    :param c3d_file_path:  path of c3d file with foot_off and foot_strike events '*.4.c3d'
+    :param cycle_data: unnormalised cycle data
+    :param method: method normalise "linear" api.NORMALISE_METHODE_LINEAR
+    :param buffer_output_path: if buffering needed path to folder
+    :return: normalised gait cycles
+    """
+
+    # check params for validity
+    if method not in NORMALISE_METHODE_LIST:
+        raise KeyError(f"{method} is not a valid methode")
+    if buffer_output_path:
+        if not os.path.isdir(buffer_output_path):
+            raise FileExistsError(f"{buffer_output_path} does not exists")
+
+    # get method
+    if method == NORMALISE_METHODE_LINEAR:
+        method = cycle.LinearTimeNormalisation()
+
+    # normalise
+    normalised_data = method.normalise(cycle_data)
+
+    # buffer cycles
+    if buffer_output_path:
+        prefix = os.path.basename(c3d_file_path).replace(".4.c3d", "")
+        _cycle_points_to_csv(normalised_data, buffer_output_path, prefix)
+
+    return normalised_data
+
+
+def _cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
     for key in cycle_data:
         cycle_data[key].to_csv(dir_path, prefix)

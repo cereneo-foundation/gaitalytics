@@ -4,7 +4,7 @@ import re
 
 from gait_analysis import c3d
 from gait_analysis.events import ZenisGaitEventDetector
-from gait_analysis.api import ConfigProvider
+from gait_analysis.utils import ConfigProvider
 
 # This is an example pipeline #
 ###############################

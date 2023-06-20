@@ -1,16 +1,15 @@
 from abc import ABC, abstractmethod
+from types import MappingProxyType
+from typing import List
 
 import numpy as np
 from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
 from matplotlib import pyplot as plt
 from scipy import signal
 
-from gait_analysis.api import GaitEventLabel, ConfigProvider
-from gait_analysis.utils import min_max_norm
-from gait_analysis import c3d
-from gait_analysis.c3d import is_progression_axes_flip
+from gait_analysis import c3d, utils
 
-FORCE_PLATE_SIDE_MAPPING_CAREN = {"Left": 0, "Right": 1}
+FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
 
 
 # Event detection
@@ -21,13 +20,12 @@ class AbstractGaitEventDetector(ABC):
         pass
 
     @staticmethod
-    def _create_event(acq, frame: int, event_label: GaitEventLabel, event_context: c3d.GaitEventContext):
+    def _create_event(acq, frame: int, event_label: c3d.GaitEventLabel, event_context: c3d.GaitEventContext):
         frequency = acq.GetPointFrequency()
         event = btkEvent()
         event.SetLabel(event_label.value)
-        #  event.SetFrame(int(frame))
-        event.SetId(GaitEventLabel.get_type_id(event_label.value))
-        event.SetDetectionFlags(btkEvent.Automatic)
+        #event.SetFrame(int(frame))
+        event.SetId(c3d.GaitEventLabel.get_type_id(event_label.value))
         event.SetContext(event_context.value)
         event.SetTime(float((frame - 1) / frequency))
         return event
@@ -38,7 +36,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, configs: ConfigProvider, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, configs: utils.ConfigProvider, foot_strike_offset: int = 0, foot_off_offset: int = 0):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
@@ -65,23 +63,23 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         right_diff_toe = right_heel - sacrum
         left_diff_toe = left_heel - sacrum
 
-        self._create_events(acq, left_diff_toe, GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_toe, GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.RIGHT)
-        self._create_events(acq, left_diff_heel, GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_heel, GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_toe, c3d.GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_toe, c3d.GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_heel, c3d.GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_heel, c3d.GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.RIGHT)
 
     #   c3d.sort_events(acq)
 
-    def _create_events(self, acq, diff, event_label: GaitEventLabel, event_context: c3d.GaitEventContext,
+    def _create_events(self, acq, diff, event_label: c3d.GaitEventLabel, event_context: c3d.GaitEventContext,
                        min_distance: int = 100,
                        show_plot: bool = False):
         data = diff[:, c3d.AxesNames.y.value]
-        if is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
+        if c3d.is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
                                     acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
             data = data * -1
-        data = min_max_norm(data)
+        data = utils.min_max_norm(data)
 
-        if GaitEventLabel.FOOT_STRIKE == event_label:
+        if c3d.GaitEventLabel.FOOT_STRIKE == event_label:
             data = [entry * -1 for entry in data]
 
         extremes, foo = signal.find_peaks(data, height=[0, 1], distance=min_distance)
@@ -132,7 +130,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
             btk_acq.AppendEvent(ev)
 
     @staticmethod
-    def _detect_gait_event_type(force_plate_signal: np.ndarray, detected_force_plate_events: np.ndarray) -> list:
+    def _detect_gait_event_type(force_plate_signal: list, detected_force_plate_events: np.ndarray) -> list:
         """
         Iterate through each event detected by detect_onset and determine if the event is a FootStrike or a FootOff.
         Return array of ["Type of event":str,index of event:int]
@@ -152,33 +150,45 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
                     # positive or negative slope (FeetOff or FeetStrike)
                     diff = force_plate_signal[signal_index - 20] - force_plate_signal[signal_index + 20]
                     if diff > 0:
-                        detected_event_types.append([GaitEventLabel.FOOT_OFF, signal_index])
+                        detected_event_types.append([c3d.GaitEventLabel.FOOT_OFF, signal_index])
                     else:
-                        detected_event_types.append([GaitEventLabel.FOOT_STRIKE, signal_index])
+                        detected_event_types.append([c3d.GaitEventLabel.FOOT_STRIKE, signal_index])
         return detected_event_types  # Contain the label of the event and the corresponding index
 
 
 # Anomaly detection
+class GaitEventAnomaly:
+    """
+    Stores anomalies for easy print
+    """
 
-class EventAnomalyChecker(ABC):
+    def __init__(self, start_frame: int, end_frame: int, context: str, anomaly: str):
+        self.start_frame = start_frame
+        self.end_frame = end_frame
+        self.context = context
+        self.anomaly = anomaly
+
+    def __str__(self):
+        return f"{self.anomaly}: {self.start_frame} - {self.end_frame} ({self.context})"
+
+
+class AbstractEventAnomalyChecker(ABC):
     """
     Queued Events anomaly checker framework. Calls checker in a defined sequence
     """
 
-    """
-    Initiate instance and adds event_checker as callable child.
-    :param event_checker: Subclass of EventAnomalyChecker
-    """
-
     def __init__(self, event_checker=None):
+        """
+        Initiate instance and adds event_checker as callable child.
+        :param event_checker: Subclass of EventAnomalyChecker
+        """
         self.child = event_checker
 
-    """
-    Calls event anomaly checker of subclass and its children in sequences
-    :param acq_walk: Acquisition with predefined events
-    """
-
     def check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+        """
+        Calls event anomaly checker of subclass and its children in sequences
+        :param acq_walk: Acquisition with predefined events
+        """
         [anomaly_detected, abnormal_event_frames] = self._check_events(acq_walk)
         if self.child is not None:
             [child_anomaly_detected, child_abnormal_event_frames] = self.child.check_events(acq_walk)
@@ -187,29 +197,27 @@ class EventAnomalyChecker(ABC):
             anomaly_detected = child_anomaly_detected | anomaly_detected
         return anomaly_detected, abnormal_event_frames
 
-    """
-    Implementation of event checker
-    :param acq_walk: Acquisition with added Events
-    :param abnormal_event_frames: list of found already found anomalies
-    :return: flag is anomalies found, list of anomalies
-    """
-
     @abstractmethod
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
+        """
+        Implementation of event checker
+        :param acq_walk: Acquisition with added Events
+        :return: flag is anomalies found, list of anomalies
+        """
         pass
 
 
-class ContextPatternChecker(EventAnomalyChecker):
+class ContextPatternChecker(AbstractEventAnomalyChecker):
     """
     Checks if events are alternating between Heel_Strike and Foot_Off per context
     """
 
-    """
-    kick off the checker
-    :param acq_walk: Acquisition with added Events
-    :return: flag is anomalies found, list of anomalies
-    """
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
+        """
+        kick off the checker
+        :param acq_walk: Acquisition with added Events
+        :return: flag is anomalies found, list of anomalies
+        """
         abnormal_event_frames = []
         anomaly_detected = False
 
@@ -223,21 +231,23 @@ class ContextPatternChecker(EventAnomalyChecker):
                 if next_event.GetContext() == context:
                     if current_event.GetLabel() == next_event.GetLabel():
                         anomaly_detected = True
-                        abnormal_event_frames.append({"Context": context, "Start-Frame": current_event.GetFrame(),
-                                                      "End-Frame": next_event.GetFrame(),
-                                                      "Anomaly": "Normal Per Context Sequence"})
+                        anomaly = GaitEventAnomaly(current_event.GetFrame(),
+                                                   next_event.GetFrame(), context,
+                                                   f"Event sequence off")
+                        abnormal_event_frames.append(anomaly)
+
                     break
 
         return [anomaly_detected, abnormal_event_frames]
 
 
-class EventSpacingChecker(EventAnomalyChecker):
+class EventSpacingChecker(AbstractEventAnomalyChecker):
 
     def __init__(self, event_checker=None, frame_threshold=30):
         super().__init__(event_checker)
         self._frame_threshold = frame_threshold
 
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
         anomaly_detected = False
         abnormal_event_frames = []
         for current_event_index in range(0, acq_walk.GetEventNumber()):
@@ -247,9 +257,10 @@ class EventSpacingChecker(EventAnomalyChecker):
                 next_event = acq_walk.GetEvent(next_event_index)
                 if next_event.GetContext() == context:
                     if next_event.GetFrame() - current_event.GetFrame() < self._frame_threshold:
-                        abnormal_event_frames.append({"Context": context, "Start-Frame": current_event.GetFrame(),
-                                                      "End-Frame": next_event.GetFrame(),
-                                                      "Anomaly": "Abnormal time spacing"})
+                        anomaly = GaitEventAnomaly(current_event.GetFrame(),
+                                                   next_event.GetFrame(), context,
+                                                   f"Spacing smaller than {self._frame_threshold}")
+                        abnormal_event_frames.append(anomaly)
                         anomaly_detected = True
                     break
         return [anomaly_detected, abnormal_event_frames]

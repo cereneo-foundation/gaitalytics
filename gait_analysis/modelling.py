@@ -3,13 +3,12 @@ from abc import ABC, abstractmethod
 import numpy as np
 from btk import btkAcquisition, btkPoint
 
-from gait_analysis.c3d import PointDataType
-from gait_analysis.api import ConfigProvider
+from . import c3d, utils
 
 
 class BaseOutputModeller(ABC):
 
-    def __init__(self, label: str, point_type: PointDataType):
+    def __init__(self, label: str, point_type: c3d.PointDataType):
         self._label = label
         self._type = point_type
 
@@ -27,8 +26,8 @@ class BaseOutputModeller(ABC):
 
 class COMModeller(BaseOutputModeller):
 
-    def __init__(self, configs: ConfigProvider):
-        super().__init__(configs.MARKER_MAPPING.com.value, PointDataType.Scalar)
+    def __init__(self, configs: utils.ConfigProvider):
+        super().__init__(configs.MARKER_MAPPING.com.value, c3d.PointDataType.Scalar)
         self._configs = configs
 
     def _calculate_point(self, acq: btkAcquisition):
@@ -41,11 +40,11 @@ class COMModeller(BaseOutputModeller):
 
 class MLcMoSModeller(BaseOutputModeller):
 
-    def __init__(self, configs: ConfigProvider, dominant_leg_length: float, belt_speed: float):
+    def __init__(self, configs: utils.ConfigProvider, dominant_leg_length: float, belt_speed: float):
         self._configs = configs
         self._dominant_leg_length = dominant_leg_length
         self._belt_speed = belt_speed
-        super().__init__("MLcMoS", PointDataType.Scalar)
+        super().__init__("MLcMoS", c3d.PointDataType.Scalar)
 
     def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
         freq = acq.GetPointFrequency()
