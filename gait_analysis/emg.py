@@ -3,8 +3,8 @@ from scipy import signal
 
 from . import c3d, events
 
-class EMGCoherenceAnalysis:
 
+class EMGCoherenceAnalysis:
     """
     This class contains all the material to calculate coherence from analog EMG signals
     """
@@ -45,15 +45,15 @@ class EMGCoherenceAnalysis:
                 if event.GetLabel() == events.GaitEventLabel.FOOT_OFF.value:
                     # TODO what is last Event is FS?????
                     foot_off_list.append(event.GetFrame())
-                    if start: # Be sure first event ist Foot of (we want swing phase)
+                    if start:  # Be sure first event ist Foot of (we want swing phase)
                         start = False
                 elif event.GetLabel() == events.GaitEventLabel.FOOT_STRIKE.value:
-                    if not start: # Be sure first event ist Foot of (we want swing phase)
+                    if not start:  # Be sure first event ist Foot of (we want swing phase)
                         foot_strike_list.append(event.GetFrame())
             event_iterator.incr()
 
         segments = list(zip(foot_off_list, foot_strike_list))  # merge lists to make a list of segments
-        
+
         # Save segments as attribute
         self._segments = segments
 
@@ -66,12 +66,14 @@ class EMGCoherenceAnalysis:
         :return mean_coherence: averaged coherence over all segments
         """
         # Extract swing phase segments from both signals
-        emg_channel_1 = [acq.GetAnalog(self._emg_channel_1_index).GetValues()[start:end] for start, end in self._segments]
-        emg_channel_2 = [acq.GetAnalog(self._emg_channel_2_index).GetValues()[start:end] for start, end in self._segments]
+        emg_channel_1 = [acq.GetAnalog(self._emg_channel_1_index).GetValues()[start:end] for start, end in
+                         self._segments]
+        emg_channel_2 = [acq.GetAnalog(self._emg_channel_2_index).GetValues()[start:end] for start, end in
+                         self._segments]
         signal.windows.hann
-        # Coherence calculation
-        f, coh_segments = signal.coherence(emg_channel_1, emg_channel_2, fs=acq.GetAnalogFrequency(), window='hann', nperseg=None, noverlap=None)
+        #  Coherence calculation
+        f, coh_segments = signal.coherence(emg_channel_1, emg_channel_2, fs=acq.GetAnalogFrequency(), window='hann',
+                                           nperseg=None, noverlap=None)
         mean_coherence = coh_segments.mean(axis=0)
 
         return f, mean_coherence
-

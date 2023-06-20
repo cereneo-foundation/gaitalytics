@@ -61,9 +61,10 @@ class MLcMoSModeller(BaseOutputModeller):
         r_meta_5 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_5.value).GetValues()
         l_heel = acq.GetPoint(self._configs.MARKER_MAPPING.left_heel.value).GetValues()
         r_heel = acq.GetPoint(self._configs.MARKER_MAPPING.right_heel.value).GetValues()
-        return self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli, l_med_malleoli,
-                     r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
-                     self._belt_speed)
+        return self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli,
+                            l_med_malleoli,
+                            r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
+                            self._belt_speed)
 
     def ML_cMoS(self, COM, COM_freq, vGRF_Right, vGRF_Left, vGRF_freq, Lat_Malleoli_Marker_Right,
                 Lat_Malleoli_Marker_Left,

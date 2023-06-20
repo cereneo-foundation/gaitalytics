@@ -34,7 +34,9 @@ def main():
                 event_anomaly = filtered_file.replace(".4.c3d", "_anomalies.txt")
                 f = open(f"./out/{event_anomaly}", "w")
                 for anomaly in anomalies:
-                    print(f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']} - {anomaly['Anomaly']}", file=f)
+                    print(
+                        f"{anomaly['Context']}: {anomaly['Start-Frame']} - {anomaly['End-Frame']} - {anomaly['Anomaly']}",
+                        file=f)
 
                 f.close()
 

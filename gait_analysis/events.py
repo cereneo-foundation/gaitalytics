@@ -24,7 +24,7 @@ class AbstractGaitEventDetector(ABC):
         frequency = acq.GetPointFrequency()
         event = btkEvent()
         event.SetLabel(event_label.value)
-        #event.SetFrame(int(frame))
+        # event.SetFrame(int(frame))
         event.SetId(c3d.GaitEventLabel.get_type_id(event_label.value))
         event.SetContext(event_context.value)
         event.SetTime(float((frame - 1) / frequency))
@@ -75,7 +75,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
                        show_plot: bool = False):
         data = diff[:, c3d.AxesNames.y.value]
         if c3d.is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
-                                    acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
+                                        acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
             data = data * -1
         data = utils.min_max_norm(data)
 

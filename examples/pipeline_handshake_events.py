@@ -1,6 +1,6 @@
-from argparse import ArgumentParser, Namespace
 import os
 import re
+from argparse import ArgumentParser, Namespace
 
 from gait_analysis import c3d
 from gait_analysis.events import ZenisGaitEventDetector
@@ -32,7 +32,7 @@ def main():
             print(f"{root}/{filtered_file}")
             event_added_file = filtered_file.replace("3.c3d", "4.c3d")
             if os.path.exists(f"{root}/{event_added_file}"):
-             #   os.remove(f"{root}/{event_added_file}")
+                #   os.remove(f"{root}/{event_added_file}")
                 print("existing file deleted")
             else:
                 print(f"add events")

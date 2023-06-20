@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 import re
-
 from abc import ABC, abstractmethod
 from enum import Enum
 from math import ceil
@@ -12,9 +11,9 @@ import numpy as np
 from btk import btkAcquisition, btkEvent
 from pandas import DataFrame, concat, read_csv
 
-from .utils import ConfigProvider
 from .c3d import AxesNames, PointDataType, GaitEventContext, GaitEventLabel
 from .events import AbstractEventAnomalyChecker, find_next_event
+from .utils import ConfigProvider
 
 
 # Cycle Builder

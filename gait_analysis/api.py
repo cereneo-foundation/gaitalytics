@@ -7,6 +7,7 @@ from pandas import DataFrame
 
 from . import c3d, cycle, events, utils, analysis
 
+# constants
 CYCLE_METHOD_HEEL_STRIKE = "HS"
 CYCLE_METHOD_TOE_OFF = "TO"
 
@@ -66,7 +67,6 @@ def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
             results = results.merge(result, on=cycle.BasicCyclePoint.CYCLE_NUMBER)
 
     return results
-
 
 
 def detect_gait_events(c3d_file_path: str,

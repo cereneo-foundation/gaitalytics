@@ -10,8 +10,8 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
-from gait_analysis.c3d import PointDataType
 
+from gait_analysis.c3d import PointDataType
 
 
 class PlotGroup(Enum):
@@ -99,7 +99,8 @@ class SeparatelyPicturePlot(BasicPlotter):
 
 class PdfPlotter(BasicPlotter):
 
-    def __init__(self, configs: MarkerModelConfig, plot_path: str, filename: str = "overview.pdf", cols: int = 4, rows: int = 3):
+    def __init__(self, configs: MarkerModelConfig, plot_path: str, filename: str = "overview.pdf", cols: int = 4,
+                 rows: int = 3):
         super().__init__(configs)
         self.plot_path = plot_path
         self.cols = cols

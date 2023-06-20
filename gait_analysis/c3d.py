@@ -6,7 +6,6 @@ from statistics import mean
 import btk
 import numpy as np
 
-
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
 

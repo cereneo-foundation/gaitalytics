@@ -1,9 +1,9 @@
 import os
 import unittest
 
-from gait_analysis.utils import ConfigProvider
 from gait_analysis.c3d import C3dAcquisition
 from gait_analysis.c3d import GaitEventContext
+from gait_analysis.utils import ConfigProvider
 
 DATA_PATH = "./test/data"
 TEST_INPUT_FILE_NAME = "Baseline.3.c3d"

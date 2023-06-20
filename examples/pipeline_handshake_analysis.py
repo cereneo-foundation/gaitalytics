@@ -2,14 +2,14 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
+from gait_analysis import c3d
 from gait_analysis.analysis import JointMomentsCycleAnalysis, JointPowerCycleAnalysis, JointAnglesCycleAnalysis, \
     SpatioTemporalAnalysis
+from gait_analysis.api import _cycle_points_to_csv
 from gait_analysis.cycle import HeelStrikeToHeelStrikeCycleBuilder, CycleDataExtractor, BasicCyclePoint, \
     CyclePointLoader
-from gait_analysis.api import _cycle_points_to_csv
-from gait_analysis.utils import ConfigProvider
 from gait_analysis.events import ContextPatternChecker
-from gait_analysis import c3d
+from gait_analysis.utils import ConfigProvider
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "C:/ViconData/Handshake/"
