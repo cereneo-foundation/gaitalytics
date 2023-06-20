@@ -3,7 +3,7 @@ from statistics import mean
 
 import btk
 import numpy as np
-from btk import btkAcquisition
+
 
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
 
@@ -99,7 +99,7 @@ def is_progression_axes_flip(left_heel, left_toe):
     return 0 < mean(left_toe[AxesNames.y.value] - left_heel[AxesNames.y.value])
 
 
-def correct_points_frame_by_frame(acq_trial: btkAcquisition):
+def correct_points_frame_by_frame(acq_trial: btk.btkAcquisition):
     frame_size = acq_trial.GetPointFrameNumber()
     correction = get_fastest_point_by_frame(acq_trial, 1)
     for frame_number in range(1, frame_size):
@@ -109,7 +109,7 @@ def correct_points_frame_by_frame(acq_trial: btkAcquisition):
         correction += correction_new
 
 
-def correct_points_in_frame(acq_trial: btkAcquisition, frame_number: int, correction: float):
+def correct_points_in_frame(acq_trial: btk.btkAcquisition, frame_number: int, correction: float):
     print(f"{frame_number}:{correction}")
     for point_number in range(0, acq_trial.GetPointNumber()):
         acq_trial.GetPoint(point_number).SetValue(frame_number, 1,

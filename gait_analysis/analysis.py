@@ -8,28 +8,49 @@ from gait_analysis.api import BasicCyclePoint, ConfigProvider
 from gait_analysis.c3d import PointDataType, AxesNames, GaitEventContext
 
 
-class BaseCycleAnalysis(ABC):
-
-    def __init__(self, data_list: Dict, data_type: PointDataType):
+class AbstractAnalysis(ABC):
+    def __init__(self, data_list: Dict[str, BasicCyclePoint]):
         self._data_list: Dict[str, BasicCyclePoint] = data_list
+
+    def analyse(self) -> DataFrame:
+        pass
+
+
+class AbstractCycleAnalysis(AbstractAnalysis, ABC):
+
+    def __init__(self, data_list: Dict[str, BasicCyclePoint], data_type: PointDataType):
+        super().__init__(data_list)
         self._point_data_type = data_type
 
     @abstractmethod
     def _do_analysis(self, data: DataFrame) -> DataFrame:
         pass
 
-    def _filter_keys(self, key: str, ) -> bool:
+    def _filter_keys(self, key: str) -> bool:
         """ Check if its the right point data """
         return f".{self._point_data_type.name}." in key
 
-    def analyse(self) -> DataFrame:
+    def analyse(self, by_phase=True) -> DataFrame:
         results = None
         for key in self._data_list:  # TODO change quick fix
             if self._filter_keys(key):
                 raw_point = self._data_list[key]
                 data = raw_point.data_table
-                result = self._do_analysis(data)
-                result['metric'] = key
+                if not by_phase:
+                    result = self._do_analysis(data)
+                    result['metric'] = key
+                else:
+                    standing = data.copy()
+                    swinging = data.copy()
+                    for row in range(len(data)):
+                        event_frame = raw_point.event_frames.iloc[row][BasicCyclePoint.EVENT_FRAME_NUMBER]
+                        swinging.iloc[row, 1:event_frame] = float("Nan")
+                        standing.iloc[row, event_frame + 1: -1] = float("Nan")
+                    result1 = self._do_analysis(standing)
+                    result1['metric'] = f"{key}.standing"
+                    result2 = self._do_analysis(swinging)
+                    result2['metric'] = f"{key}.swinging"
+                    result = concat([result1, result2])
 
                 if results is None:
                     results = result
@@ -38,7 +59,7 @@ class BaseCycleAnalysis(ABC):
         return results.pivot(columns="metric")
 
 
-class JointMomentsCycleAnalysis(BaseCycleAnalysis):
+class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Moments)
@@ -62,7 +83,7 @@ class JointMomentsCycleAnalysis(BaseCycleAnalysis):
         return results
 
 
-class JointPowerCycleAnalysis(BaseCycleAnalysis):
+class JointPowerCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Power)
@@ -87,7 +108,7 @@ class JointPowerCycleAnalysis(BaseCycleAnalysis):
         return results
 
 
-class JointAnglesCycleAnalysis(BaseCycleAnalysis):
+class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
 
     def __init__(self, data_list: Dict):
         super().__init__(data_list, PointDataType.Angles)
@@ -115,10 +136,10 @@ class JointAnglesCycleAnalysis(BaseCycleAnalysis):
         return results
 
 
-class SpatioTemporalAnalysis(BaseCycleAnalysis):
+class SpatioTemporalAnalysis(AbstractAnalysis):
 
     def __init__(self, configs: ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
-        super().__init__(data_list, PointDataType.Angles)
+        super().__init__(data_list)
         self._configs = configs
         self._frequency = frequency
         self._body_height = body_height
@@ -247,7 +268,7 @@ class SpatioTemporalAnalysis(BaseCycleAnalysis):
     def _side_step_length_calculation(context_heel_progression: DataFrame,
                                       contra_heel_progression: DataFrame, side: str) -> np.array:
         s_len_label = f"step_length_{side}"
-        step_length = DataFrame(index=context_heel_progression.index, columns=[s_len_label ])
+        step_length = DataFrame(index=context_heel_progression.index, columns=[s_len_label])
 
         for cycle_number in context_heel_progression.index.to_series():
             context_hs_pos = context_heel_progression.loc[cycle_number][1]
@@ -256,11 +277,20 @@ class SpatioTemporalAnalysis(BaseCycleAnalysis):
 
         return step_length
 
-    def _do_analysis(self, data: Dict[int, np.array], key: str):
-        pass
+    # drag_duration_gc = np.zeros(len(data))  # %GC
+    # drag_duration_swing = np.zeros(len(data))  # %swing
+    # single_stance_duration = np.zeros(len(data))  # %GC
+    # double_stance_duration = np.zeros(len(data))  # %GC
+    # stride_speed = np.zeros(len(data))  # m/s
+    # stride_length_com = np.zeros(len(data))  # %BH
+    # stride_speed_com = np.zeros(len(data))  # m/s
+    # length_foot_trajectory = np.zeros(len(data))  # %BH
+    # length_com_trajectory = np.zeros(len(data))  # %BH
+    # lateral_movement_during_swing = np.zeros(len(data))  # BH%
+    # max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
 
 
-class BaseNormalisedAnalysis(ABC):
+class AbstractNormalisedAnalysis(ABC):
 
     def __init__(self, data_list: {}):
         self.data_list = data_list
@@ -283,20 +313,8 @@ class BaseNormalisedAnalysis(ABC):
                 results = concat([results, result])
         return results
 
-    # drag_duration_gc = np.zeros(len(data))  # %GC
-    # drag_duration_swing = np.zeros(len(data))  # %swing
-    # single_stance_duration = np.zeros(len(data))  # %GC
-    # double_stance_duration = np.zeros(len(data))  # %GC
-    # stride_speed = np.zeros(len(data))  # m/s
-    # stride_length_com = np.zeros(len(data))  # %BH
-    # stride_speed_com = np.zeros(len(data))  # m/s
-    # length_foot_trajectory = np.zeros(len(data))  # %BH
-    # length_com_trajectory = np.zeros(len(data))  # %BH
-    # lateral_movement_during_swing = np.zeros(len(data))  # BH%
-    # max_hip_vertical_amplitude = np.zeros(len(data))  # BH%
 
-
-class DescriptiveNormalisedAnalysis(BaseNormalisedAnalysis):
+class DescriptiveNormalisedAnalysis(AbstractNormalisedAnalysis):
 
     def _do_analysis(self, table: DataFrame) -> DataFrame:
         frame_number = np.arange(1, 101, 1)  # Could be something like myRange = range(1,1000,1)

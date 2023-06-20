@@ -60,6 +60,7 @@ class GaitCycleList:
 
 class BasicCyclePoint:
     EVENT_FRAME_NUMBER = "events_between"
+    EVENT_LABEL = "events_label"
     CYCLE_NUMBER = "cycle_number"
     TYPE_RAW = "raw"
     TYPE_NORM = "normalised"
@@ -122,16 +123,17 @@ class BasicCyclePoint:
     def event_frames(self, event_frames: DataFrame):
         self._event_frames = event_frames
 
-    def add_event_frame(self, event_frame: int, cycle_number: int):
+    def add_event_frame(self, event_frame: int, cycle_number: int, event_label: str):
         if self.event_frames is None:
-            prep_dict = {cycle_number: [event_frame]}
-            self.event_frames = DataFrame.from_dict(data=prep_dict, orient="index", columns=[self.EVENT_FRAME_NUMBER])
+            prep_dict = {cycle_number: [event_frame, event_label]}
+            self.event_frames = DataFrame.from_dict(data=prep_dict, orient="index",
+                                                    columns=[self.EVENT_FRAME_NUMBER, self.EVENT_LABEL])
             self.event_frames.index.name = self.CYCLE_NUMBER
         else:
-            self.event_frames.loc[cycle_number] = event_frame
+            self.event_frames.loc[cycle_number] = [event_frame, event_label]
 
-    def get_mean_event_frame(self) -> int:
-        return self.event_frames.mean(axis=1)
+    def get_mean_event_frame(self) -> float:
+        return self.event_frames[self.EVENT_FRAME_NUMBER].mean()
 
     @property
     def data_table(self) -> DataFrame:
@@ -155,12 +157,14 @@ class BasicCyclePoint:
         df = DataFrame.from_dict({cycle_number: data}, orient="index")
         df.index.name = self.CYCLE_NUMBER
         return df
+
     @staticmethod
     def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
         key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
                                         cycle_point.context)
 
         return f"{prefix}{CyclePointLoader.FILENAME_DELIMITER}{key}{CyclePointLoader.FILENAME_DELIMITER}{postfix}.csv"
+
     def to_csv(self, path: str, prefix: str):
         output = self.event_frames.merge(self.data_table, on=self.CYCLE_NUMBER)
         filename = self.define_cycle_point_file_name(self, prefix, self.cycle_point_type)
@@ -174,8 +178,8 @@ class BasicCyclePoint:
         translated = configs.get_translated_label(label, data_type)
         point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context)
         data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
-        point.event_frames = DataFrame(data_table[cls.EVENT_FRAME_NUMBER])
-        data_table = data_table.drop(cls.EVENT_FRAME_NUMBER, axis=1)
+        point.event_frames = DataFrame([data_table[cls.EVENT_FRAME_NUMBER], data_table[cls.EVENT_LABEL]]).T
+        data_table = data_table.drop([cls.EVENT_FRAME_NUMBER, cls.EVENT_LABEL], axis=1)
         point.data_table = data_table
 
         return point

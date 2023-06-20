@@ -8,8 +8,8 @@ import numpy as np
 from btk import btkAcquisition
 
 from gait_analysis.api import GaitCycleList, GaitCycle, BasicCyclePoint, GaitEventLabel, ConfigProvider
-from gait_analysis.events import EventAnomalyChecker, find_next_event
 from gait_analysis.c3d import AxesNames, PointDataType, GaitEventContext
+from gait_analysis.events import EventAnomalyChecker, find_next_event
 
 
 # Cycle Builder
@@ -103,7 +103,7 @@ class CycleDataExtractor:
                 data_list[key].add_cycle_data(
                     raw_data[:, direction_index], cycle.number)
                 data_list[key].add_event_frame(
-                    cycle.unused_event.GetFrame() - cycle.start_frame, cycle.number)
+                    cycle.unused_event.GetFrame() - cycle.start_frame, cycle.number, cycle.unused_event.GetLabel())
 
 
 # Normalisation
@@ -136,7 +136,10 @@ class TimeNormalisationAlgorithm(ABC):
                         r_cycle_point.event_frames.iloc[cycle_key][BasicCyclePoint.EVENT_FRAME_NUMBER],
                         len(cycle_data),
                         self._number_frames)
-                    n_cycle_point.add_event_frame(norm_event_frame, cycle_key)
+                    n_cycle_point.add_event_frame(norm_event_frame,
+                                                  cycle_key,
+                                                  r_cycle_point.event_frames.iloc[cycle_key][
+                                                      BasicCyclePoint.EVENT_LABEL])
                     n_data_list[data_key] = n_cycle_point
         return n_data_list
 
