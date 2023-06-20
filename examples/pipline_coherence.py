@@ -1,5 +1,4 @@
-from gait_analysis import c3d
-from gait_analysis.emg import EMGCoherenceAnalysis
+from gaitalytics import c3d, emg
 
 # This is an example pipeline #
 ###############################
@@ -15,8 +14,8 @@ def main():
     acq_trial = c3d.read_btk(f"{DATA_PATH}{TEST_ORIGIN_FILE_NAME}")
 
     # Instanciate EMGCoherenceAnalysis objects
-    coh_left = EMGCoherenceAnalysis(1, 2, "Left")  # Verify if good channel indexs
-    coh_right = EMGCoherenceAnalysis(3, 4, "Right")  # Verify if good channel indexs
+    coh_left = emg.EMGCoherenceAnalysis(1, 2, "Left")  # Verify if good channel indexs
+    coh_right = emg.EMGCoherenceAnalysis(3, 4, "Right")  # Verify if good channel indexs
 
     # Results stored in a tuple of frequencies and coherences
     coherence_result_left = coh_left.calculate_coherence(acq_trial)

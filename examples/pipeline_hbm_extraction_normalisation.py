@@ -1,5 +1,4 @@
-from gait_analysis import api
-from gait_analysis.utils import ConfigProvider
+from gaitalytics import api, utils
 
 
 def main():
@@ -7,7 +6,7 @@ def main():
     file_path = "./test/data/Baseline.4.c3d"
     buffered_path = "./out"
 
-    configs = ConfigProvider(settings_file)
+    configs = utils.ConfigProvider(settings_file)
 
     cycle_data = api.extract_cycles(file_path, configs, buffer_output_path=buffered_path)
     api.normalise_cycles(file_path, cycle_data, buffer_output_path=buffered_path)
