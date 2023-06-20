@@ -7,7 +7,7 @@ from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundR
 from matplotlib import pyplot as plt
 from scipy import signal
 
-from gait_analysis import c3d, utils
+from . import c3d, utils
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
 
