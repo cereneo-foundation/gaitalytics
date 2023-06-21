@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from btk import btkAcquisition, btkPoint
-import gaitalytics.c3d
 import gaitalytics.utils
-from . import c3d, utils
+import gaitalytics.c3d
+import gaitalytics.cycle
 
 
 class BaseOutputModeller(ABC):
@@ -67,12 +67,25 @@ class MLcMoSModeller(BaseOutputModeller):
                             r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
                             self._belt_speed)
 
-    def ML_cMoS(self, COM, COM_freq, vGRF_Right, vGRF_Left, vGRF_freq, Lat_Malleoli_Marker_Right,
-                Lat_Malleoli_Marker_Left,
-                Med_Malleoli_Marker_Right, Med_Malleoli_Marker_Left, Second_Meta_Head_Marker_Right,
-                Second_Meta_Head_Marker_Left, Fifth_Meta_Head_Marker_Right, Fifth_Meta_Head_Marker_Left,
-                Heel_Marker_Right, Heel_Marker_Left, Marker_freq, dominant_leg_length, belt_speed,
-                show=False) -> np.ndarray:
+    def ML_cMoS(self, COM : gaitalytics.cycle.BasicCyclePoint,
+                COM_freq : int,
+                vGRF_Right : gaitalytics.cycle.BasicCyclePoint,
+                vGRF_Left : gaitalytics.cycle.BasicCyclePoint,
+                vGRF_freq: int,
+                Lat_Malleoli_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
+                Lat_Malleoli_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Med_Malleoli_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
+                Med_Malleoli_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Second_Meta_Head_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
+                Second_Meta_Head_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Fifth_Meta_Head_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
+                Fifth_Meta_Head_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Heel_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
+                Heel_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Marker_freq: int,
+                dominant_leg_length: float,
+                belt_speed: float,
+                show: bool=False) -> np.ndarray:
         # TODO Adam: Do your magic
         """MLcMoS estimation.
 
