@@ -10,8 +10,9 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
+import gaitalytics.utils
+import gaitalytics.c3d
 
-from gait_analysis.c3d import PointDataType
 
 
 class PlotGroup(Enum):
@@ -24,7 +25,7 @@ class BasicPlotter(ABC):
     MEDIUM_SIZE = 10
     BIGGER_SIZE = 12
 
-    def __init__(self, configs: MarkerModelConfig):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider):
         self.configs = configs
 
     @abstractmethod
@@ -73,7 +74,7 @@ class BasicPlotter(ABC):
 
 class SeparatelyPicturePlot(BasicPlotter):
 
-    def __init__(self, configs: MarkerModelConfig, plot_path: str, format: str):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, plot_path: str, format: str):
         super().__init__(configs)
         self.plot_path = plot_path
         self.format = format
@@ -99,7 +100,7 @@ class SeparatelyPicturePlot(BasicPlotter):
 
 class PdfPlotter(BasicPlotter):
 
-    def __init__(self, configs: MarkerModelConfig, plot_path: str, filename: str = "overview.pdf", cols: int = 4,
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, plot_path: str, filename: str = "overview.pdf", cols: int = 4,
                  rows: int = 3):
         super().__init__(configs)
         self.plot_path = plot_path
@@ -107,7 +108,7 @@ class PdfPlotter(BasicPlotter):
         self.rows = rows
         self.filename = filename
 
-    def plot(self, results: DataFrame, data_types: List[PointDataType]):
+    def plot(self, results: DataFrame, data_types: List[gaitalytics.c3d.PointDataType]):
         with PdfPages(f'{self.plot_path}/{self.filename}') as pdf:
             for data_type in data_types:
                 figures = self._plot_data_type(data_type, results)
@@ -125,7 +126,7 @@ class PdfPlotter(BasicPlotter):
         pass
 
     @staticmethod
-    def _create_figure(data_type: PointDataType) -> Figure:
+    def _create_figure(data_type: gaitalytics.c3d.PointDataType) -> Figure:
         figure = plt.figure()
         figure.suptitle(data_type.name)
         figure.subplots_adjust(hspace=0.3, wspace=0.4)

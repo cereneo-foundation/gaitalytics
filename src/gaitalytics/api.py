@@ -4,8 +4,12 @@ import os
 from typing import Dict, List
 
 from pandas import DataFrame
+import gaitalytics.c3d
+import gaitalytics.cycle
+import gaitalytics.events
+import gaitalytics.utils
+import gaitalytics.analysis
 
-from . import c3d, cycle, events, utils, analysis
 
 # constants
 CYCLE_METHOD_HEEL_STRIKE = "HS"
@@ -36,8 +40,8 @@ ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_TOE_CLEARANCE)
 
 
-def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
-                 config: utils.ConfigProvider,
+def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
+                 config: gaitalytics.utils.ConfigProvider,
                  methode: List[str] = ANALYSIS_LIST) -> DataFrame:
     """
     runs specified analysis and concatenates into one frame
@@ -51,17 +55,17 @@ def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
     if not all(item in ANALYSIS_LIST for item in methode):
         raise KeyError(f"{methode} are not a valid anomaly checker")
 
-    methods: List[analysis.AbstractAnalysis] = []
+    methods: List[gaitalytics.analysis.AbstractAnalysis] = []
     if ANALYSIS_ANGLES in methode:
-        methods.append(analysis.JointAnglesCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointAnglesCycleAnalysis(cycle_data))
     if ANALYSIS_MOMENTS in methode:
-        methods.append(analysis.JointMomentsCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointMomentsCycleAnalysis(cycle_data))
     if ANALYSIS_POWERS in methode:
-        methods.append(analysis.JointPowerCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointPowerCycleAnalysis(cycle_data))
     if ANALYSIS_SPATIO_TEMP in methode:
-        methods.append(analysis.SpatioTemporalAnalysis(config, cycle_data))
+        methods.append(gaitalytics.analysis.SpatioTemporalAnalysis(config, cycle_data))
     if ANALYSIS_TOE_CLEARANCE in methode:
-        methods.append(analysis.MinimalClearingDifference(cycle_data, config))
+        methods.append(gaitalytics.analysis.MinimalClearingDifference(cycle_data, config))
 
     results = None
     for methode in methods:
@@ -69,14 +73,14 @@ def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
         if results is None:
             results = result
         else:
-            results = results.merge(result, on=cycle.BasicCyclePoint.CYCLE_NUMBER)
+            results = results.merge(result, on=gaitalytics.cycle.BasicCyclePoint.CYCLE_NUMBER)
 
     return results
 
 
 def detect_gait_events(c3d_file_path: str,
                        output_path: str,
-                       configs: utils.ConfigProvider,
+                       configs: gaitalytics.utils.ConfigProvider,
                        methode: str = GAIT_EVENT_METHODE_MARKER,
                        anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST):
     """
@@ -100,24 +104,24 @@ def detect_gait_events(c3d_file_path: str,
         raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
 
     # read c3d
-    acq_trial = c3d.read_btk(c3d_file_path)
+    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
 
     # define output name
     filename = os.path.basename(c3d_file_path).replace(".3.c3d", ".4.c3d")
     out_path = os.path.join(output_path, filename)
 
     if methode == GAIT_EVENT_METHODE_FP:
-        methode = events.ForcePlateEventDetection()
+        methode = gaitalytics.events.ForcePlateEventDetection()
     elif methode == GAIT_EVENT_METHODE_MARKER:
-        methode = events.ZenisGaitEventDetector(configs)
+        methode = gaitalytics.events.ZenisGaitEventDetector(configs)
 
     methode.detect_events(acq_trial)
 
     # write events c3d
-    c3d.write_btk(acq_trial, out_path)
+    gaitalytics.c3d.write_btk(acq_trial, out_path)
 
     # read c3d
-    acq_trial = c3d.read_btk(c3d_file_path)
+    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
 
     # get anomaly detection
     checker = _get_anomaly_checker(anomaly_checker)
@@ -133,7 +137,7 @@ def detect_gait_events(c3d_file_path: str,
         f.close()
 
 
-def _get_anomaly_checker(anomaly_checker: List[str]) -> events.AbstractEventAnomalyChecker:
+def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.AbstractEventAnomalyChecker:
     """
     defines checker by list of inputs
     :param anomaly_checker: list of checker name
@@ -141,13 +145,13 @@ def _get_anomaly_checker(anomaly_checker: List[str]) -> events.AbstractEventAnom
     """
     checker = None
     if GAIT_EVENT_CHECKER_CONTEXT in anomaly_checker:
-        checker = events.ContextPatternChecker()
+        checker = gaitalytics.events.ContextPatternChecker()
     if GAIT_EVENT_CHECKER_SPACING in anomaly_checker:
-        checker = events.EventSpacingChecker(checker)
+        checker = gaitalytics.events.EventSpacingChecker(checker)
     return checker
 
 
-def extract_cycles_buffered(buffer_output_path: str, configs: utils.ConfigProvider) -> cycle.CyclePointLoader:
+def extract_cycles_buffered(buffer_output_path: str, configs: gaitalytics.utils.ConfigProvider) -> gaitalytics.cycle.CyclePointLoader:
     """
     gets normalised and unnormalised data from buffered folder. It is needed to run api.extract_cycles as
     api.normalise_cycles with given buffer_output_path once to use this function
@@ -159,15 +163,15 @@ def extract_cycles_buffered(buffer_output_path: str, configs: utils.ConfigProvid
         raise FileExistsError(f"{buffer_output_path} does not exists")
 
     # load cycles
-    loader = cycle.CyclePointLoader(configs, buffer_output_path)
+    loader = gaitalytics.cycle.CyclePointLoader(configs, buffer_output_path)
     return loader
 
 
 def extract_cycles(c3d_file_path: str,
-                   configs: utils.ConfigProvider,
+                   configs: gaitalytics.utils.ConfigProvider,
                    methode: str = CYCLE_METHOD_HEEL_STRIKE,
                    buffer_output_path: str = None,
-                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[str, cycle.BasicCyclePoint]:
+                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[str, gaitalytics.cycle.BasicCyclePoint]:
     """
     extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
     csv file. Do not edit files and structure.
@@ -191,7 +195,7 @@ def extract_cycles(c3d_file_path: str,
         raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
 
     # read c3d
-    acq_trial = c3d.read_btk(c3d_file_path)
+    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
 
     # get anomaly detection
     checker = _get_anomaly_checker(anomaly_checker)
@@ -199,15 +203,15 @@ def extract_cycles(c3d_file_path: str,
     # choose cut method
     cycle_builder = None
     if methode == CYCLE_METHOD_TOE_OFF:
-        cycle_builder = cycle.ToeOffToToeOffCycleBuilder(checker)
+        cycle_builder = gaitalytics.cycle.ToeOffToToeOffCycleBuilder(checker)
     elif methode == CYCLE_METHOD_HEEL_STRIKE:
-        cycle_builder = cycle.HeelStrikeToHeelStrikeCycleBuilder(checker)
+        cycle_builder = gaitalytics.cycle.HeelStrikeToHeelStrikeCycleBuilder(checker)
 
     # get cycles
     cycles = cycle_builder.build_cycles(acq_trial)
 
     # extract cycles
-    cycle_data = cycle.CycleDataExtractor(configs).extract_data(cycles, acq_trial)
+    cycle_data = gaitalytics.cycle.CycleDataExtractor(configs).extract_data(cycles, acq_trial)
 
     # buffer cycles
     if buffer_output_path:
@@ -218,9 +222,9 @@ def extract_cycles(c3d_file_path: str,
 
 
 def normalise_cycles(c3d_file_path: str,
-                     cycle_data: Dict[str, cycle.BasicCyclePoint],
+                     cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
                      method: str = NORMALISE_METHODE_LINEAR,
-                     buffer_output_path: str = None) -> Dict[str, cycle.BasicCyclePoint]:
+                     buffer_output_path: str = None) -> Dict[str, gaitalytics.cycle.BasicCyclePoint]:
     """
     normalise and returns cycles
     :param c3d_file_path:  path of c3d file with foot_off and foot_strike events '*.4.c3d'
@@ -239,7 +243,7 @@ def normalise_cycles(c3d_file_path: str,
 
     # get method
     if method == NORMALISE_METHODE_LINEAR:
-        method = cycle.LinearTimeNormalisation()
+        method = gaitalytics.cycle.LinearTimeNormalisation()
 
     # normalise
     normalised_data = method.normalise(cycle_data)

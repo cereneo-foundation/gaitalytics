@@ -11,15 +11,15 @@ import numpy as np
 from btk import btkAcquisition, btkEvent
 from pandas import DataFrame, concat, read_csv
 
-from .c3d import AxesNames, PointDataType, GaitEventContext, GaitEventLabel
-from .events import AbstractEventAnomalyChecker, find_next_event
-from .utils import ConfigProvider
+import gaitalytics.c3d
+import gaitalytics.events
+import gaitalytics.utils
 
 
 # Cycle Builder
 class CycleBuilder(ABC):
 
-    def __init__(self, event_anomaly_checker: AbstractEventAnomalyChecker):
+    def __init__(self, event_anomaly_checker: gaitalytics.events.AbstractEventAnomalyChecker):
         self.eventAnomalyChecker = event_anomaly_checker
 
     def build_cycles(self, aqc: btkAcquisition) -> GaitCycleList:
@@ -38,14 +38,16 @@ class CycleBuilder(ABC):
 
 
 class EventCycleBuilder(CycleBuilder):
-    def __init__(self, event_anomaly_checker: AbstractEventAnomalyChecker, event: GaitEventLabel):
+    def __init__(self,
+                 event_anomaly_checker: gaitalytics.events.AbstractEventAnomalyChecker,
+                 event: gaitalytics.c3d.GaitEventLabel):
         super().__init__(event_anomaly_checker)
         self.event_label = event.value
 
     def _build(self, acq: btkAcquisition) -> GaitCycleList:
         gait_cycles = GaitCycleList()
-        numbers = {GaitEventContext.LEFT.value: 0,
-                   GaitEventContext.RIGHT.value: 0}
+        numbers = {gaitalytics.c3d.GaitEventContext.LEFT.value: 0,
+                   gaitalytics.c3d.GaitEventContext.RIGHT.value: 0}
         for event_index in range(0, acq.GetEventNumber()):
             start_event = acq.GetEvent(event_index)
             context = start_event.GetContext()
@@ -53,10 +55,10 @@ class EventCycleBuilder(CycleBuilder):
             label = start_event.GetLabel()
             if label == self.event_label:
                 try:
-                    [end_event, unused_events] = find_next_event(acq, label, context, event_index)
+                    [end_event, unused_events] = gaitalytics.events.find_next_event(acq, label, context, event_index)
                     if end_event is not None:
                         numbers[context] = numbers[context] + 1
-                        cycle = GaitCycle(numbers[context], GaitEventContext(context),
+                        cycle = GaitCycle(numbers[context], gaitalytics.c3d.GaitEventContext(context),
                                           start_event.GetFrame(), end_event.GetFrame(),
                                           unused_events)
                         gait_cycles.add_cycle(cycle)
@@ -66,18 +68,18 @@ class EventCycleBuilder(CycleBuilder):
 
 
 class HeelStrikeToHeelStrikeCycleBuilder(EventCycleBuilder):
-    def __init__(self, event_anomaly_checker: AbstractEventAnomalyChecker):
-        super().__init__(event_anomaly_checker, GaitEventLabel.FOOT_STRIKE)
+    def __init__(self, event_anomaly_checker: gaitalytics.events.AbstractEventAnomalyChecker):
+        super().__init__(event_anomaly_checker, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE)
 
 
 class ToeOffToToeOffCycleBuilder(EventCycleBuilder):
-    def __init__(self, event_anomaly_checker: AbstractEventAnomalyChecker):
-        super().__init__(event_anomaly_checker, GaitEventLabel.FOOT_OFF)
+    def __init__(self, event_anomaly_checker: gaitalytics.events.AbstractEventAnomalyChecker):
+        super().__init__(event_anomaly_checker, gaitalytics.c3d.GaitEventLabel.FOOT_OFF)
 
 
 # Cycle Extractor
 class CycleDataExtractor:
-    def __init__(self, configs: ConfigProvider):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider):
         self._configs = configs
 
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, BasicCyclePoint]:
@@ -95,11 +97,11 @@ class CycleDataExtractor:
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
         for direction_index in range(0, len(raw_data[0])):
             label = point.GetLabel()
-            direction = AxesNames(direction_index)
-            data_type = PointDataType(point.GetType())
+            direction = gaitalytics.c3d.AxesNames(direction_index)
+            data_type = gaitalytics.c3d.PointDataType(point.GetType())
             translated_label = self._configs.get_translated_label(label, data_type)
             if translated_label is not None:
-                key = ConfigProvider.define_key(translated_label, data_type, direction, cycle.context)
+                key = gaitalytics.utils.ConfigProvider.define_key(translated_label, data_type, direction, cycle.context)
                 if key not in data_list:
                     data_list[key] = BasicCyclePoint(
                         BasicCyclePoint.TYPE_RAW,
@@ -118,12 +120,12 @@ class TimeNormalisationAlgorithm(ABC):
 
     def __init__(self, number_frames: int = 100):
         self._number_frames = number_frames
-        self._data_type_fiter = {PointDataType.Angles,
-                                 PointDataType.Forces,
-                                 PointDataType.Moments,
-                                 PointDataType.Power,
-                                 PointDataType.Scalar,
-                                 PointDataType.Reaction}
+        self._data_type_fiter = {gaitalytics.c3d.PointDataType.Angles,
+                                 gaitalytics.c3d.PointDataType.Forces,
+                                 gaitalytics.c3d.PointDataType.Moments,
+                                 gaitalytics.c3d.PointDataType.Power,
+                                 gaitalytics.c3d.PointDataType.Scalar,
+                                 gaitalytics.c3d.PointDataType.Reaction}
 
     def normalise(self, r_data_list: Dict[str, BasicCyclePoint]) -> Dict[str, BasicCyclePoint]:
         n_data_list = {}
@@ -173,7 +175,7 @@ class LinearTimeNormalisation(TimeNormalisationAlgorithm):
 
 class GaitCycle:
 
-    def __init__(self, number: int, context: GaitEventContext, start_frame: int, end_frame: int,
+    def __init__(self, number: int, context: gaitalytics.c3d.GaitEventContext, start_frame: int, end_frame: int,
                  unused_event: btkEvent):
         self.number = number
         self.context = context
@@ -189,7 +191,7 @@ class GaitCycleList:
         self._right_cycles = {}
 
     def add_cycle(self, cycle: GaitCycle):
-        if cycle.context == GaitEventContext.LEFT:
+        if cycle.context == gaitalytics.c3d.GaitEventContext.LEFT:
             self._left_cycles[cycle.number] = cycle
         else:
             self._right_cycles[cycle.number] = cycle
@@ -223,8 +225,12 @@ class BasicCyclePoint:
     TYPE_RAW = "raw"
     TYPE_NORM = "normalised"
 
-    def __init__(self, cycle_point_type: str, translated_label: Enum, direction: AxesNames, data_type: PointDataType,
-                 context: GaitEventContext):
+    def __init__(self,
+                 cycle_point_type: str,
+                 translated_label: Enum,
+                 direction: gaitalytics.c3d.AxesNames,
+                 data_type: gaitalytics.c3d.PointDataType,
+                 context: gaitalytics.c3d.GaitEventContext):
         self._cycle_point_type = cycle_point_type
         self._data_table: DataFrame = None
         self._event_frames = None
@@ -242,27 +248,27 @@ class BasicCyclePoint:
         self._cycle_point_type = cycle_point_type
 
     @property
-    def data_type(self) -> PointDataType:
+    def data_type(self) -> gaitalytics.c3d.PointDataType:
         return self._data_type
 
     @data_type.setter
-    def data_type(self, value: PointDataType):
+    def data_type(self, value: gaitalytics.c3d.PointDataType):
         self._data_type = value
 
     @property
-    def context(self) -> GaitEventContext:
+    def context(self) -> gaitalytics.c3d.GaitEventContext:
         return self._context
 
     @context.setter
-    def context(self, value: GaitEventContext):
+    def context(self, value: gaitalytics.c3d.GaitEventContext):
         self._context = value
 
     @property
-    def direction(self) -> AxesNames:
+    def direction(self) -> gaitalytics.c3d.AxesNames:
         return self._direction
 
     @direction.setter
-    def direction(self, value: AxesNames):
+    def direction(self, value: gaitalytics.c3d.AxesNames):
         self._direction = value
 
     @property
@@ -318,8 +324,9 @@ class BasicCyclePoint:
 
     @staticmethod
     def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
-        key = ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type, cycle_point.direction,
-                                        cycle_point.context)
+        key = gaitalytics.utils.ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type,
+                                                          cycle_point.direction,
+                                                          cycle_point.context)
 
         return f"{prefix}{CyclePointLoader.FILENAME_DELIMITER}{key}{CyclePointLoader.FILENAME_DELIMITER}{postfix}.csv"
 
@@ -329,7 +336,7 @@ class BasicCyclePoint:
         output.to_csv(f"{path}/{filename}")
 
     @classmethod
-    def from_csv(cls, configs: ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
+    def from_csv(cls, configs: gaitalytics.utils.ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
         [label, data_type, direction, context, cycle_point_type,
          prefix] = CyclePointLoader.get_meta_data_filename(filename)
 
@@ -344,7 +351,7 @@ class BasicCyclePoint:
 
 
 class BufferedCyclePoint(BasicCyclePoint):
-    def __init__(self, configs: ConfigProvider, path: str, filename: str):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, path: str, filename: str):
         self._configs = configs
         self._filename = filename
         self._path = path
@@ -377,32 +384,32 @@ class BufferedCyclePoint(BasicCyclePoint):
         super().add_cycle_data(data, cycle_number)
 
     @property
-    def data_type(self) -> PointDataType:
+    def data_type(self) -> gaitalytics.c3d.PointDataType:
         self._load_file()
         return super().data_type
 
     @data_type.setter
-    def data_type(self, value: PointDataType):
+    def data_type(self, value: gaitalytics.c3d.PointDataType):
         self._load_file()
         super().data_type = value
 
     @property
-    def context(self) -> GaitEventContext:
+    def context(self) -> gaitalytics.c3d.GaitEventContext:
         self._load_file()
         return super().context
 
     @context.setter
-    def context(self, value: GaitEventContext):
+    def context(self, value: gaitalytics.c3d.GaitEventContext):
         self._load_file()
         super().context = value
 
     @property
-    def direction(self) -> AxesNames:
+    def direction(self) -> gaitalytics.c3d.AxesNames:
         self._load_file()
         return super().direction
 
     @direction.setter
-    def direction(self, value: AxesNames):
+    def direction(self, value: gaitalytics.c3d.AxesNames):
         self._load_file()
         super().direction = value
 
@@ -426,9 +433,9 @@ class BufferedCyclePoint(BasicCyclePoint):
         self._load_file()
         super().event_frames = value
 
-    def add_event_frame(self, event_frame: int, cycle_number: int):
+    def add_event_frame(self, event_frame: int, cycle_number: int, event_label: str):
         self._load_file()
-        super().add_event_frame(event_frame, cycle_number)
+        super().add_event_frame(event_frame, cycle_number, event_label)
 
     def to_csv(self, path: str, prefix: str):
         self._load_file()
@@ -438,7 +445,7 @@ class BufferedCyclePoint(BasicCyclePoint):
 class CyclePointLoader:
     FILENAME_DELIMITER = "-"
 
-    def __init__(self, configs: ConfigProvider, dir_path: str):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, dir_path: str):
         self._raw_cycle_data = {}
         self._norm_cycle_data = {}
         file_names = os.listdir(dir_path)
@@ -464,13 +471,14 @@ class CyclePointLoader:
         return filename.split(cls.FILENAME_DELIMITER)
 
     @classmethod
-    def get_meta_data_filename(cls, filename: str) -> [str, PointDataType, AxesNames, GaitEventContext, str, str]:
+    def get_meta_data_filename(cls, filename: str) -> [str, gaitalytics.c3d.PointDataType, gaitalytics.c3d.AxesNames,
+                                                       gaitalytics.c3d.GaitEventContext, str, str]:
         prefix, key, postfix = cls.get_key_from_filename(filename)
         meta_data = key.split(".")
         label = meta_data[0]
-        data_type = PointDataType[meta_data[1]]
-        direction = AxesNames[meta_data[2]]
-        context = GaitEventContext(meta_data[3])
+        data_type = gaitalytics.c3d.PointDataType[meta_data[1]]
+        direction = gaitalytics.c3d.AxesNames[meta_data[2]]
+        context = gaitalytics.c3d.GaitEventContext(meta_data[3])
         return [label, data_type, direction, context, postfix, prefix]
 
     @classmethod

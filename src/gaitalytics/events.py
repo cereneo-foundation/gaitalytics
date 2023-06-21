@@ -7,7 +7,8 @@ from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundR
 from matplotlib import pyplot as plt
 from scipy import signal
 
-from . import c3d, utils
+import gaitalytics.c3d
+import gaitalytics.utils
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
 
@@ -20,12 +21,14 @@ class AbstractGaitEventDetector(ABC):
         pass
 
     @staticmethod
-    def _create_event(acq, frame: int, event_label: c3d.GaitEventLabel, event_context: c3d.GaitEventContext):
+    def _create_event(acq, frame: int,
+                      event_label: gaitalytics.c3d.GaitEventLabel,
+                      event_context: gaitalytics.c3d.GaitEventContext):
         frequency = acq.GetPointFrequency()
         event = btkEvent()
         event.SetLabel(event_label.value)
         # event.SetFrame(int(frame))
-        event.SetId(c3d.GaitEventLabel.get_type_id(event_label.value))
+        event.SetId(gaitalytics.c3d.GaitEventLabel.get_type_id(event_label.value))
         event.SetContext(event_context.value)
         event.SetTime(float((frame - 1) / frequency))
         return event
@@ -36,7 +39,9 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     This class detects gait events from cgm2 model data
     """
 
-    def __init__(self, configs: utils.ConfigProvider, foot_strike_offset: int = 0, foot_off_offset: int = 0):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider,
+                 foot_strike_offset: int = 0,
+                 foot_off_offset: int = 0):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
@@ -63,23 +68,24 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         right_diff_toe = right_heel - sacrum
         left_diff_toe = left_heel - sacrum
 
-        self._create_events(acq, left_diff_toe, c3d.GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_toe, c3d.GaitEventLabel.FOOT_OFF, c3d.GaitEventContext.RIGHT)
-        self._create_events(acq, left_diff_heel, c3d.GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_heel, c3d.GaitEventLabel.FOOT_STRIKE, c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF, gaitalytics.c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF, gaitalytics.c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE, gaitalytics.c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE, gaitalytics.c3d.GaitEventContext.RIGHT)
 
-    #   c3d.sort_events(acq)
+    #   gaitalytics.c3d.sort_events(acq)
 
-    def _create_events(self, acq, diff, event_label: c3d.GaitEventLabel, event_context: c3d.GaitEventContext,
+    def _create_events(self, acq, diff, event_label: gaitalytics.c3d.GaitEventLabel,
+                       event_context: gaitalytics.c3d.GaitEventContext,
                        min_distance: int = 100,
                        show_plot: bool = False):
-        data = diff[:, c3d.AxesNames.y.value]
-        if c3d.is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
+        data = diff[:, gaitalytics.c3d.AxesNames.y.value]
+        if gaitalytics.c3d.is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
                                         acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
             data = data * -1
-        data = utils.min_max_norm(data)
+        data = gaitalytics.utils.min_max_norm(data)
 
-        if c3d.GaitEventLabel.FOOT_STRIKE == event_label:
+        if gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE == event_label:
             data = [entry * -1 for entry in data]
 
         extremes, foo = signal.find_peaks(data, height=[0, 1], distance=min_distance)
@@ -116,7 +122,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         :param acq: loaded and filtered acquisition
         """
 
-        for context in c3d.GaitEventContext:
+        for context in gaitalytics.c3d.GaitEventContext:
             force_down_sample = force_plate_down_sample(acq, self._mapped_force_plate[context.value])
             detection = detect_onset(force_down_sample, threshold=self._weight_threshold)
             sequence = self._detect_gait_event_type(force_down_sample, detection)
@@ -150,9 +156,9 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
                     # positive or negative slope (FeetOff or FeetStrike)
                     diff = force_plate_signal[signal_index - 20] - force_plate_signal[signal_index + 20]
                     if diff > 0:
-                        detected_event_types.append([c3d.GaitEventLabel.FOOT_OFF, signal_index])
+                        detected_event_types.append([gaitalytics.c3d.GaitEventLabel.FOOT_OFF, signal_index])
                     else:
-                        detected_event_types.append([c3d.GaitEventLabel.FOOT_STRIKE, signal_index])
+                        detected_event_types.append([gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE, signal_index])
         return detected_event_types  # Contain the label of the event and the corresponding index
 
 
@@ -221,7 +227,7 @@ class ContextPatternChecker(AbstractEventAnomalyChecker):
         abnormal_event_frames = []
         anomaly_detected = False
 
-        c3d.sort_events(acq_walk)
+        gaitalytics.c3d.sort_events(acq_walk)
 
         for current_event_index in range(0, acq_walk.GetEventNumber()):
             current_event = acq_walk.GetEvent(current_event_index)
