@@ -44,7 +44,8 @@ def analyse_data(cycle_data: Dict[str, cycle.BasicCyclePoint],
     :param cycle_data: unnormalised cycle data
     :param config: configs from marker and model mapping
     :param methode: list of methods, 'moments' api.ANALYSIS_MOMENTS, 'angles' api.ANALYSIS_ANGLES,
-        'powers' api.ANALYSIS_POWERS, 'forces' api.ANALYSIS_FORCES, 'spatiotemporal' api.ANALYSIS_SPATIO_TEMP
+        'powers' api.ANALYSIS_POWERS, 'forces' api.ANALYSIS_FORCES, 'spatiotemporal' api.ANALYSIS_SPATIO_TEMP,
+        'toe_clearance' api.ANALYSIS_TOE_CLEARANCE
     :return: results of analysis
     """
     if not all(item in ANALYSIS_LIST for item in methode):

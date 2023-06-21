@@ -143,3 +143,5 @@ dmypy.json
 /PiGPipeline_SimonPlayground/
 /plots/
 /out/
+
+/.pypirc

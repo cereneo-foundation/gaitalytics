@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaitalytics"
+version = "0.0.2beta"
+authors = [
+  { name="André Böni", email="andre.boeni@cereneo.foundation" },
+]
+description = "Library to analyse gait data captured with a mocap system"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/cereneo-foundation/gait_analysis"
+"Bug Tracker" = "https://github.com/cereneo-foundation/gait_analysis/issues"
