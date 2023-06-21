@@ -66,6 +66,8 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
         methods.append(gaitalytics.analysis.SpatioTemporalAnalysis(config, cycle_data))
     if ANALYSIS_TOE_CLEARANCE in methode:
         methods.append(gaitalytics.analysis.MinimalClearingDifference(cycle_data, config))
+    if ANALYSIS_FORCES in methode:
+        methods.append(gaitalytics.analysis.JointForcesCycleAnalysis(cycle_data))
 
     results = None
     for methode in methods:

@@ -1,12 +1,13 @@
 from abc import ABC, abstractmethod
 from typing import Dict
+
 import numpy as np
 from pandas import DataFrame, concat
 from scipy import signal
-import gaitalytics.cycle
-import gaitalytics.c3d
-import gaitalytics.utils
 
+import gaitalytics.c3d
+import gaitalytics.cycle
+import gaitalytics.utils
 
 
 class AbstractAnalysis(ABC):
@@ -19,7 +20,8 @@ class AbstractAnalysis(ABC):
 
 class AbstractCycleAnalysis(AbstractAnalysis, ABC):
 
-    def __init__(self, data_list: Dict[str, gaitalytics.cycle.BasicCyclePoint], data_type: gaitalytics.c3d.PointDataType):
+    def __init__(self, data_list: Dict[str, gaitalytics.cycle.BasicCyclePoint],
+                 data_type: gaitalytics.c3d.PointDataType):
         super().__init__(data_list)
         self._point_data_type = data_type
 
@@ -44,7 +46,8 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
                     standing = data.copy()
                     swinging = data.copy()
                     for row in range(len(data)):
-                        event_frame = raw_point.event_frames.iloc[row][gaitalytics.cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
+                        event_frame = raw_point.event_frames.iloc[row][
+                            gaitalytics.cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
                         swinging.iloc[row, 1:event_frame] = float("Nan")
                         standing.iloc[row, event_frame + 1: -1] = float("Nan")
                     result1 = self._do_analysis(standing)
@@ -58,6 +61,30 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
                 else:
                     results = concat([results, result])
         return results.pivot(columns="metric")
+
+
+class JointForcesCycleAnalysis(AbstractCycleAnalysis):
+
+    def __init__(self, data_list: Dict):
+        super().__init__(data_list, gaitalytics.c3d.PointDataType.Forces)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            splits = key.split(".")
+            return splits[3].lower() in splits[0]
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+        rom_max = data.max(axis=1)
+        rom_min = data.min(axis=1)
+        rom_mean = data.mean(axis=1)
+        results['forces_mean'] = rom_mean
+        results['forces_max'] = rom_max
+        results['forces_min'] = rom_min
+        results['forces_sd'] = data.std(axis=1)
+        results['forces_amplitude'] = rom_max - rom_min
+        return results
 
 
 class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
@@ -139,7 +166,8 @@ class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
 
 class SpatioTemporalAnalysis(AbstractAnalysis):
 
-    def __init__(self, configs: gaitalytics.utils.ConfigProvider, data_list: Dict, body_height: float = 1800, frequency: int = 100):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, data_list: Dict, body_height: float = 1800,
+                 frequency: int = 100):
         super().__init__(data_list)
         self._configs = configs
         self._frequency = frequency
@@ -158,22 +186,26 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         return result.pivot(columns="metric")
 
     def _calculate_step_width(self) -> DataFrame:
-        right_heel_x_right = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                             gaitalytics.c3d.PointDataType.Marker,
-                                                                             gaitalytics.c3d.AxesNames.x,
-                                                                             gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
-        left_heel_x_right = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                            gaitalytics.c3d.PointDataType.Marker,
-                                                                            gaitalytics.c3d.AxesNames.x,
-                                                                            gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
-        right_heel_x_left = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                            gaitalytics.c3d.PointDataType.Marker,
-                                                                            gaitalytics.c3d.AxesNames.x,
-                                                                            gaitalytics.c3d.GaitEventContext.LEFT)].data_table
-        left_heel_x_left = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                           gaitalytics.c3d.PointDataType.Marker,
-                                                                           gaitalytics.c3d.AxesNames.x,
-                                                                           gaitalytics.c3d.GaitEventContext.LEFT)].data_table
+        right_heel_x_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.x,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
+        left_heel_x_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.x,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
+        right_heel_x_left = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.x,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)].data_table
+        left_heel_x_left = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.x,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
         right = self._calculate_step_width_side(right_heel_x_right, left_heel_x_right, "right")
         left = self._calculate_step_width_side(left_heel_x_left, right_heel_x_left, "left")
@@ -190,14 +222,16 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         return width
 
     def _calculate_step_height(self) -> DataFrame:
-        right_heel_z = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                                                       gaitalytics.c3d.PointDataType.Marker,
-                                                                       gaitalytics.c3d.AxesNames.z,
-                                                                       gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
-        left_heel_z = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                                                      gaitalytics.c3d.PointDataType.Marker,
-                                                                      gaitalytics.c3d.AxesNames.z,
-                                                                      gaitalytics.c3d.GaitEventContext.LEFT)].data_table
+        right_heel_z = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.z,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
+        left_heel_z = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.z,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
         right = self._calculate_step_height_side(right_heel_z, "right")
         left = self._calculate_step_height_side(left_heel_z, "left")
@@ -213,14 +247,14 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
     def _calculate_durations(self):
         right_heel_progression = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.RIGHT)]
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)]
         left_heel_progression = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.LEFT)]
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)]
         right_durations = self._side_duration_calculation(right_heel_progression, "right")
         left_durations = self._side_duration_calculation(left_heel_progression, "left")
 
@@ -247,25 +281,25 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
     def _calculate_length(self) -> DataFrame:
         right_heel_progression_right = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
         left_heel_progression_right = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].data_table
 
         left_heel_progression_left = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.LEFT)].data_table
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)].data_table
         right_heel_progression_left = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
-                                            gaitalytics.c3d.PointDataType.Marker,
-                                            gaitalytics.c3d.AxesNames.y,
-                                            gaitalytics.c3d.GaitEventContext.LEFT)].data_table
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.y,
+                                                        gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
         right = self._side_step_length_calculation(right_heel_progression_right,
                                                    left_heel_progression_right, "right")
@@ -305,19 +339,21 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
 class MinimalClearingDifference(AbstractAnalysis):
 
-    def __init__(self, data_list: Dict[str, gaitalytics.cycle.BasicCyclePoint], configs: gaitalytics.utils.ConfigProvider):
+    def __init__(self, data_list: Dict[str, gaitalytics.cycle.BasicCyclePoint],
+                 configs: gaitalytics.utils.ConfigProvider):
         super().__init__(data_list)
         self._configs = configs
 
     def analyse(self) -> DataFrame:
-        right_toe = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_meta_2,
-                                                                    gaitalytics.c3d.PointDataType.Marker,
-                                                                    gaitalytics.c3d.AxesNames.z,
-                                                                    gaitalytics.c3d.GaitEventContext.RIGHT)]
+        right_toe = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_meta_2,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.z,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)]
         left_toe = self._data_list[gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_meta_2,
-                                                                   gaitalytics.c3d.PointDataType.Marker,
-                                                                   gaitalytics.c3d.AxesNames.z,
-                                                                   gaitalytics.c3d.GaitEventContext.LEFT)]
+                                                                               gaitalytics.c3d.PointDataType.Marker,
+                                                                               gaitalytics.c3d.AxesNames.z,
+                                                                               gaitalytics.c3d.GaitEventContext.LEFT)]
 
         right = self._calculate_minimal_clearance(right_toe.data_table, right_toe.event_frames, "right")
         left = self._calculate_minimal_clearance(left_toe.data_table, left_toe.event_frames, "left")
