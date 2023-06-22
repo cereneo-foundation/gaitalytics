@@ -135,19 +135,19 @@ class TimeNormalisationAlgorithm(ABC):
                 n_cycle_point = BasicCyclePoint(BasicCyclePoint.TYPE_NORM, r_cycle_point.translated_label,
                                                 r_cycle_point.direction, r_cycle_point.data_type,
                                                 r_cycle_point.context)
-                for cycle_key in r_cycle_point.data_table:
-                    cycle_data = r_cycle_point.data_table.iloc[cycle_key].to_list()
+                for cycle_key in r_cycle_point.data_table.index.to_list():
+                    cycle_data = r_cycle_point.data_table.loc[cycle_key].to_list()
 
                     interpolated_data = self._run_algorithm(cycle_data, self._number_frames)
                     n_cycle_point.add_cycle_data(interpolated_data, cycle_key)
 
                     norm_event_frame = self._define_event_frame(
-                        r_cycle_point.event_frames.iloc[cycle_key][BasicCyclePoint.EVENT_FRAME_NUMBER],
+                        r_cycle_point.event_frames.loc[cycle_key][BasicCyclePoint.EVENT_FRAME_NUMBER],
                         len(cycle_data),
                         self._number_frames)
                     n_cycle_point.add_event_frame(norm_event_frame,
                                                   cycle_key,
-                                                  r_cycle_point.event_frames.iloc[cycle_key][
+                                                  r_cycle_point.event_frames.loc[cycle_key][
                                                       BasicCyclePoint.EVENT_LABEL])
                     n_data_list[data_key] = n_cycle_point
         return n_data_list
@@ -168,8 +168,10 @@ class LinearTimeNormalisation(TimeNormalisationAlgorithm):
         return ceil(event_frame / frame_number_cycle * number_frames)
 
     def _run_algorithm(self, data: np.array, number_frames: int = 100) -> np.array:
+        data = np.array(data)
+        data = data[np.logical_not(np.isnan(data))]
         times = np.arange(0, len(data), 1)
-        times_new = np.linspace(0, len(data), num=100)
+        times_new = np.linspace(0, len(data), num=number_frames)
         return np.interp(times_new, times, data)
 
 
@@ -345,6 +347,7 @@ class BasicCyclePoint:
         data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
         point.event_frames = DataFrame([data_table[cls.EVENT_FRAME_NUMBER], data_table[cls.EVENT_LABEL]]).T
         data_table = data_table.drop([cls.EVENT_FRAME_NUMBER, cls.EVENT_LABEL], axis=1)
+        data_table.columns = data_table.columns.map(int)
         point.data_table = data_table
 
         return point

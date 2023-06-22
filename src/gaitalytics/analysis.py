@@ -214,6 +214,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
     @staticmethod
     def _calculate_step_width_side(context_heel_x: DataFrame, contra_heel_x: DataFrame, side: str) -> DataFrame:
+        # TODO: Medial marker
         column_label = f"step_width_{side}"
         width = DataFrame(index=context_heel_x.index, columns=[column_label])
         for cycle_number in context_heel_x.index.to_series():
@@ -307,6 +308,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
                                                   right_heel_progression_left, "left")
 
         results = concat([left, right], axis=1)
+        ## Todo: check stride length
         results['stride_length'] = results["step_length_right"] + results["step_length_left"]
 
         return results
@@ -314,6 +316,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
     @staticmethod
     def _side_step_length_calculation(context_heel_progression: DataFrame,
                                       contra_heel_progression: DataFrame, side: str) -> np.array:
+        # TODO: checks step definition
         s_len_label = f"step_length_{side}"
         step_length = DataFrame(index=context_heel_progression.index, columns=[s_len_label])
 
