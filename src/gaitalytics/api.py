@@ -62,12 +62,13 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
         methods.append(gaitalytics.analysis.JointMomentsCycleAnalysis(cycle_data))
     if ANALYSIS_POWERS in methode:
         methods.append(gaitalytics.analysis.JointPowerCycleAnalysis(cycle_data))
+    if ANALYSIS_FORCES in methode:
+        methods.append(gaitalytics.analysis.JointForcesCycleAnalysis(cycle_data))
     if ANALYSIS_SPATIO_TEMP in methode:
         methods.append(gaitalytics.analysis.SpatioTemporalAnalysis(config, cycle_data))
     if ANALYSIS_TOE_CLEARANCE in methode:
         methods.append(gaitalytics.analysis.MinimalClearingDifference(cycle_data, config))
-    if ANALYSIS_FORCES in methode:
-        methods.append(gaitalytics.analysis.JointForcesCycleAnalysis(cycle_data))
+
 
     results = None
     for methode in methods:
@@ -258,6 +259,9 @@ def normalise_cycles(c3d_file_path: str,
     return normalised_data
 
 
-def _cycle_points_to_csv(cycle_data: Dict, dir_path: str, prefix: str):
+def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint], dir_path: str, prefix: str):
+    subject_saved = False
     for key in cycle_data:
         cycle_data[key].to_csv(dir_path, prefix)
+        if not subject_saved:
+            cycle_data[key].subject.to_file(dir_path)

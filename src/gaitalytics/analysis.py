@@ -174,18 +174,24 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         self._body_height = body_height
 
     def analyse(self) -> DataFrame:
-        step_length = self._calculate_length()
+        subject = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.c3d.PointDataType.Marker,
+                                                        gaitalytics.c3d.AxesNames.x,
+                                                        gaitalytics.c3d.GaitEventContext.RIGHT)].subject
+        step_length = self._calculate_length(subject)
         durations = self._calculate_durations()
 
-        step_height = self._calculate_step_height()
-        step_width = self._calculate_step_width()
+        step_height = self._calculate_step_height(subject)
+        step_width = self._calculate_step_width(subject)
         result = step_length.merge(durations, on="cycle_number")
         result = result.merge(step_height, on="cycle_number")
         result = result.merge(step_width, on="cycle_number")
         result['metric'] = "Spatiotemporal"
         return result.pivot(columns="metric")
 
-    def _calculate_step_width(self) -> DataFrame:
+    def _calculate_step_width(self, subject: gaitalytics.cycle.SubjectMeasures) -> DataFrame:
+
         right_heel_x_right = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
                                                         gaitalytics.c3d.PointDataType.Marker,
@@ -207,22 +213,23 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
                                                         gaitalytics.c3d.AxesNames.x,
                                                         gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
-        right = self._calculate_step_width_side(right_heel_x_right, left_heel_x_right, "right")
-        left = self._calculate_step_width_side(left_heel_x_left, right_heel_x_left, "left")
+        right = self._calculate_step_width_side(right_heel_x_right, left_heel_x_right, subject.body_height, "right")
+        left = self._calculate_step_width_side(left_heel_x_left, right_heel_x_left, subject.body_height, "left")
 
         return concat([left, right], axis=1)
 
     @staticmethod
-    def _calculate_step_width_side(context_heel_x: DataFrame, contra_heel_x: DataFrame, side: str) -> DataFrame:
+    def _calculate_step_width_side(context_heel_x: DataFrame, contra_heel_x: DataFrame, body_height: float,
+                                   side: str) -> DataFrame:
         # TODO: Medial marker
         column_label = f"step_width_{side}"
         width = DataFrame(index=context_heel_x.index, columns=[column_label])
         for cycle_number in context_heel_x.index.to_series():
             width_c = abs(context_heel_x.loc[cycle_number][1] - contra_heel_x.loc[cycle_number][1])
-            width.loc[cycle_number][column_label] = width_c
+            width.loc[cycle_number][column_label] = width_c / body_height
         return width
 
-    def _calculate_step_height(self) -> DataFrame:
+    def _calculate_step_height(self, subject: gaitalytics.cycle.SubjectMeasures) -> DataFrame:
         right_heel_z = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
                                                         gaitalytics.c3d.PointDataType.Marker,
@@ -234,15 +241,15 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
                                                         gaitalytics.c3d.AxesNames.z,
                                                         gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
-        right = self._calculate_step_height_side(right_heel_z, "right")
-        left = self._calculate_step_height_side(left_heel_z, "left")
+        right = self._calculate_step_height_side(right_heel_z, subject.body_height, "right")
+        left = self._calculate_step_height_side(left_heel_z, subject.body_height, "left")
         return concat([left, right], axis=1)
 
     @staticmethod
-    def _calculate_step_height_side(heel_z: DataFrame, side: str) -> DataFrame:
+    def _calculate_step_height_side(heel_z: DataFrame, body_height: float, side: str) -> DataFrame:
         column_label = f"step_height_{side}"
         height = DataFrame(index=heel_z.index, columns=[column_label])
-        height[column_label] = heel_z.max(axis=1) - heel_z.min(axis=1)
+        height[column_label] = (heel_z.max(axis=1) - heel_z.min(axis=1)) / body_height
         return height
 
     def _calculate_durations(self):
@@ -279,7 +286,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         durations[st_dur_label] = 100 - durations[sw_dur_label]
         return durations
 
-    def _calculate_length(self) -> DataFrame:
+    def _calculate_length(self, subject: gaitalytics.cycle.SubjectMeasures) -> DataFrame:
         right_heel_progression_right = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
                                                         gaitalytics.c3d.PointDataType.Marker,
@@ -303,9 +310,9 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
                                                         gaitalytics.c3d.GaitEventContext.LEFT)].data_table
 
         right = self._side_step_length_calculation(right_heel_progression_right,
-                                                   left_heel_progression_right, "right")
+                                                   left_heel_progression_right, subject.body_height, "right")
         left = self._side_step_length_calculation(left_heel_progression_left,
-                                                  right_heel_progression_left, "left")
+                                                  right_heel_progression_left, subject.body_height, "left")
 
         results = concat([left, right], axis=1)
         ## Todo: check stride length
@@ -315,7 +322,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
     @staticmethod
     def _side_step_length_calculation(context_heel_progression: DataFrame,
-                                      contra_heel_progression: DataFrame, side: str) -> np.array:
+                                      contra_heel_progression: DataFrame, body_height: float, side: str) -> np.array:
         # TODO: checks step definition
         s_len_label = f"step_length_{side}"
         step_length = DataFrame(index=context_heel_progression.index, columns=[s_len_label])
@@ -323,7 +330,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         for cycle_number in context_heel_progression.index.to_series():
             context_hs_pos = context_heel_progression.loc[cycle_number][1]
             contra_hs_pos = contra_heel_progression.loc[cycle_number][1]
-            step_length.loc[cycle_number][s_len_label] = abs(context_hs_pos - contra_hs_pos)
+            step_length.loc[cycle_number][s_len_label] = abs(context_hs_pos - contra_hs_pos) / body_height
 
         return step_length
 

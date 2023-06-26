@@ -8,13 +8,13 @@ from math import ceil
 from typing import Dict, List
 
 import numpy as np
+import yaml
 from btk import btkAcquisition, btkEvent
 from pandas import DataFrame, concat, read_csv
 
 import gaitalytics.c3d
 import gaitalytics.events
 import gaitalytics.utils
-
 
 # Cycle Builder
 class CycleBuilder(ABC):
@@ -84,16 +84,27 @@ class CycleDataExtractor:
 
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, BasicCyclePoint]:
         data_list = {}
+        subject = self._extract_subject(acq)
         for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
             for point_index in range(0, acq.GetPointNumber()):
                 point = acq.GetPoint(point_index)
                 if len(cycles.right_cycles) + 1 > cycle_number:
-                    self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number])
+                    self._extract_cycle(data_list, point, cycles.right_cycles[cycle_number], subject)
                 if len(cycles.left_cycles) + 1 > cycle_number:
-                    self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number])
+                    self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number], subject)
         return data_list
 
-    def _extract_cycle(self, data_list, point, cycle: GaitCycle):
+    @staticmethod
+    def _extract_subject(acq: btkAcquisition) -> SubjectMeasures:
+
+        body_mass = acq.GetMetaData().GetChild("PROCESSING").GetChild("Bodymass").GetInfo().ToDouble()[0]
+        body_height = acq.GetMetaData().GetChild("PROCESSING").GetChild("Height").GetInfo().ToDouble()[0]
+        left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
+        right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
+        subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length)
+        return subject
+
+    def _extract_cycle(self, data_list, point, cycle: GaitCycle, subject: SubjectMeasures):
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]
         for direction_index in range(0, len(raw_data[0])):
             label = point.GetLabel()
@@ -108,7 +119,8 @@ class CycleDataExtractor:
                         translated_label,
                         direction,
                         data_type,
-                        cycle.context)
+                        cycle.context,
+                        subject)
                 data_list[key].add_cycle_data(
                     raw_data[:, direction_index], cycle.number)
                 data_list[key].add_event_frame(
@@ -134,7 +146,7 @@ class TimeNormalisationAlgorithm(ABC):
             if r_cycle_point.data_type in self._data_type_fiter:
                 n_cycle_point = BasicCyclePoint(BasicCyclePoint.TYPE_NORM, r_cycle_point.translated_label,
                                                 r_cycle_point.direction, r_cycle_point.data_type,
-                                                r_cycle_point.context)
+                                                r_cycle_point.context, r_cycle_point.subject)
                 for cycle_key in r_cycle_point.data_table.index.to_list():
                     cycle_data = r_cycle_point.data_table.loc[cycle_key].to_list()
 
@@ -220,6 +232,59 @@ class GaitCycleList:
         return l_num if l_num >= r_num else r_num
 
 
+class SubjectMeasures(yaml.YAMLObject):
+    yaml_tag = u'!subject'
+    yaml_loader = yaml.SafeLoader
+
+    def __init__(self, body_mass: float, body_height: float, left_leg_length: float, right_leg_length: float):
+        self._body_mass = body_mass
+        self._body_height = body_height
+        self._left_leg_length = left_leg_length
+        self._right_leg_length = right_leg_length
+
+    @property
+    def body_mass(self) -> float:
+        return self._body_mass
+
+    @body_mass.setter
+    def body_mass(self, body_mass: float):
+        self._body_mass = body_mass
+
+    @property
+    def body_height(self) -> float:
+        return self._body_height
+
+    @body_height.setter
+    def body_height(self, body_height):
+        self._body_height = body_height
+
+    @property
+    def left_leg_length(self) -> float:
+        return self._left_leg_length
+
+    @left_leg_length.setter
+    def left_leg_length(self, left_leg_length: float):
+        self._left_leg_length = left_leg_length
+
+    @property
+    def right_leg_length(self) -> float:
+        return self._right_leg_length
+
+    @right_leg_length.setter
+    def right_leg_length(self, right_leg_length: float):
+        self._right_leg_length = right_leg_length
+
+    def to_file(self, path_out: str):
+        with open(f"{path_out}/subject.yml", "w") as f:
+            yaml.dump(self, f)
+
+    @staticmethod
+    def from_file(file_path: str):
+        with open(file_path, 'r') as f:
+            measures = yaml.safe_load(f)
+            return measures
+
+
 class BasicCyclePoint:
     EVENT_FRAME_NUMBER = "events_between"
     EVENT_LABEL = "events_label"
@@ -232,7 +297,8 @@ class BasicCyclePoint:
                  translated_label: Enum,
                  direction: gaitalytics.c3d.AxesNames,
                  data_type: gaitalytics.c3d.PointDataType,
-                 context: gaitalytics.c3d.GaitEventContext):
+                 context: gaitalytics.c3d.GaitEventContext,
+                 subject: SubjectMeasures):
         self._cycle_point_type = cycle_point_type
         self._data_table: DataFrame = None
         self._event_frames = None
@@ -240,6 +306,7 @@ class BasicCyclePoint:
         self._direction = direction
         self._context = context
         self._data_type = data_type
+        self._subject = subject
 
     @property
     def cycle_point_type(self) -> str:
@@ -324,6 +391,14 @@ class BasicCyclePoint:
         df.index.name = self.CYCLE_NUMBER
         return df
 
+    @property
+    def subject(self) -> SubjectMeasures:
+        return self._subject
+
+    @subject.setter
+    def subject(self, subject: SubjectMeasures):
+        self._subject = subject
+
     @staticmethod
     def define_cycle_point_file_name(cycle_point, prefix: str, postfix: str) -> str:
         key = gaitalytics.utils.ConfigProvider.define_key(cycle_point.translated_label, cycle_point.data_type,
@@ -338,12 +413,15 @@ class BasicCyclePoint:
         output.to_csv(f"{path}/{filename}")
 
     @classmethod
-    def from_csv(cls, configs: gaitalytics.utils.ConfigProvider, path: str, filename: str) -> BasicCyclePoint:
-        [label, data_type, direction, context, cycle_point_type,
-         prefix] = CyclePointLoader.get_meta_data_filename(filename)
+    def from_csv(cls, configs: gaitalytics.utils.ConfigProvider,
+                 path: str,
+                 filename: str,
+                 subject: SubjectMeasures) -> BasicCyclePoint:
+        [label, data_type, direction, context, cycle_point_type, prefix] = CyclePointLoader.get_meta_data_filename(
+            filename)
 
         translated = configs.get_translated_label(label, data_type)
-        point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context)
+        point = BasicCyclePoint(cycle_point_type, translated, direction, data_type, context, subject)
         data_table = read_csv(f"{path}/{filename}", index_col=cls.CYCLE_NUMBER)
         point.event_frames = DataFrame([data_table[cls.EVENT_FRAME_NUMBER], data_table[cls.EVENT_LABEL]]).T
         data_table = data_table.drop([cls.EVENT_FRAME_NUMBER, cls.EVENT_LABEL], axis=1)
@@ -354,15 +432,16 @@ class BasicCyclePoint:
 
 
 class BufferedCyclePoint(BasicCyclePoint):
-    def __init__(self, configs: gaitalytics.utils.ConfigProvider, path: str, filename: str):
+    def __init__(self, configs: gaitalytics.utils.ConfigProvider, path: str, filename: str, subject: SubjectMeasures):
         self._configs = configs
         self._filename = filename
         self._path = path
         self._loaded = False
+        self._subject = subject
 
     def _load_file(self):
         if not self._loaded:
-            point = BasicCyclePoint.from_csv(self._configs, self._path, self._filename)
+            point = BasicCyclePoint.from_csv(self._configs, self._path, self._filename, self.subject)
             self._cycle_point_type = point.cycle_point_type
             self._event_frames = point.event_frames
             self._translated_label = point.translated_label
@@ -454,17 +533,21 @@ class CyclePointLoader:
         file_names = os.listdir(dir_path)
         postfix = BasicCyclePoint.TYPE_RAW
         raw_file_names = self._filter_filenames(file_names, postfix)
-
-        self._raw_cycle_data = self._init_buffered_points(configs, dir_path, raw_file_names)
+        subject = SubjectMeasures.from_file(f"{dir_path}/subject.yml")
+        self._raw_cycle_data = self._init_buffered_points(configs, dir_path, raw_file_names, subject)
 
         postfix = BasicCyclePoint.TYPE_NORM
         norm_file_names = self._filter_filenames(file_names, postfix)
-        self._norm_cycle_data = self._init_buffered_points(configs, dir_path, norm_file_names)
+        self._norm_cycle_data = self._init_buffered_points(configs, dir_path, norm_file_names, subject)
 
-    def _init_buffered_points(self, configs, dir_path, file_names) -> Dict[str, BasicCyclePoint]:
+    def _init_buffered_points(self,
+                              configs: gaitalytics.utils.ConfigProvider,
+                              dir_path: str,
+                              file_names: List[str],
+                              subject: SubjectMeasures) -> Dict[str, BasicCyclePoint]:
         cycle_data: Dict[str, BasicCyclePoint] = {}
         for file_name in file_names:
-            point = BufferedCyclePoint(configs, dir_path, file_name)
+            point = BufferedCyclePoint(configs, dir_path, file_name, subject)
             foo, key, foo = self.get_key_from_filename(file_name)
             cycle_data[key] = point
         return cycle_data
