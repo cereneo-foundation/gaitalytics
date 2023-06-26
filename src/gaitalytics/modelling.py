@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 
 import numpy as np
-from btk import btkAcquisition, btkPoint
+from btk import btkAcquisition, btkPoint, btkEventCollection
 import gaitalytics.utils
 import gaitalytics.c3d
 import gaitalytics.cycle
@@ -52,20 +52,21 @@ class MLcMoSModeller(BaseOutputModeller):
         com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
         l_grf = acq.GetPoint(self._configs.MODEL_MAPPING.left_GRF.value).GetValues()
         r_grf = acq.GetPoint(self._configs.MODEL_MAPPING.right_GRF.value).GetValues()
-        l_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_lateral_malleoli.value).GetValues()
-        r_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_lateral_malleoli.value).GetValues()
-        l_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_medial_malleoli.value).GetValues()
-        r_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_medial_malleoli.value).GetValues()
+        l_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_lat_malleoli.value).GetValues()
+        r_lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_lat_malleoli.value).GetValues()
+        l_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_med_malleoli.value).GetValues()
+        r_med_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.right_med_malleoli.value).GetValues()
         l_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_2.value).GetValues()
         r_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_2.value).GetValues()
         l_meta_5 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_5.value).GetValues()
         r_meta_5 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_5.value).GetValues()
         l_heel = acq.GetPoint(self._configs.MARKER_MAPPING.left_heel.value).GetValues()
         r_heel = acq.GetPoint(self._configs.MARKER_MAPPING.right_heel.value).GetValues()
+        events = acq.GetEvents()
         return self.ML_cMoS(com, freq, r_grf, l_grf, freq, r_lat_malleoli, l_lat_malleoli, r_med_malleoli,
                             l_med_malleoli,
                             r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
-                            self._belt_speed)
+                            self._belt_speed, events)
 
     def ML_cMoS(self, COM : gaitalytics.cycle.BasicCyclePoint,
                 COM_freq : int,
@@ -85,7 +86,10 @@ class MLcMoSModeller(BaseOutputModeller):
                 Marker_freq: int,
                 dominant_leg_length: float,
                 belt_speed: float,
+                events: btkEventCollection,
                 show: bool=False) -> np.ndarray:
+
+        # [[1,2,2, ML X][6,5,4, AP Y][0,0,0, None USe Z]]
         # TODO Adam: Do your magic
         """MLcMoS estimation.
 
