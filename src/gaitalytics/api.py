@@ -136,7 +136,7 @@ def detect_gait_events(c3d_file_path: str,
         out_path = os.path.join(output_path, filename)
         f = open(out_path, "w")
         for anomaly in anomalies:
-            print(anomaly)
+            print(anomaly, file=f)
         f.close()
 
 

@@ -2,14 +2,8 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis import c3d
-from gait_analysis.analysis import JointMomentsCycleAnalysis, JointPowerCycleAnalysis, JointAnglesCycleAnalysis, \
-    SpatioTemporalAnalysis
-from gait_analysis.api import _cycle_points_to_csv
-from gait_analysis.cycle import HeelStrikeToHeelStrikeCycleBuilder, CycleDataExtractor, BasicCyclePoint, \
-    CyclePointLoader
-from gait_analysis.events import ContextPatternChecker
-from gait_analysis.utils import ConfigProvider
+from gaitalytics.utils import ConfigProvider
+from gaitalytics import api
 
 SETTINGS_FILE = "settings/hbm_pig.yaml"
 DATA_PATH = "C:/ViconData/Handshake/"
@@ -26,8 +20,7 @@ def get_args() -> Namespace:
 
 
 def main():
-    configs = ConfigProvider()
-    configs.read_configs(SETTINGS_FILE)
+    configs = ConfigProvider(SETTINGS_FILE)
     for root, sub_folder, file_name in os.walk(DATA_PATH):
         r = re.compile("S0.*\.4\.c3d")
         filtered_files = list(filter(r.match, file_name))
@@ -36,24 +29,19 @@ def main():
             subject = filtered_file.replace(".4.c3d", "")
             cycle_path = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_CYCLES}/{subject}"
             if not os.path.exists(cycle_path):
-                acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-                cycle_builder = HeelStrikeToHeelStrikeCycleBuilder(ContextPatternChecker())
-                cycles = cycle_builder.build_cycles(acq_trial)
-                cycle_data = CycleDataExtractor(configs).extract_data(cycles, acq_trial)
                 os.mkdir(cycle_path)
-                _cycle_points_to_csv(cycle_data, cycle_path, subject)
+                cycle_data = api.extract_cycles(f"{root}/{filtered_file}", configs, buffer_output_path=cycle_path)
             else:
-                cycle_data = CyclePointLoader(configs, cycle_path).get_raw_cycle_points()
+                cycle_data = api.extract_cycles_buffered(cycle_path, configs).get_raw_cycle_points()
+            analysis = [api.ANALYSIS_MOMENTS,
+                 api.ANALYSIS_ANGLES,
+                 api.ANALYSIS_POWERS,
+                 api.ANALYSIS_FORCES,
+                 api.ANALYSIS_SPATIO_TEMP]
+            results = api.analyse_data(cycle_data, configs, methode=analysis)
 
-            joint_angles_results = JointAnglesCycleAnalysis(cycle_data).analyse()
-            spatio_results = SpatioTemporalAnalysis(configs, cycle_data, 100).analyse()
-            moments_angles_results = JointMomentsCycleAnalysis(cycle_data).analyse()
-            powers_angles_results = JointPowerCycleAnalysis(cycle_data).analyse()
-            results = joint_angles_results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER)
-            results = results.merge(moments_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
-            results = results.merge(powers_angles_results, on=BasicCyclePoint.CYCLE_NUMBER)
             filename_base = f"{DATA_OUTPUT_BASE}{DATA_OUTPUT_METRICS}/{subject}"
-            results.merge(spatio_results, on=BasicCyclePoint.CYCLE_NUMBER).to_csv(f"{filename_base}_metrics.csv")
+            results.to_csv(f"{filename_base}_metrics.csv")
 
 
 # Using the special variable

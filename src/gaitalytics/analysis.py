@@ -283,7 +283,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
             durations.loc[cycle_number][s_dur_label] = len(cycle_data[toe_off: -1]) / self._frequency
         swing_percent = durations[s_dur_label] / durations[c_dur_label]
         durations[sw_dur_label] = swing_percent
-        durations[st_dur_label] = 100 - durations[sw_dur_label]
+        durations[st_dur_label] = 1 - durations[sw_dur_label]
         return durations
 
     def _calculate_length(self, subject: gaitalytics.cycle.SubjectMeasures) -> DataFrame:
