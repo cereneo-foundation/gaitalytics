@@ -47,7 +47,7 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
                     swinging = data.copy()
                     for row in range(len(data)):
                         event_frame = raw_point.event_frames.iloc[row][
-                            gaitalytics.cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
+                            gaitalytics.cycle.BasicCyclePoint.FOOT_OFF]
                         swinging.iloc[row, 1:event_frame] = float("Nan")
                         standing.iloc[row, event_frame + 1: -1] = float("Nan")
                     result1 = self._do_analysis(standing)
@@ -276,7 +276,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         columns = [c_dur_label, s_dur_label, sw_dur_label, st_dur_label]
         durations = DataFrame(index=progression.data_table.index, columns=columns)
         for cycle_number in progression.data_table.index.to_series():
-            toe_off = progression.event_frames.loc[cycle_number][gaitalytics.cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
+            toe_off = progression.event_frames.loc[cycle_number][gaitalytics.cycle.BasicCyclePoint.FOOT_OFF]
             cycle_data = progression.data_table.loc[cycle_number][~progression.data_table.loc[cycle_number].isna()]
 
             durations.loc[cycle_number][c_dur_label] = len(cycle_data) / self._frequency
@@ -378,7 +378,7 @@ class MinimalClearingDifference(AbstractAnalysis):
         s_tc_hs_label = f"toe_clearance_heel_strike_{side}"
         toe_clearance = DataFrame(index=toe.index, columns=[s_mtc_label, s_mtc_cycle_label, s_tc_hs_label])
         for cycle_number in toe.index.to_series():
-            toe_off_frame = event_frames.loc[cycle_number][gaitalytics.cycle.BasicCyclePoint.EVENT_FRAME_NUMBER]
+            toe_off_frame = event_frames.loc[cycle_number][gaitalytics.cycle.BasicCyclePoint.FOOT_OFF]
             swing_phase_data = toe.loc[cycle_number][toe_off_frame: -1]
             mid_swing_index = round(len(swing_phase_data) / 2)
             peaks = signal.find_peaks(swing_phase_data[0:mid_swing_index], distance=len(swing_phase_data))

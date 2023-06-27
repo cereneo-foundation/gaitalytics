@@ -4,12 +4,12 @@ import os
 from typing import Dict, List
 
 from pandas import DataFrame
+
+import gaitalytics.analysis
 import gaitalytics.c3d
 import gaitalytics.cycle
 import gaitalytics.events
 import gaitalytics.utils
-import gaitalytics.analysis
-
 
 # constants
 CYCLE_METHOD_HEEL_STRIKE = "HS"
@@ -69,7 +69,6 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
     if ANALYSIS_TOE_CLEARANCE in methode:
         methods.append(gaitalytics.analysis.MinimalClearingDifference(cycle_data, config))
 
-
     results = None
     for methode in methods:
         result = methode.analyse()
@@ -79,6 +78,42 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
             results = results.merge(result, on=gaitalytics.cycle.BasicCyclePoint.CYCLE_NUMBER)
 
     return results
+
+
+def check_gait_event(c3d_file_path: str,
+                     output_path: str,
+                     anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST):
+    """
+    Checks events aditionally
+    with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
+    :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
+    :param output_path: path to dir to store c3d file with events
+    :param configs: configs from marker and model mapping
+    :param methode: methode to detect events 'Marker' api.GAIT_EVENT_METHODE_MARKER or
+       'Forceplate' api.GAIT_EVENT_METHODE_FP
+    :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
+       "spacing" api.GAIT_EVENT_CHECKER_SPACING
+    """
+    if not os.path.isfile(c3d_file_path):
+        raise FileExistsError(f"{c3d_file_path} does not exists")
+    if not os.path.isdir(output_path):
+        raise FileExistsError(f"{output_path} does not exists")
+    if not all(item in GAIT_EVENT_CHECKER_LIST for item in anomaly_checker):
+        raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
+    # read c3d
+    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
+    # get anomaly detection
+    checker = _get_anomaly_checker(anomaly_checker)
+    detected, anomalies = checker.check_events(acq_trial)
+
+    # write anomalies to file
+    if detected:
+        filename = os.path.basename(c3d_file_path).replace(".4.c3d", "_anomalies.txt")
+        out_path = os.path.join(output_path, filename)
+        f = open(out_path, "w")
+        for anomaly in anomalies:
+            print(anomaly, file=f)
+        f.close()
 
 
 def detect_gait_events(c3d_file_path: str,
@@ -123,21 +158,7 @@ def detect_gait_events(c3d_file_path: str,
     # write events c3d
     gaitalytics.c3d.write_btk(acq_trial, out_path)
 
-    # read c3d
-    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
-
-    # get anomaly detection
-    checker = _get_anomaly_checker(anomaly_checker)
-    detected, anomalies = checker.check_events(acq_trial)
-
-    # write anomalies to file
-    if detected:
-        filename = os.path.basename(c3d_file_path).replace(".3.c3d", "_anomalies.txt")
-        out_path = os.path.join(output_path, filename)
-        f = open(out_path, "w")
-        for anomaly in anomalies:
-            print(anomaly, file=f)
-        f.close()
+    check_gait_event(out_path, output_path)
 
 
 def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.AbstractEventAnomalyChecker:
@@ -154,7 +175,8 @@ def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.Abstr
     return checker
 
 
-def extract_cycles_buffered(buffer_output_path: str, configs: gaitalytics.utils.ConfigProvider) -> gaitalytics.cycle.CyclePointLoader:
+def extract_cycles_buffered(buffer_output_path: str,
+                            configs: gaitalytics.utils.ConfigProvider) -> gaitalytics.cycle.CyclePointLoader:
     """
     gets normalised and unnormalised data from buffered folder. It is needed to run api.extract_cycles as
     api.normalise_cycles with given buffer_output_path once to use this function
@@ -174,7 +196,8 @@ def extract_cycles(c3d_file_path: str,
                    configs: gaitalytics.utils.ConfigProvider,
                    methode: str = CYCLE_METHOD_HEEL_STRIKE,
                    buffer_output_path: str = None,
-                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[str, gaitalytics.cycle.BasicCyclePoint]:
+                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[
+    str, gaitalytics.cycle.BasicCyclePoint]:
     """
     extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
     csv file. Do not edit files and structure.

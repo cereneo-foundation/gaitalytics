@@ -68,10 +68,14 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         right_diff_toe = right_heel - sacrum
         left_diff_toe = left_heel - sacrum
 
-        self._create_events(acq, left_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF, gaitalytics.c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF, gaitalytics.c3d.GaitEventContext.RIGHT)
-        self._create_events(acq, left_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE, gaitalytics.c3d.GaitEventContext.LEFT)
-        self._create_events(acq, right_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE, gaitalytics.c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF,
+                            gaitalytics.c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_toe, gaitalytics.c3d.GaitEventLabel.FOOT_OFF,
+                            gaitalytics.c3d.GaitEventContext.RIGHT)
+        self._create_events(acq, left_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE,
+                            gaitalytics.c3d.GaitEventContext.LEFT)
+        self._create_events(acq, right_diff_heel, gaitalytics.c3d.GaitEventLabel.FOOT_STRIKE,
+                            gaitalytics.c3d.GaitEventContext.RIGHT)
 
     #   gaitalytics.c3d.sort_events(acq)
 
@@ -80,8 +84,9 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
                        min_distance: int = 100,
                        show_plot: bool = False):
         data = diff[:, gaitalytics.c3d.AxesNames.y.value]
-        if gaitalytics.c3d.is_progression_axes_flip(acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
-                                        acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
+        if gaitalytics.c3d.is_progression_axes_flip(
+                acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
+                acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
             data = data * -1
         data = gaitalytics.utils.min_max_norm(data)
 
@@ -273,15 +278,16 @@ class EventSpacingChecker(AbstractEventAnomalyChecker):
 
 
 # utils
-def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, btkEvent]:
+def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, List[btkEvent]]:
     if acq.GetEventNumber() >= start_index + 1:
+        unused_events: List[btkEvent] = []
         for event_index in range(start_index + 1, acq.GetEventNumber()):
             event = acq.GetEvent(event_index)
             if event.GetContext() == context:
                 if event.GetLabel() == label:
-                    return [event, unused_event]
-                else:
-                    unused_event = event
+                    return [event, unused_events]
+
+            unused_events.append(event)
     raise IndexError()
 
 

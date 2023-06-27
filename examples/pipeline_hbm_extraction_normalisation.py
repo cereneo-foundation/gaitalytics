@@ -1,3 +1,5 @@
+import os
+
 from src.gaitalytics import api
 from src.gaitalytics import utils
 
@@ -8,8 +10,11 @@ def main():
     buffered_path = "./out"
 
     configs = utils.ConfigProvider(settings_file)
-
-    cycle_data = api.extract_cycles(file_path, configs, buffer_output_path=buffered_path)
+    if not os.path.exists(buffered_path):
+        os.mkdir(buffered_path)
+        cycle_data = api.extract_cycles(file_path, configs, buffer_output_path=buffered_path)
+    else:
+        cycle_data = api.extract_cycles_buffered(buffered_path,configs).get_raw_cycle_points()
     api.normalise_cycles(file_path, cycle_data, buffer_output_path=buffered_path)
 
 
