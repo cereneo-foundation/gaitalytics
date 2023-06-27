@@ -1,5 +1,5 @@
 
-from src.gaitalytics import utils, c3d, modelling
+from gaitalytics import utils, c3d, modelling
 
 
 def main():
@@ -14,7 +14,8 @@ def main():
     acq_trial = c3d.read_btk(file_path)
     com_modeller = modelling.COMModeller(configs)
     com_modeller.create_point(acq_trial)
-    cmos_modeller = modelling.MLcMoSModeller(configs, 100, 1.3)
+    subject = utils.extract_subject(acq_trial)
+    cmos_modeller = modelling.MLcMoSModeller(configs, subject.left_leg_length, 1.3)
     cmos_modeller.create_point(acq_trial)
 
     c3d.write_btk(acq_trial, out_path)

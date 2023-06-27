@@ -84,7 +84,7 @@ class CycleDataExtractor:
 
     def extract_data(self, cycles: GaitCycleList, acq: btkAcquisition) -> Dict[str, BasicCyclePoint]:
         data_list = {}
-        subject = self._extract_subject(acq)
+        subject = gaitalytics.utils.extract_subject(acq)
         for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
             for point_index in range(0, acq.GetPointNumber()):
                 point = acq.GetPoint(point_index)
@@ -94,15 +94,6 @@ class CycleDataExtractor:
                     self._extract_cycle(data_list, point, cycles.left_cycles[cycle_number], subject)
         return data_list
 
-    @staticmethod
-    def _extract_subject(acq: btkAcquisition) -> SubjectMeasures:
-
-        body_mass = acq.GetMetaData().GetChild("PROCESSING").GetChild("Bodymass").GetInfo().ToDouble()[0]
-        body_height = acq.GetMetaData().GetChild("PROCESSING").GetChild("Height").GetInfo().ToDouble()[0]
-        left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
-        right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
-        subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length)
-        return subject
 
     def _extract_cycle(self, data_list, point, cycle: GaitCycle, subject: SubjectMeasures):
         raw_data = point.GetValues()[cycle.start_frame: cycle.end_frame]

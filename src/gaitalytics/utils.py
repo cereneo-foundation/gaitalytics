@@ -3,8 +3,10 @@ from __future__ import annotations
 from enum import Enum
 
 import yaml
+from btk import btkAcquisition
 
 import gaitalytics.c3d
+import gaitalytics.cycle
 
 
 def min_max_norm(data):
@@ -43,3 +45,13 @@ class ConfigProvider:
                    side: gaitalytics.c3d.GaitEventContext) -> str:
         if translated_label is not None:
             return f"{translated_label.name}.{point_type.name}.{direction.name}.{side.value}"
+
+
+def extract_subject(acq: btkAcquisition) -> gaitalytics.cycle.SubjectMeasures:
+
+    body_mass = acq.GetMetaData().GetChild("PROCESSING").GetChild("Bodymass").GetInfo().ToDouble()[0]
+    body_height = acq.GetMetaData().GetChild("PROCESSING").GetChild("Height").GetInfo().ToDouble()[0]
+    left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
+    right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
+    subject = gaitalytics.cycle.SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length)
+    return subject
