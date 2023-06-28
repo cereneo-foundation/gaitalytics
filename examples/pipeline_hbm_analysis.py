@@ -1,5 +1,5 @@
-from src.gaitalytics import api
-from src.gaitalytics import utils
+from gaitalytics import api
+from gaitalytics import utils
 
 
 def main():

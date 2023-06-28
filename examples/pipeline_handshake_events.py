@@ -2,9 +2,7 @@ import os
 import re
 from argparse import ArgumentParser, Namespace
 
-from gait_analysis import c3d
-from gait_analysis.events import ZenisGaitEventDetector
-from gait_analysis.utils import ConfigProvider
+from gaitalytics import utils, api
 
 # This is an example pipeline #
 ###############################
@@ -23,8 +21,7 @@ def get_args() -> Namespace:
 
 
 def main():
-    configs = ConfigProvider()
-    configs.read_configs(SETTINGS_FILE)
+    configs = utils.ConfigProvider(SETTINGS_FILE)
     for root, sub_folder, file_name in os.walk(DATA_PATH):
         r = re.compile("S.*\.3\.c3d")
         filtered_files = list(filter(r.match, file_name))
@@ -36,9 +33,7 @@ def main():
                 print("existing file deleted")
             else:
                 print(f"add events")
-                acq_trial = c3d.read_btk(f"{root}/{filtered_file}")
-                ZenisGaitEventDetector(configs).detect_events(acq_trial)
-                c3d.write_btk(acq_trial, f"{root}/{event_added_file}")
+                api.detect_gait_events(f"{root}/{filtered_file}", root, configs)
 
 
 # Using the special variable

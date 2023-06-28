@@ -17,7 +17,7 @@ FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
 class AbstractGaitEventDetector(ABC):
 
     @abstractmethod
-    def detect_events(self, acq: btkAcquisition):
+    def detect_events(self, acq: btkAcquisition, **kwargs):
         pass
 
     @staticmethod
@@ -40,22 +40,25 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
     """
 
     def __init__(self, configs: gaitalytics.utils.ConfigProvider,
-                 foot_strike_offset: int = 0,
-                 foot_off_offset: int = 0):
+                 **kwargs):
         """ Initializes Object
 
         :param foot_strike_offset: numbers of frames to offset next foot strike event
         :param foot_off_offset: number of frames to offset next foot off event
         """
         self._config = configs
-        self._foot_strike_offset = foot_strike_offset
-        self._foot_off_offset = foot_off_offset
+        self._foot_strike_offset = kwargs.get("foot_strike_offset", 0)
+        self._foot_off_offset = kwargs.get("foot_off_offset", 0)
 
-    def detect_events(self, acq: btkAcquisition):
+    def detect_events(self, acq: btkAcquisition, **kwargs):
         """detects zeni gait events and stores it in to the acquisition
 
         :param acq: loaded and filtered acquisition
+        :param min_distance: minimum frames between same event
+        :param show_plot: plots of zenis shown
         """
+        min_distance = kwargs.get("min_distance", 100)
+        show_plot = kwargs.get("show_plot", False)
 
         right_heel = acq.GetPoint(self._config.MARKER_MAPPING.right_heel.value).GetValues()
         left_heel = acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues()
@@ -69,13 +72,13 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         left_diff_toe = left_heel - sacrum
 
         self._create_events(acq, left_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
-                            gaitalytics.utils.GaitEventContext.LEFT)
+                            gaitalytics.utils.GaitEventContext.LEFT, min_distance, show_plot)
         self._create_events(acq, right_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
-                            gaitalytics.utils.GaitEventContext.RIGHT)
+                            gaitalytics.utils.GaitEventContext.RIGHT, min_distance, show_plot)
         self._create_events(acq, left_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
-                            gaitalytics.utils.GaitEventContext.LEFT)
+                            gaitalytics.utils.GaitEventContext.LEFT, min_distance, show_plot)
         self._create_events(acq, right_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
-                            gaitalytics.utils.GaitEventContext.RIGHT)
+                            gaitalytics.utils.GaitEventContext.RIGHT, min_distance, show_plot)
 
     #   gaitalytics.c3d.sort_events(acq)
 
@@ -121,7 +124,7 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         self._mapped_force_plate = mapped_force_plate
         self._weight_threshold = force_gait_event_threshold
 
-    def detect_events(self, acq: btkAcquisition):
+    def detect_events(self, acq: btkAcquisition, **kwargs):
         """
         Detect force plate gait events with peak detection
         :param acq: loaded and filtered acquisition

@@ -117,7 +117,7 @@ def detect_gait_events(c3d_file_path: str,
                        output_path: str,
                        configs: gaitalytics.utils.ConfigProvider,
                        methode: str = GAIT_EVENT_METHODE_MARKER,
-                       anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST):
+                       anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST, **kwargs):
     """
     Adds gait events to c3d file and saves it in output_path with a '.4.c3d' extension. Checks events aditionally
     with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
@@ -148,9 +148,9 @@ def detect_gait_events(c3d_file_path: str,
     if methode == GAIT_EVENT_METHODE_FP:
         methode = gaitalytics.events.ForcePlateEventDetection()
     elif methode == GAIT_EVENT_METHODE_MARKER:
-        methode = gaitalytics.events.ZenisGaitEventDetector(configs)
+        methode = gaitalytics.events.ZenisGaitEventDetector(configs, **kwargs)
 
-    methode.detect_events(acq_trial)
+    methode.detect_events(acq_trial, **kwargs)
 
     # write events c3d
     gaitalytics.c3d.write_btk(acq_trial, out_path)
@@ -193,8 +193,8 @@ def extract_cycles(c3d_file_path: str,
                    configs: gaitalytics.utils.ConfigProvider,
                    methode: str = CYCLE_METHOD_HEEL_STRIKE,
                    buffer_output_path: str = None,
-                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[
-    str, gaitalytics.utils.BasicCyclePoint]:
+                   anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> \
+        Dict[str, gaitalytics.utils.BasicCyclePoint]:
     """
     extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
     csv file. Do not edit files and structure.

@@ -1,5 +1,5 @@
-from src.gaitalytics import api
-from src.gaitalytics import utils
+from gaitalytics import api
+from gaitalytics import utils
 
 
 def main():
@@ -10,7 +10,7 @@ def main():
     # load configs
     configs = utils.ConfigProvider(settings_file)
 
-    api.detect_gait_events(file_path, out_path, configs)
+    api.detect_gait_events(file_path, out_path, configs, min_distance=50, foot_strike_offset=-3)
 
 
 if __name__ == "__main__":
