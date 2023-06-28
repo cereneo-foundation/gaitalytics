@@ -1,42 +1,13 @@
 from __future__ import annotations
 
-from enum import Enum
 from statistics import mean
 
 import btk
 import numpy as np
 
+import gaitalytics.utils
+
 ANALOG_VOLTAGE_PREFIX_LABEL = "Voltage."
-
-
-class PointDataType(Enum):
-    Marker = 0
-    Angles = 1
-    Forces = 2
-    Moments = 3
-    Power = 4
-    Scalar = 5
-    Reaction = 6
-
-
-class AxesNames(Enum):
-    x = 0
-    y = 1
-    z = 2
-
-
-class GaitEventContext(Enum):
-    """
-    Representation of gait event contexts. At the moment mainly left and right
-    """
-    LEFT = "Left"
-    RIGHT = "Right"
-
-    @classmethod
-    def get_contrary_context(cls, context: str):
-        if context == cls.LEFT.value:
-            return cls.RIGHT
-        return cls.LEFT
 
 
 def sort_events(acq):
@@ -97,7 +68,7 @@ def write_btk(acq, filename):
 
 
 def is_progression_axes_flip(left_heel, left_toe):
-    return 0 < mean(left_toe[AxesNames.y.value] - left_heel[AxesNames.y.value])
+    return 0 < mean(left_toe[gaitalytics.utils.AxesNames.y.value] - left_heel[gaitalytics.utils.AxesNames.y.value])
 
 
 def correct_points_frame_by_frame(acq_trial: btk.btkAcquisition):
@@ -130,18 +101,3 @@ def get_fastest_point_by_frame(acq_trial, frame_number) -> float:
     return np.min([lfmh_dist, lhee_dist, rfmh_dist, rhee_dist])
 
 
-class GaitEventLabel(Enum):
-    FOOT_STRIKE = "Foot Strike"
-    FOOT_OFF = "Foot Off"
-
-    @classmethod
-    def get_contrary_event(cls, event_label: str):
-        if event_label == cls.FOOT_STRIKE.value:
-            return cls.FOOT_OFF
-        return cls.FOOT_STRIKE
-
-    @classmethod
-    def get_type_id(cls, event_label: str):
-        if event_label == cls.FOOT_STRIKE.value:
-            return 1
-        return 2

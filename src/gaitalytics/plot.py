@@ -10,6 +10,7 @@ from matplotlib.axes import Axes
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 from pandas import DataFrame
+
 import gaitalytics.utils
 import gaitalytics.c3d
 
@@ -108,7 +109,7 @@ class PdfPlotter(BasicPlotter):
         self.rows = rows
         self.filename = filename
 
-    def plot(self, results: DataFrame, data_types: List[gaitalytics.c3d.PointDataType]):
+    def plot(self, results: DataFrame, data_types: List[gaitalytics.utils.PointDataType]):
         with PdfPages(f'{self.plot_path}/{self.filename}') as pdf:
             for data_type in data_types:
                 figures = self._plot_data_type(data_type, results)
@@ -126,7 +127,7 @@ class PdfPlotter(BasicPlotter):
         pass
 
     @staticmethod
-    def _create_figure(data_type: gaitalytics.c3d.PointDataType) -> Figure:
+    def _create_figure(data_type: gaitalytics.utils.PointDataType) -> Figure:
         figure = plt.figure()
         figure.suptitle(data_type.name)
         figure.subplots_adjust(hspace=0.3, wspace=0.4)

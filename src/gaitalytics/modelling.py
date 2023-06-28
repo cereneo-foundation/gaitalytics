@@ -2,14 +2,13 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 from btk import btkAcquisition, btkPoint, btkEventCollection
+
 import gaitalytics.utils
-import gaitalytics.c3d
-import gaitalytics.cycle
 
 
 class BaseOutputModeller(ABC):
 
-    def __init__(self, label: str, point_type: gaitalytics.c3d.PointDataType):
+    def __init__(self, label: str, point_type: gaitalytics.utils.PointDataType):
         self._label = label
         self._type = point_type
 
@@ -28,7 +27,7 @@ class BaseOutputModeller(ABC):
 class COMModeller(BaseOutputModeller):
 
     def __init__(self, configs: gaitalytics.utils.ConfigProvider):
-        super().__init__(configs.MARKER_MAPPING.com.value, gaitalytics.c3d.PointDataType.Scalar)
+        super().__init__(configs.MARKER_MAPPING.com.value, gaitalytics.utils.PointDataType.Scalar)
         self._configs = configs
 
     def _calculate_point(self, acq: btkAcquisition):
@@ -45,7 +44,7 @@ class MLcMoSModeller(BaseOutputModeller):
         self._configs = configs
         self._dominant_leg_length = dominant_leg_length
         self._belt_speed = belt_speed
-        super().__init__("MLcMoS", gaitalytics.c3d.PointDataType.Scalar)
+        super().__init__("MLcMoS", gaitalytics.utils.PointDataType.Scalar)
 
     def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
         freq = acq.GetPointFrequency()
@@ -68,21 +67,21 @@ class MLcMoSModeller(BaseOutputModeller):
                             r_meta_2, l_meta_2, r_meta_5, l_meta_5, r_heel, l_heel, freq, self._dominant_leg_length,
                             self._belt_speed, events)
 
-    def ML_cMoS(self, COM : gaitalytics.cycle.BasicCyclePoint,
+    def ML_cMoS(self, COM : gaitalytics.utils.BasicCyclePoint,
                 COM_freq : int,
-                vGRF_Right : gaitalytics.cycle.BasicCyclePoint,
-                vGRF_Left : gaitalytics.cycle.BasicCyclePoint,
+                vGRF_Right : gaitalytics.utils.BasicCyclePoint,
+                vGRF_Left : gaitalytics.utils.BasicCyclePoint,
                 vGRF_freq: int,
-                Lat_Malleoli_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
-                Lat_Malleoli_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
-                Med_Malleoli_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
-                Med_Malleoli_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
-                Second_Meta_Head_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
-                Second_Meta_Head_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
-                Fifth_Meta_Head_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
-                Fifth_Meta_Head_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
-                Heel_Marker_Right: gaitalytics.cycle.BasicCyclePoint,
-                Heel_Marker_Left: gaitalytics.cycle.BasicCyclePoint,
+                Lat_Malleoli_Marker_Right: gaitalytics.utils.BasicCyclePoint,
+                Lat_Malleoli_Marker_Left: gaitalytics.utils.BasicCyclePoint,
+                Med_Malleoli_Marker_Right: gaitalytics.utils.BasicCyclePoint,
+                Med_Malleoli_Marker_Left: gaitalytics.utils.BasicCyclePoint,
+                Second_Meta_Head_Marker_Right: gaitalytics.utils.BasicCyclePoint,
+                Second_Meta_Head_Marker_Left: gaitalytics.utils.BasicCyclePoint,
+                Fifth_Meta_Head_Marker_Right: gaitalytics.utils.BasicCyclePoint,
+                Fifth_Meta_Head_Marker_Left: gaitalytics.utils.BasicCyclePoint,
+                Heel_Marker_Right: gaitalytics.utils.BasicCyclePoint,
+                Heel_Marker_Left: gaitalytics.utils.BasicCyclePoint,
                 Marker_freq: int,
                 dominant_leg_length: float,
                 belt_speed: float,

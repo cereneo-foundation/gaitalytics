@@ -40,7 +40,7 @@ ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_TOE_CLEARANCE)
 
 
-def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
+def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
                  config: gaitalytics.utils.ConfigProvider,
                  methode: List[str] = ANALYSIS_LIST) -> DataFrame:
     """
@@ -75,7 +75,7 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
         if results is None:
             results = result
         else:
-            results = results.merge(result, on=gaitalytics.cycle.BasicCyclePoint.CYCLE_NUMBER)
+            results = results.merge(result, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
 
     return results
 
@@ -88,9 +88,6 @@ def check_gait_event(c3d_file_path: str,
     with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
     :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
     :param output_path: path to dir to store c3d file with events
-    :param configs: configs from marker and model mapping
-    :param methode: methode to detect events 'Marker' api.GAIT_EVENT_METHODE_MARKER or
-       'Forceplate' api.GAIT_EVENT_METHODE_FP
     :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
        "spacing" api.GAIT_EVENT_CHECKER_SPACING
     """
@@ -197,7 +194,7 @@ def extract_cycles(c3d_file_path: str,
                    methode: str = CYCLE_METHOD_HEEL_STRIKE,
                    buffer_output_path: str = None,
                    anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST) -> Dict[
-    str, gaitalytics.cycle.BasicCyclePoint]:
+    str, gaitalytics.utils.BasicCyclePoint]:
     """
     extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
     csv file. Do not edit files and structure.
@@ -248,9 +245,9 @@ def extract_cycles(c3d_file_path: str,
 
 
 def normalise_cycles(c3d_file_path: str,
-                     cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint],
+                     cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
                      method: str = NORMALISE_METHODE_LINEAR,
-                     buffer_output_path: str = None) -> Dict[str, gaitalytics.cycle.BasicCyclePoint]:
+                     buffer_output_path: str = None) -> Dict[str, gaitalytics.utils.BasicCyclePoint]:
     """
     normalise and returns cycles
     :param c3d_file_path:  path of c3d file with foot_off and foot_strike events '*.4.c3d'
@@ -282,7 +279,7 @@ def normalise_cycles(c3d_file_path: str,
     return normalised_data
 
 
-def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.cycle.BasicCyclePoint], dir_path: str, prefix: str):
+def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint], dir_path: str, prefix: str):
     subject_saved = False
     for key in cycle_data:
         cycle_data[key].to_csv(dir_path, prefix)
