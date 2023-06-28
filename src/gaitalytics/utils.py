@@ -61,11 +61,12 @@ class SubjectMeasures(yaml.YAMLObject):
     yaml_tag = u'!subject'
     yaml_loader = yaml.SafeLoader
 
-    def __init__(self, body_mass: float, body_height: float, left_leg_length: float, right_leg_length: float):
+    def __init__(self, body_mass: float, body_height: float, left_leg_length: float, right_leg_length: float, subject :str):
         self.body_mass = body_mass
         self.body_height = body_height
         self.left_leg_length = left_leg_length
         self.right_leg_length = right_leg_length
+        self.subject = subject
 
     def to_file(self, path_out: str):
         with open(f"{path_out}/subject.yml", "w") as f:
@@ -83,7 +84,8 @@ def extract_subject(acq: btkAcquisition) -> SubjectMeasures:
     body_height = acq.GetMetaData().GetChild("PROCESSING").GetChild("Height").GetInfo().ToDouble()[0]
     left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
     right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
-    subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length)
+    name = acq.GetMetaData().GetChild("SUBJECTS").GetChild("NAMES").GetInfo().ToString()[0].strip()
+    subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length, name)
     return subject
 
 
