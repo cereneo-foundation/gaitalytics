@@ -1,4 +1,6 @@
-# gaitalytics
+
+# Gaitalytics
+<img src="resources/logos/Gaitalytics_noBackground.png" alt="Gaitalytics logo" width="200"/>
 
 This Python package provides a comprehensive set of tools and advanced algorithms for analyzing 3D motion capture data.
 It is specifically designed to process gait data stored in c3d format. Prior to utilizing the features of gaitalytics,
