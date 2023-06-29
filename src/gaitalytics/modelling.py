@@ -78,6 +78,11 @@ class CMoSModeller(BaseOutputModeller):
              acq: btkAcquisition,
              side: str,
              show: bool = True) -> np.ndarray:
+        # AP axis is inverted
+        com[:, 1] *= -1
+        second_meta_head_marker[:, 1] *= -1
+        second_meta_head_marker_contra[:, 1] *= -1
+
         if side == "Left":
             contra_side = "Right"
         else:
@@ -113,7 +118,7 @@ class CMoSModeller(BaseOutputModeller):
                 break
 
             # calculating the x_com
-            x_com = [com[i,0] + (com_v[i, 0]/sqrt_leg_speed), com[i,1] + (com_v[i, 1] + belt_speed) / sqrt_leg_speed]
+            x_com = [com[i, 0] + (com_v[i, 0]/sqrt_leg_speed), com[i, 1] + (belt_speed+com_v[i, 1]) / sqrt_leg_speed]
             # still miss the treadmill speed (need velocity of belt in AP and ML axis too)
             # x_com = [COM[i, 0], COM[i, 1]]
             # calculating the distance between the x_com and the BOS
@@ -142,6 +147,9 @@ class CMoSModeller(BaseOutputModeller):
                        second_meta_head_marker_contra[i, 1] - x_com[1]]
             else:
                 mos = [0, 0]
+
+            if side == "Left":
+                mos[0] = mos[0] * -1
             distance_from_x_com_to_bos[i, 0] = mos[0]
             distance_from_x_com_to_bos[i, 1] = mos[1]
         if show:

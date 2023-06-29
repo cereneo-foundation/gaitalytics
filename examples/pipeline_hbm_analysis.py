@@ -11,7 +11,7 @@ def main():
     loaded_cycles = api.extract_cycles_buffered(buffered_path, configs)
     cycle_data = loaded_cycles.get_raw_cycle_points()
 
-    results = api.analyse_data(cycle_data, configs)
+    results = api.analyse_data(cycle_data, configs, methode=[api.ANALYSIS_MOS])
     results.to_csv("plots/nice.csv")
 
 
