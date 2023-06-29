@@ -9,8 +9,10 @@ import gaitalytics.utils
 
 
 class AbstractAnalysis(ABC):
-    def __init__(self, data_list: Dict[str, gaitalytics.utils.BasicCyclePoint]):
+    def __init__(self, data_list: Dict[str, gaitalytics.utils.BasicCyclePoint],
+                 configs: gaitalytics.utils.ConfigProvider):
         self._data_list: Dict[str, gaitalytics.utils.BasicCyclePoint] = data_list
+        self._configs = configs
 
     def analyse(self) -> DataFrame:
         pass
@@ -19,8 +21,9 @@ class AbstractAnalysis(ABC):
 class AbstractCycleAnalysis(AbstractAnalysis, ABC):
 
     def __init__(self, data_list: Dict[str, gaitalytics.utils.BasicCyclePoint],
+                 configs: gaitalytics.utils.ConfigProvider,
                  data_type: gaitalytics.utils.PointDataType):
-        super().__init__(data_list)
+        super().__init__(data_list, configs)
         self._point_data_type = data_type
 
     @abstractmethod
@@ -63,8 +66,8 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
 
 class JointForcesCycleAnalysis(AbstractCycleAnalysis):
 
-    def __init__(self, data_list: Dict):
-        super().__init__(data_list, gaitalytics.utils.PointDataType.Forces)
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider):
+        super().__init__(data_list, configs, gaitalytics.utils.PointDataType.Forces)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -87,8 +90,8 @@ class JointForcesCycleAnalysis(AbstractCycleAnalysis):
 
 class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
 
-    def __init__(self, data_list: Dict):
-        super().__init__(data_list, gaitalytics.utils.PointDataType.Moments)
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider):
+        super().__init__(data_list, configs, gaitalytics.utils.PointDataType.Moments)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -111,8 +114,8 @@ class JointMomentsCycleAnalysis(AbstractCycleAnalysis):
 
 class JointPowerCycleAnalysis(AbstractCycleAnalysis):
 
-    def __init__(self, data_list: Dict):
-        super().__init__(data_list, gaitalytics.utils.PointDataType.Power)
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider):
+        super().__init__(data_list, configs, gaitalytics.utils.PointDataType.Power)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -136,8 +139,8 @@ class JointPowerCycleAnalysis(AbstractCycleAnalysis):
 
 class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
 
-    def __init__(self, data_list: Dict):
-        super().__init__(data_list, gaitalytics.utils.PointDataType.Angles)
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider):
+        super().__init__(data_list, configs, gaitalytics.utils.PointDataType.Angles)
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
@@ -162,12 +165,91 @@ class JointAnglesCycleAnalysis(AbstractCycleAnalysis):
         return results
 
 
+class CMosAnalysis(AbstractCycleAnalysis):
+
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider):
+        super().__init__(data_list, configs, gaitalytics.utils.PointDataType.Marker)
+
+    def _filter_keys(self, key: str) -> bool:
+        if super()._filter_keys(key):
+            useful = self._configs.MARKER_MAPPING.right_cmos.name in key
+            useful = self._configs.MARKER_MAPPING.left_cmos.name in key or useful
+            return useful
+        return False
+
+    def _do_analysis(self, data: DataFrame) -> DataFrame:
+        results = DataFrame(index=data.index)
+
+        results['cmos_mean'] = data.mean(axis=1)
+        results['cmos_max'] = data.max(axis=1)
+        results['cmos_min'] = data.min(axis=1)
+        results['cmos_sd'] = data.std(axis=1)
+
+        return results
+
+
+class MosAnalysis(AbstractAnalysis):
+
+    def analyse(self) -> DataFrame:
+        left_cmos_ap = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+        left_cmos_ml = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+
+        right_cmos_ap = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+        right_cmos_ml = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+
+        left_ap = self._extract_mos_frames(left_cmos_ap, "left", "ap")
+        left_ml = self._extract_mos_frames(left_cmos_ml, "left", "ml")
+        right_ap = self._extract_mos_frames(right_cmos_ap, "right", "ap")
+        right_ml = self._extract_mos_frames(right_cmos_ml, "right", "ml")
+        result = left_ap.merge(left_ml, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
+        result = result.merge(right_ap, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
+        result = result.merge(right_ml, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
+
+
+        result['metric'] = "Mos"
+        return result.pivot(columns="metric")
+
+    @staticmethod
+    def _extract_mos_frames(cmos: gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER, side, direction):
+        hs_label = f"{direction}_hs_{side}"
+        to_label = f"{direction}_to_{side}"
+        hs_contra_label = f"{direction}_hs_contra_{side}"
+        to_contra_label = f"{direction}_to_contra_{side}"
+        column_label = [hs_label, to_label, hs_contra_label, to_contra_label]
+
+        result = DataFrame(index=cmos.data_table.index)
+        result[hs_label] = cmos.data_table[0].to_list()
+        for cycle_number in cmos.event_frames.index.to_list():
+            to_frame = cmos.event_frames[gaitalytics.utils.BasicCyclePoint.FOOT_OFF].loc[cycle_number]
+            hs_contra_frame = cmos.event_frames[gaitalytics.utils.BasicCyclePoint.FOOT_STRIKE_CONTRA].loc[cycle_number]
+            to_contra_frame = cmos.event_frames[gaitalytics.utils.BasicCyclePoint.FOOT_OFF_CONTRA].loc[cycle_number]
+            result.loc[cycle_number, to_label] = cmos.data_table.loc[cycle_number, to_frame]
+            result.loc[cycle_number, hs_contra_label] = cmos.data_table.loc[cycle_number, hs_contra_frame]
+            result.loc[cycle_number, to_contra_label] = cmos.data_table.loc[cycle_number, to_contra_frame]
+        return result
+
+
 class SpatioTemporalAnalysis(AbstractAnalysis):
 
-    def __init__(self, configs: gaitalytics.utils.ConfigProvider, data_list: Dict, body_height: float = 1800,
+    def __init__(self, data_list: Dict, configs: gaitalytics.utils.ConfigProvider, body_height: float = 1800,
                  frequency: int = 100):
-        super().__init__(data_list)
-        self._configs = configs
+        super().__init__(data_list, configs)
         self._frequency = frequency
         self._body_height = body_height
 
@@ -266,7 +348,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
         return concat([left_durations, right_durations], axis=1)
 
-    def _side_duration_calculation(self, progression: DataFrame, side: str) -> DataFrame:
+    def _side_duration_calculation(self, progression: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
         c_dur_label = f"cycle_duration_s_{side}"
         s_dur_label = f"step_duration_s_{side}"
         sw_dur_label = f"swing_duration_p_{side}"
@@ -349,8 +431,7 @@ class MinimalClearingDifference(AbstractAnalysis):
 
     def __init__(self, data_list: Dict[str, gaitalytics.utils.BasicCyclePoint],
                  configs: gaitalytics.utils.ConfigProvider):
-        super().__init__(data_list)
-        self._configs = configs
+        super().__init__(data_list, configs)
 
     def analyse(self) -> DataFrame:
         right_toe = self._data_list[

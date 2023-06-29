@@ -47,7 +47,11 @@ class CMoSModeller(BaseOutputModeller):
         self._dominant_leg_length = dominant_leg_length
         self._belt_speed = belt_speed
         self._side = side
-        super().__init__(f"{side}cMoS", gaitalytics.utils.PointDataType.Marker)
+        if side == "Left":
+            label = self._configs.MARKER_MAPPING.left_cmos.value
+        else:
+            label = self._configs.MARKER_MAPPING.right_cmos.value
+        super().__init__(label, gaitalytics.utils.PointDataType.Marker)
 
     def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
         com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()

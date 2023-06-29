@@ -6,7 +6,7 @@ from gaitalytics import utils
 
 def main():
     settings_file = "settings/hbm_pig.yaml"
-    file_path = "./test/data/Baseline.4.c3d"
+    file_path = "./test/data/Baseline.5.c3d"
     buffered_path = "./out"
 
     configs = utils.ConfigProvider(settings_file)

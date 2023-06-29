@@ -16,7 +16,7 @@ def main():
     subject = utils.extract_subject(acq_trial)
     cmos_modeller = modelling.CMoSModeller("Left", configs, subject.left_leg_length, 1.3)
     cmos_modeller.create_point(acq_trial)
-    cmos_modeller = modelling.CMoSModeller("Right", configs, subject.left_leg_length, 1.3)
+    cmos_modeller = modelling.CMoSModeller("Right", configs, subject.right_leg_length, 1.3)
     cmos_modeller.create_point(acq_trial)
     c3d.write_btk(acq_trial, out_path)
 

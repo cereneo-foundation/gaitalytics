@@ -32,12 +32,16 @@ ANALYSIS_POWERS = "powers"
 ANALYSIS_FORCES = "forces"
 ANALYSIS_TOE_CLEARANCE = "toe_clearance"
 ANALYSIS_SPATIO_TEMP = "spatiotemporal"
+ANALYSIS_CMOS = "cmos"
+ANALYSIS_MOS = "mos"
 ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_ANGLES,
                  ANALYSIS_POWERS,
                  ANALYSIS_FORCES,
                  ANALYSIS_SPATIO_TEMP,
-                 ANALYSIS_TOE_CLEARANCE)
+                 ANALYSIS_TOE_CLEARANCE,
+                 ANALYSIS_CMOS,
+                 ANALYSIS_MOS)
 
 
 def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
@@ -49,7 +53,7 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
     :param config: configs from marker and model mapping
     :param methode: list of methods, 'moments' api.ANALYSIS_MOMENTS, 'angles' api.ANALYSIS_ANGLES,
         'powers' api.ANALYSIS_POWERS, 'forces' api.ANALYSIS_FORCES, 'spatiotemporal' api.ANALYSIS_SPATIO_TEMP,
-        'toe_clearance' api.ANALYSIS_TOE_CLEARANCE
+        'toe_clearance' api.ANALYSIS_TOE_CLEARANCE, 'cmos' api.ANALYSIS_CMOS
     :return: results of analysis
     """
     if not all(item in ANALYSIS_LIST for item in methode):
@@ -57,17 +61,21 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
 
     methods: List[gaitalytics.analysis.AbstractAnalysis] = []
     if ANALYSIS_ANGLES in methode:
-        methods.append(gaitalytics.analysis.JointAnglesCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointAnglesCycleAnalysis(cycle_data, config))
     if ANALYSIS_MOMENTS in methode:
-        methods.append(gaitalytics.analysis.JointMomentsCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointMomentsCycleAnalysis(cycle_data, config))
     if ANALYSIS_POWERS in methode:
-        methods.append(gaitalytics.analysis.JointPowerCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointPowerCycleAnalysis(cycle_data, config))
     if ANALYSIS_FORCES in methode:
-        methods.append(gaitalytics.analysis.JointForcesCycleAnalysis(cycle_data))
+        methods.append(gaitalytics.analysis.JointForcesCycleAnalysis(cycle_data, config))
     if ANALYSIS_SPATIO_TEMP in methode:
-        methods.append(gaitalytics.analysis.SpatioTemporalAnalysis(config, cycle_data))
+        methods.append(gaitalytics.analysis.SpatioTemporalAnalysis(cycle_data, config))
     if ANALYSIS_TOE_CLEARANCE in methode:
         methods.append(gaitalytics.analysis.MinimalClearingDifference(cycle_data, config))
+    if ANALYSIS_CMOS in methode:
+        methods.append(gaitalytics.analysis.CMosAnalysis(cycle_data, config))
+    if ANALYSIS_MOS in methode:
+        methods.append(gaitalytics.analysis.MosAnalysis(cycle_data, config))
 
     results = None
     for methode in methods:
@@ -84,7 +92,7 @@ def check_gait_event(c3d_file_path: str,
                      output_path: str,
                      anomaly_checker: List[str] = GAIT_EVENT_CHECKER_LIST):
     """
-    Checks events aditionally
+    Checks events additionally
     with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
     :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
     :param output_path: path to dir to store c3d file with events

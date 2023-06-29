@@ -12,7 +12,7 @@ def main():
     cycle_data = loaded_cycles.get_raw_cycle_points()
 
     results = api.analyse_data(cycle_data, configs)
-    results.to_csv("out/nice.csv")
+    results.to_csv("plots/nice.csv")
 
 
 if __name__ == "__main__":

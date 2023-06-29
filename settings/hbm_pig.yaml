@@ -38,6 +38,8 @@ marker_set_mapping:
 
 
   com: COM
+  left_cmos : cmos_left
+  right_cmos : cmos_right
 
 model_mapping:
   #Angles
