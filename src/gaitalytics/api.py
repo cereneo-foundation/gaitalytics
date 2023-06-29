@@ -46,7 +46,7 @@ ANALYSIS_LIST = (ANALYSIS_MOMENTS,
 
 def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
                  config: gaitalytics.utils.ConfigProvider,
-                 methode: List[str] = ANALYSIS_LIST) -> DataFrame:
+                 methode: List[str] = ANALYSIS_LIST, **kwargs) -> DataFrame:
     """
     runs specified analysis and concatenates into one frame
     :param cycle_data: unnormalised cycle data
@@ -79,7 +79,7 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
 
     results = None
     for methode in methods:
-        result = methode.analyse()
+        result = methode.analyse(**kwargs)
         if results is None:
             results = result
         else:

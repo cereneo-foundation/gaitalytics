@@ -14,7 +14,7 @@ class AbstractAnalysis(ABC):
         self._data_list: Dict[str, gaitalytics.utils.BasicCyclePoint] = data_list
         self._configs = configs
 
-    def analyse(self) -> DataFrame:
+    def analyse(self, **kwargs) -> DataFrame:
         pass
 
 
@@ -34,7 +34,8 @@ class AbstractCycleAnalysis(AbstractAnalysis, ABC):
         """ Check if its the right point data """
         return f".{self._point_data_type.name}." in key
 
-    def analyse(self, by_phase=True) -> DataFrame:
+    def analyse(self, **kwargs) -> DataFrame:
+        by_phase = kwargs.get("by_phase", True)
         results = None
         for key in self._data_list:  # TODO change quick fix
             if self._filter_keys(key):
@@ -190,7 +191,7 @@ class CMosAnalysis(AbstractCycleAnalysis):
 
 class MosAnalysis(AbstractAnalysis):
 
-    def analyse(self) -> DataFrame:
+    def analyse(self, **kwargs) -> DataFrame:
         left_cmos_ap = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_cmos,
                                                         gaitalytics.utils.PointDataType.Marker,
@@ -253,7 +254,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         self._frequency = frequency
         self._body_height = body_height
 
-    def analyse(self) -> DataFrame:
+    def analyse(self, **kwargs) -> DataFrame:
         subject = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
                                                         gaitalytics.utils.PointDataType.Marker,
@@ -433,7 +434,7 @@ class MinimalClearingDifference(AbstractAnalysis):
                  configs: gaitalytics.utils.ConfigProvider):
         super().__init__(data_list, configs)
 
-    def analyse(self) -> DataFrame:
+    def analyse(self, **kwargs) -> DataFrame:
         right_toe = self._data_list[
             gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_meta_2,
                                                         gaitalytics.utils.PointDataType.Marker,
