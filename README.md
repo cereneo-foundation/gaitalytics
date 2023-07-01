@@ -100,7 +100,7 @@ marker_set_mapping:
 model_mapping:
 ````
 > **Warning**
-> Do not rename keys for the minimal setting
+> Do not rename keys of the minimal setting
 
 ### Pipline
 
