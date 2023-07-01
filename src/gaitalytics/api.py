@@ -9,6 +9,7 @@ import gaitalytics.analysis
 import gaitalytics.c3d
 import gaitalytics.cycle
 import gaitalytics.events
+import gaitalytics.modelling
 import gaitalytics.utils
 
 # constants
@@ -42,6 +43,11 @@ ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_TOE_CLEARANCE,
                  ANALYSIS_CMOS,
                  ANALYSIS_MOS)
+
+MODELLING_COM = "com"
+MODELLING_CMOS = "cmos"
+MODELLING_LIST = [MODELLING_COM,
+                  MODELLING_CMOS]
 
 
 def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
@@ -285,6 +291,48 @@ def normalise_cycles(c3d_file_path: str,
         _cycle_points_to_csv(normalised_data, buffer_output_path, prefix)
 
     return normalised_data
+
+
+def model_data(c3d_file_path: str,
+               output_path: str,
+               configs: gaitalytics.utils.ConfigProvider,
+               methode: str,
+               **kwargs):
+    """
+    Models data according to chosen method and saves new c3d file in output path with '.5.c3d extension'
+
+    :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
+    :param output_path: path to dir to store c3d file with events
+    :param configs: configs from marker and model mapping
+    :param methode: methode to detect events 'Marker' api.GAIT_EVENT_METHODE_MARKER or
+        'Forceplate' api.GAIT_EVENT_METHODE_FP
+    :keyword belt_speed: belt speed
+    """
+    if not methode in MODELLING_LIST:
+        raise KeyError(f"{methode} is not a valid modelling methode")
+    methods: List[gaitalytics.modelling.BaseOutputModeller] = []
+    belt_speed = kwargs.get("belt_speed", 0)
+    acq = gaitalytics.c3d.read_btk(c3d_file_path)
+    subject = gaitalytics.utils.extract_subject(acq)
+    if methode == MODELLING_CMOS:
+        methods.append(gaitalytics.modelling.COMModeller(configs))
+        methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.LEFT,
+                                                          configs,
+                                                          subject.left_leg_length,
+                                                          belt_speed))
+        methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.RIGHT,
+                                                          configs,
+                                                          subject.right_leg_length,
+                                                          belt_speed))
+    elif methode == MODELLING_COM:
+        methods.append(gaitalytics.modelling.COMModeller(configs))
+
+    for methode in methods:
+        methode.create_point(acq)
+    filename = os.path.basename(c3d_file_path)
+    filename = filename.replace(".4.c3d", ".5.c3d")
+    output_path = os.path.join(output_path, filename)
+    gaitalytics.c3d.write_btk(acq, output_path)
 
 
 def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint], dir_path: str, prefix: str):
