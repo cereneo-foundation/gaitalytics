@@ -1,4 +1,3 @@
-import gaitalytics.utils
 from gaitalytics import utils, api
 
 
