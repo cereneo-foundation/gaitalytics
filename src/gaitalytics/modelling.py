@@ -13,15 +13,15 @@ class BaseOutputModeller(ABC):
         self._label = label
         self._type = point_type
 
-    def create_point(self, acq: btkAcquisition):
-        result = self._calculate_point(acq)
+    def create_point(self, acq: btkAcquisition, **kwargs):
+        result = self._calculate_point(acq , **kwargs)
         point = btkPoint(self._type.value)
         point.SetValues(result)
         point.SetLabel(self._label)
         acq.AppendPoint(point)
 
     @abstractmethod
-    def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
+    def _calculate_point(self, acq: btkAcquisition, **kwargs) -> np.ndarray:
         pass
 
 
@@ -31,7 +31,7 @@ class COMModeller(BaseOutputModeller):
         super().__init__(configs.MARKER_MAPPING.com.value, gaitalytics.utils.PointDataType.Scalar)
         self._configs = configs
 
-    def _calculate_point(self, acq: btkAcquisition):
+    def _calculate_point(self, acq: btkAcquisition, **kwargs):
         l_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.left_back_hip.value).GetValues()
         r_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.right_back_hip.value).GetValues()
         l_hip_f = acq.GetPoint(self._configs.MARKER_MAPPING.left_front_hip.value).GetValues()
@@ -42,7 +42,8 @@ class COMModeller(BaseOutputModeller):
 class CMoSModeller(BaseOutputModeller):
 
     def __init__(self, side: gaitalytics.utils.GaitEventContext, configs: gaitalytics.utils.ConfigProvider,
-                 dominant_leg_length: float, belt_speed: float):
+                 dominant_leg_length: float, **kwargs):
+        belt_speed = kwargs.get("belt_speed", 0)
         self._configs = configs
         self._dominant_leg_length = dominant_leg_length
         self._belt_speed = belt_speed
@@ -53,7 +54,7 @@ class CMoSModeller(BaseOutputModeller):
             label = self._configs.MARKER_MAPPING.right_cmos.value
         super().__init__(label, gaitalytics.utils.PointDataType.Marker)
 
-    def _calculate_point(self, acq: btkAcquisition) -> np.ndarray:
+    def _calculate_point(self, acq: btkAcquisition, **kwargs) -> np.ndarray:
         com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
         if self._side == gaitalytics.utils.GaitEventContext.LEFT:
             lat_malleoli = acq.GetPoint(self._configs.MARKER_MAPPING.left_lat_malleoli.value).GetValues()
@@ -66,7 +67,7 @@ class CMoSModeller(BaseOutputModeller):
             meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_2.value).GetValues()
             contra_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_2.value).GetValues()
         return self.cMoS(com, lat_malleoli, contra_lat_malleoli, meta_2, contra_meta_2, self._dominant_leg_length,
-                         self._belt_speed, acq, self._side)
+                         self._belt_speed, acq, self._side, **kwargs)
 
     def cMoS(self, com: np.ndarray,
              lat_malleoli_marker: np.ndarray,
@@ -77,7 +78,9 @@ class CMoSModeller(BaseOutputModeller):
              belt_speed: float,
              acq: btkAcquisition,
              side: gaitalytics.utils.GaitEventContext,
-             show: bool = True) -> np.ndarray:
+             **kwargs) -> np.ndarray:
+
+        show_plot = kwargs.get("show_plot", False)
         # AP axis is inverted
         com[:, 1] *= -1
         second_meta_head_marker[:, 1] *= -1
@@ -99,7 +102,6 @@ class CMoSModeller(BaseOutputModeller):
             events_frames.append(event.GetFrame())
             events_foot.append(event.GetContext())
 
-        mos = []
         itr = 0
         cycle_event = None
         com_v = calculate_point_velocity(com)
@@ -116,9 +118,6 @@ class CMoSModeller(BaseOutputModeller):
             else:
                 break
 
-            # still miss the treadmill speed (need velocity of belt in AP and ML axis too)
-            # x_com = [COM[i, 0], COM[i, 1]]
-            # calculating the distance between the x_com and the BOS
             # 4 cases : Left Heel Strike, Left Toe Off, Right Heel Strike, Right Toe Off
             """
                         MOSant
@@ -150,7 +149,7 @@ class CMoSModeller(BaseOutputModeller):
 
             distance_from_x_com_to_bos[i, 0] = mos[0]
             distance_from_x_com_to_bos[i, 1] = mos[1]
-        if show:
+        if show_plot:
             self._show(distance_from_x_com_to_bos, side.value)
         return distance_from_x_com_to_bos
 

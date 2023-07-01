@@ -311,7 +311,6 @@ def model_data(c3d_file_path: str,
     if not methode in MODELLING_LIST:
         raise KeyError(f"{methode} is not a valid modelling methode")
     methods: List[gaitalytics.modelling.BaseOutputModeller] = []
-    belt_speed = kwargs.get("belt_speed", 0)
     acq = gaitalytics.c3d.read_btk(c3d_file_path)
     subject = gaitalytics.utils.extract_subject(acq)
     if methode == MODELLING_CMOS:
@@ -319,16 +318,16 @@ def model_data(c3d_file_path: str,
         methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.LEFT,
                                                           configs,
                                                           subject.left_leg_length,
-                                                          belt_speed))
+                                                          **kwargs))
         methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.RIGHT,
                                                           configs,
                                                           subject.right_leg_length,
-                                                          belt_speed))
+                                                          **kwargs))
     elif methode == MODELLING_COM:
         methods.append(gaitalytics.modelling.COMModeller(configs))
 
     for methode in methods:
-        methode.create_point(acq)
+        methode.create_point(acq, **kwargs)
     filename = os.path.basename(c3d_file_path)
     filename = filename.replace(".4.c3d", ".5.c3d")
     output_path = os.path.join(output_path, filename)

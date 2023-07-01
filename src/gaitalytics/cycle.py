@@ -157,7 +157,8 @@ class TimeNormalisationAlgorithm(ABC):
 
     def __init__(self, number_frames: int = 100):
         self._number_frames = number_frames
-        self._data_type_fiter = {gaitalytics.utils.PointDataType.Angles,
+        self._data_type_fiter = {gaitalytics.utils.PointDataType.Marker,
+                                 gaitalytics.utils.PointDataType.Angles,
                                  gaitalytics.utils.PointDataType.Forces,
                                  gaitalytics.utils.PointDataType.Moments,
                                  gaitalytics.utils.PointDataType.Power,
