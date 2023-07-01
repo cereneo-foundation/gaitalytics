@@ -1,6 +1,6 @@
 
-Usage
-=====
+Features
+========
 
 
 Installation
@@ -58,7 +58,7 @@ Minimal requirements would look like this:
 .. warning::
     Do not rename keys of the minimal setting
 
-Pipeline
+Pipline
 -------
 
 Please take the resources in

@@ -32,4 +32,10 @@ exclude_patterns = []
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_book_theme"
+html_theme_options = {
+    "repository_url": "https://github.com/cereneo-foundation/gaitalytics",
+    "use_repository_button": True,
+}
+html_logo = "./_static/Gaitalytics_noBackground.png"
+html_title = "Gaytalytics"
 html_static_path = ['_static']

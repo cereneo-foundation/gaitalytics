@@ -5,7 +5,15 @@
 
 Gaitalytics's documentation
 ===========================
-Easy metrics for everyone
+This Python package provides a comprehensive set of tools and advanced algorithms for analyzing 3D motion capture data.
+It is specifically designed to process gait data stored in c3d format. Prior to utilizing the features of gaitalytics,
+it is necessary to perform data labeling, modeling, and filtering procedures.
+
+The library's versatility allows it to be adaptable to various marker sets and modeling algorithms,
+offering high configurability.
+
+.. note::
+   Current pre-release is only tested with data acquired with Motek Caren, HBM2 Lower Body Trunk and PIG.
 
 Contents
 ________
