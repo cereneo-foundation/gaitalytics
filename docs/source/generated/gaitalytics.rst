@@ -1,0 +1,23 @@
+﻿gaitalytics
+===========
+
+.. automodule:: gaitalytics
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

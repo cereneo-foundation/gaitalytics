@@ -52,14 +52,13 @@ MODELLING_LIST = [MODELLING_COM,
 
 def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
                  config: gaitalytics.utils.ConfigProvider,
-                 methode: List[str] = ANALYSIS_LIST, **kwargs) -> DataFrame:
+                 methode: List[str] = ANALYSIS_LIST, **kwargs: dict) -> DataFrame:
     """
-    runs specified analysis and concatenates into one frame
-    :param cycle_data: unnormalised cycle data
+    Runs specified analysis and concatenates into one Dataframe
+
+    :param cycle_data: full length cycle data
     :param config: configs from marker and model mapping
-    :param methode: list of methods, 'moments' api.ANALYSIS_MOMENTS, 'angles' api.ANALYSIS_ANGLES,
-        'powers' api.ANALYSIS_POWERS, 'forces' api.ANALYSIS_FORCES, 'spatiotemporal' api.ANALYSIS_SPATIO_TEMP,
-        'toe_clearance' api.ANALYSIS_TOE_CLEARANCE, 'cmos' api.ANALYSIS_CMOS
+    :param methode: list of methods
     :return: results of analysis
     """
     if not all(item in ANALYSIS_LIST for item in methode):
@@ -100,6 +99,7 @@ def check_gait_event(c3d_file_path: str,
     """
     Checks events additionally
     with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
+
     :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
     :param output_path: path to dir to store c3d file with events
     :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
@@ -135,6 +135,7 @@ def detect_gait_events(c3d_file_path: str,
     """
     Adds gait events to c3d file and saves it in output_path with a '.4.c3d' extension. Checks events aditionally
     with given anomaly_checker method and saves it in output_path with '*_anomaly.txt' extension
+
     :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
     :param output_path: path to dir to store c3d file with events
     :param configs: configs from marker and model mapping
@@ -175,6 +176,7 @@ def detect_gait_events(c3d_file_path: str,
 def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.AbstractEventAnomalyChecker:
     """
     defines checker by list of inputs
+
     :param anomaly_checker: list of checker name
     :return: checker object
     """
@@ -189,11 +191,12 @@ def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.Abstr
 def extract_cycles_buffered(buffer_output_path: str,
                             configs: gaitalytics.utils.ConfigProvider) -> gaitalytics.cycle.CyclePointLoader:
     """
-    gets normalised and unnormalised data from buffered folder. It is needed to run api.extract_cycles as
+    gets normalised and full length data from buffered folder. It is needed to run api.extract_cycles as
     api.normalise_cycles with given buffer_output_path once to use this function
+
     :param buffer_output_path: path to folder
     :param configs: configs from marker and model mapping
-    :return: object containing normalised and unnormalised data lists
+    :return: object containing normalised and full length data lists
     """
     if not os.path.isdir(buffer_output_path):
         raise FileExistsError(f"{buffer_output_path} does not exists")
@@ -212,6 +215,7 @@ def extract_cycles(c3d_file_path: str,
     """
     extracts and returns cycles from c3d. If a buffered path is delivered data will be stored in the path in separated
     csv file. Do not edit files and structure.
+
     :param c3d_file_path: path of c3d file with foot_off and foot_strike events '*.4.c3d'
     :param configs: configs from marker and model mapping
     :param methode: method to cut gait cycles either "HS" api.CYCLE_METHOD_HEEL_STRIKE or "TO" api.CYCLE_METHOD_TOE_OFF
@@ -264,8 +268,9 @@ def normalise_cycles(c3d_file_path: str,
                      buffer_output_path: str = None) -> Dict[str, gaitalytics.utils.BasicCyclePoint]:
     """
     normalise and returns cycles
+
     :param c3d_file_path:  path of c3d file with foot_off and foot_strike events '*.4.c3d'
-    :param cycle_data: unnormalised cycle data
+    :param cycle_data: full length cycle data
     :param method: method normalise "linear" api.NORMALISE_METHODE_LINEAR
     :param buffer_output_path: if buffering needed path to folder
     :return: normalised gait cycles
@@ -304,8 +309,7 @@ def model_data(c3d_file_path: str,
     :param c3d_file_path: path of c3d file with modelled filtered data '.3.c3d'
     :param output_path: path to dir to store c3d file with events
     :param configs: configs from marker and model mapping
-    :param methode: methode to detect events 'Marker' api.GAIT_EVENT_METHODE_MARKER or
-        'Forceplate' api.GAIT_EVENT_METHODE_FP
+    :param methode: methode to detect events
     :keyword belt_speed: belt speed
     """
     if not methode in MODELLING_LIST:

@@ -48,7 +48,11 @@ offering high configurability.
 | toe_clearance  | minimal toe clearance, <br/>percent swing phase when min toe clearance happened,<br/>toe clearance HS,                                             |
 | spatiotemporal | step_length,stride length, cycle duration,<br/>step duration percent, swing duration percent, stance duration percent,<br/>step height, step width |
 
-## Installation
+
+
+## Usage
+
+### Installation
 
 Please be aware of the dependency of gaitalytics to Biomechanical-ToolKit (BTK). To install follow the
 instructions [here](https://biomechanical-toolkit.github.io/docs/Wrapping/Python/_build_instructions.html) or use
@@ -61,8 +65,6 @@ Fast install with anaconda:
 pip install gaitalytics
 conda install -c conda-forge btk
 ````
-
-## Usage
 
 ### Configuration
 
