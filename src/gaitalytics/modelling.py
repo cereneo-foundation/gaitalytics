@@ -43,10 +43,8 @@ class CMoSModeller(BaseOutputModeller):
 
     def __init__(self, side: gaitalytics.utils.GaitEventContext, configs: gaitalytics.utils.ConfigProvider,
                  dominant_leg_length: float, **kwargs):
-        belt_speed = kwargs.get("belt_speed", 0)
         self._configs = configs
         self._dominant_leg_length = dominant_leg_length
-        self._belt_speed = belt_speed
         self._side = side
         if side == gaitalytics.utils.GaitEventContext.LEFT:
             label = self._configs.MARKER_MAPPING.left_cmos.value
@@ -67,7 +65,7 @@ class CMoSModeller(BaseOutputModeller):
             meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_2.value).GetValues()
             contra_meta_2 = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_2.value).GetValues()
         return self.cMoS(com, lat_malleoli, contra_lat_malleoli, meta_2, contra_meta_2, self._dominant_leg_length,
-                         self._belt_speed, acq, self._side, **kwargs)
+                         acq, self._side, **kwargs)
 
     def cMoS(self, com: np.ndarray,
              lat_malleoli_marker: np.ndarray,
@@ -75,11 +73,10 @@ class CMoSModeller(BaseOutputModeller):
              second_meta_head_marker: np.ndarray,
              second_meta_head_marker_contra: np.ndarray,
              dominant_leg_length: float,
-             belt_speed: float,
              acq: btkAcquisition,
              side: gaitalytics.utils.GaitEventContext,
              **kwargs) -> np.ndarray:
-
+        belt_speed = kwargs.get("belt_speed", 0)
         show_plot = kwargs.get("show_plot", False)
         # AP axis is inverted
         com[:, 1] *= -1
