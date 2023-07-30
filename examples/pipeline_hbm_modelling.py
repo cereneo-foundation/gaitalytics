@@ -9,7 +9,7 @@ def main():
     # load configs
     configs = utils.ConfigProvider(settings_file)
 
-    api.model_data(file_path, out_path, configs, methode=api.MODELLING_CMOS, belt_speed=1)
+    api.model_data(file_path, out_path, configs, methode=api.MODELLING_CMOS, belt_speed=0.8, dominant_leg_length=998, show_plot = True)
 
 
 if __name__ == "__main__":

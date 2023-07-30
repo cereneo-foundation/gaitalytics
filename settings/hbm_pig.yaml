@@ -41,8 +41,8 @@ marker_set_mapping:
 
   # Additional markers which will be modelled in modelling.py
   com: COM
-  left_cmos: cmos_left
-  right_cmos: cmos_right
+  xcom: XCOM
+  cmos: CMOS
 
 model_mapping:
   #Angles

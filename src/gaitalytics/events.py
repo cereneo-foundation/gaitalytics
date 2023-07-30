@@ -60,16 +60,40 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         min_distance = kwargs.get("min_distance", 100)
         show_plot = kwargs.get("show_plot", False)
 
-        right_heel = acq.GetPoint(self._config.MARKER_MAPPING.right_heel.value).GetValues()
-        left_heel = acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues()
-        right_hip = acq.GetPoint(self._config.MARKER_MAPPING.right_back_hip.value).GetValues()
-        left_hip = acq.GetPoint(self._config.MARKER_MAPPING.left_back_hip.value).GetValues()
-
+        right_heel = acq.GetPoint(self._config.MARKER_MAPPING.right_heel.value).GetValues()[:,
+                     gaitalytics.utils.AxesNames.y.value]
+        left_heel = acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues()[:,
+                    gaitalytics.utils.AxesNames.y.value]
+        right_toe = acq.GetPoint(self._config.MARKER_MAPPING.right_meta_2.value).GetValues()[:,
+                    gaitalytics.utils.AxesNames.y.value]
+        left_toe = acq.GetPoint(self._config.MARKER_MAPPING.left_meta_2.value).GetValues()[:,
+                   gaitalytics.utils.AxesNames.y.value]
+        right_hip = acq.GetPoint(self._config.MARKER_MAPPING.right_back_hip.value).GetValues()[:,
+                    gaitalytics.utils.AxesNames.y.value]
+        left_hip = acq.GetPoint(self._config.MARKER_MAPPING.left_back_hip.value).GetValues()[:,
+                   gaitalytics.utils.AxesNames.y.value]
+        '''
+        left_heel, left_toe, right_heel, right_toe, right_hip, left_hip = self._move_to_plus(left_heel,
+                                                                                             left_hip,
+                                                                                             left_toe,
+                                                                                             right_heel,
+                                                                                             right_hip,
+                                                                                             right_toe)
+        '''
         sacrum = (right_hip + left_hip) / 2.0
-        right_diff_heel = right_heel - sacrum
-        left_diff_heel = left_heel - sacrum
-        right_diff_toe = right_heel - sacrum
-        left_diff_toe = left_heel - sacrum
+        right_diff_heel = (right_heel - sacrum) * -1
+        left_diff_heel = (left_heel - sacrum) * -1
+        right_diff_toe = right_toe - sacrum
+        left_diff_toe = left_toe - sacrum
+
+        if show_plot:
+            base_title = "Test"
+            self._plot_curves(right_diff_heel,
+                              right_heel,
+                              sacrum, f"{base_title}_right_heel")
+            self._plot_curves(left_diff_heel,
+                              left_heel,
+                              sacrum, f"{base_title}_left_heel")
 
         self._create_events(acq, left_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
                             gaitalytics.utils.GaitEventContext.LEFT, min_distance, show_plot)
@@ -80,29 +104,68 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         self._create_events(acq, right_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
                             gaitalytics.utils.GaitEventContext.RIGHT, min_distance, show_plot)
 
+    @staticmethod
+    def _plot_curves(diff, foot, sacrum, title):
+        from_frame = 3000
+        to_frame = 3500
+        fig, host = plt.subplots(figsize=(15, 12), layout='constrained')
+        diff_short = diff[from_frame:to_frame]
+        foot_short = foot[from_frame:to_frame]
+        sacrum_short = sacrum[from_frame:to_frame]
+
+        ax2 = host.twinx()
+        ax3 = host.twinx()
+
+        host.set_xlabel("Time")
+        host.set_ylabel("Diff")
+        ax2.set_ylabel("foot")
+        ax3.set_ylabel("sacrum")
+
+        color1, color2, color3 = plt.cm.viridis([0, .5, .9])
+        p1 = host.plot(diff_short, color=color1, label="diff")
+        extremes, foo = signal.find_peaks(diff_short)
+        host.plot( extremes, diff_short[extremes], "x")
+        p2 = ax2.plot(foot_short, color=color2, label="foot")
+        p3 = ax3.plot(sacrum_short, color=color3, label="sacrum")
+
+        host.legend(handles=p1 + p2 + p3, loc='best')
+        # right, left, top, bottom
+        ax3.spines['right'].set_position(('outward', 60))
+        plt.savefig(f"./playground/{title}.png")
+        plt.show()
+
+    @staticmethod
+    def _move_to_plus(left_heel, left_hip, left_toe, right_heel, right_hip, right_toe):
+        min_value = abs(min([min(right_heel),
+                             min(right_toe),
+                             min(left_heel),
+                             min(left_toe),
+                             min(right_hip),
+                             min(left_hip)]))
+        right_heel = right_heel + min_value
+        left_heel = left_heel + min_value
+        right_toe = right_toe + min_value
+        left_toe = left_toe + min_value
+        right_hip = right_hip + min_value
+        left_hip = left_hip + min_value
+
+        return left_heel, left_toe, right_heel, right_toe, right_hip, left_hip
+
     #   gaitalytics.c3d.sort_events(acq)
 
     def _create_events(self, acq, diff, event_label: gaitalytics.utils.GaitEventLabel,
                        event_context: gaitalytics.utils.GaitEventContext,
                        min_distance: int = 100,
                        show_plot: bool = False):
-        data = diff[:, gaitalytics.utils.AxesNames.y.value]
+        data = diff
         if gaitalytics.c3d.is_progression_axes_flip(
                 acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
                 acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
             data = data * -1
+
         data = gaitalytics.utils.min_max_norm(data)
 
-        if gaitalytics.utils.GaitEventLabel.FOOT_STRIKE == event_label:
-            data = [entry * -1 for entry in data]
-
         extremes, foo = signal.find_peaks(data, height=[0, 1], distance=min_distance)
-        if show_plot:
-            plt.plot(data)
-            for i in extremes:
-                plt.plot(i, data[i], 'ro')
-            plt.plot()
-            plt.show()
 
         for frame in extremes:
             acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
