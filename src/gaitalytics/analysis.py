@@ -265,9 +265,11 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
 
         step_height = self._calculate_step_height(subject)
         step_width = self._calculate_step_width(subject)
+        limb_circumduction = self._calculate_limb_circumduction()
         result = step_length.merge(durations, on="cycle_number")
         result = result.merge(step_height, on="cycle_number")
         result = result.merge(step_width, on="cycle_number")
+        result = result.merge(limb_circumduction, on="cycle_number")
         result['metric'] = "Spatiotemporal"
         return result.pivot(columns="metric")
 
@@ -309,6 +311,74 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
             width_c = abs(context_heel_x.loc[cycle_number][1] - contra_heel_x.loc[cycle_number][1])
             width.loc[cycle_number][column_label] = width_c / body_height
         return width
+
+
+
+
+
+
+    def _calculate_limb_circumduction(self) -> DataFrame:
+        #subject.
+        right_malleoli_x_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_med_malleoli,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+        left_malleoli_x_left = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_med_malleoli,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+
+        left = self._calculate_limb_circumduction_side(left_malleoli_x_left, "left")
+        right = self._calculate_limb_circumduction_side(right_malleoli_x_right, "right")
+
+        return concat([left, right], axis=1)
+
+    #@staticmethod
+   # def _calculate_limb_circumduction_side(context_malleoli_x: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
+       # context_malleoli_x.data_table
+        #context_malleoli_x.event_frames
+        # TODO: Medial marker
+       # column_label = f"limb_circumduction_{side}"
+      # limb_circumduction = DataFrame(index=context_malleoli_x.data_table.index, columns=[column_label])
+      # for cycle_number in context_malleoli_x.data_table.index.to_series():
+     #       id_foot_off = context_malleoli_x.event_frames.loc[cycle_number]['Foot_Off']
+     #       id_heel_strike_end = context_malleoli_x.frames.loc[cycle_number]['end_frame'] - context_malleoli_x.frames.loc[cycle_number]['start_frame'] -1
+     #       if side == "right":
+    #            context_malleoli_x.data_table = context_malleoli_x.data_table*(-1)
+    #        limb_circumduction.loc[cycle_number][column_label] = max(context_malleoli_x.data_table.iloc[cycle_number, id_foot_off:id_heel_strike_end]) - context_malleoli_x.data_table.loc[cycle_number][id_foot_off]
+    #    return limb_circumduction
+
+  #  @staticmethod
+   # def _calculate_limb_circumduction_side(context_malleoli_x: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
+     #   column_label = f"limb_circumduction_{side}"
+      #  limb_circumduction = DataFrame(index=context_malleoli_x.data_table.index, columns=[column_label])
+       # for cycle_number in context_malleoli_x.data_table.index.to_series():
+       #     id_foot_off = context_malleoli_x.event_frames.loc[cycle_number]['Foot_Off']
+      #      id_heel_strike_end = context_malleoli_x.frames.loc[cycle_number]['end_frame'] - context_malleoli_x.frames.loc[cycle_number]['start_frame'] -1
+      #      if side == "right":
+      #          context_malleoli_x.data_table = context_malleoli_x.data_table*(-1)
+       #     limb_circumduction.loc[cycle_number][column_label] = max(context_malleoli_x.data_table.iloc[cycle_number, id_foot_off:id_heel_strike_end]) - context_malleoli_x.data_table.loc[cycle_number][id_foot_off]
+      #  return limb_circumduction
+
+    @staticmethod
+    def _calculate_limb_circumduction_side(context_malleoli_x: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
+        column_label = f"limb_circumduction_{side}"
+        limb_circumduction = DataFrame(index=context_malleoli_x.data_table.index, columns=[column_label])
+        data = context_malleoli_x.data_table
+        if side =="right":
+            data = data * -1
+        for cycle_number in context_malleoli_x.data_table.index.to_series():
+            id_foot_off = context_malleoli_x.event_frames.loc[cycle_number]['Foot_Off']
+            id_heel_strike_end = context_malleoli_x.frames.loc[cycle_number]['end_frame'] - context_malleoli_x.frames.loc[cycle_number]['start_frame']
+            max_data = max(data.iloc[cycle_number -1, id_foot_off:id_heel_strike_end])
+            data_TO = data.loc[cycle_number][id_foot_off]
+            limb_circumduction.loc[cycle_number][column_label] = max_data - data_TO
+
+        return limb_circumduction
+
+    # limb_circumduction.loc[cycle_number][column_label] = max(context_malleoli_x.data_table.iloc[cycle_number, id_foot_off:id_heel_strike_end]) - context_malleoli_x.data_table.loc[cycle_number][id_foot_off]
 
     def _calculate_step_height(self, subject: gaitalytics.utils.SubjectMeasures) -> DataFrame:
         right_heel_z = self._data_list[
