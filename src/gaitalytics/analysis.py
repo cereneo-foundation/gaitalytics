@@ -266,10 +266,16 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         step_height = self._calculate_step_height(subject)
         step_width = self._calculate_step_width(subject)
         limb_circumduction = self._calculate_limb_circumduction()
+
+        double_stance_duration = self._calculate_double_support_duration()
+        single_stance_duration = self._calculate_single_support_duration()
+
         result = step_length.merge(durations, on="cycle_number")
         result = result.merge(step_height, on="cycle_number")
         result = result.merge(step_width, on="cycle_number")
         result = result.merge(limb_circumduction, on="cycle_number")
+        result = result.merge(double_stance_duration, on ="cycle_number")
+        result = result.merge(single_stance_duration, on ="cycle_number")
         result['metric'] = "Spatiotemporal"
         return result.pivot(columns="metric")
 
@@ -339,7 +345,7 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
    # def _calculate_limb_circumduction_side(context_malleoli_x: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
        # context_malleoli_x.data_table
         #context_malleoli_x.event_frames
-        # TODO: Medial marker
+        #
        # column_label = f"limb_circumduction_{side}"
       # limb_circumduction = DataFrame(index=context_malleoli_x.data_table.index, columns=[column_label])
       # for cycle_number in context_malleoli_x.data_table.index.to_series():
@@ -379,6 +385,83 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         return limb_circumduction
 
     # limb_circumduction.loc[cycle_number][column_label] = max(context_malleoli_x.data_table.iloc[cycle_number, id_foot_off:id_heel_strike_end]) - context_malleoli_x.data_table.loc[cycle_number][id_foot_off]
+
+    def _calculate_double_support_duration(self) -> DataFrame:
+        # subject.
+        right_heel_y_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+        left_heel_y_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+
+        left = self._calculate_double_support_duration_side(left_heel_y_right, "left")
+        right = self._calculate_double_support_duration_side(right_heel_y_right, "right")
+
+        return concat([left, right], axis=1)
+
+    def _calculate_double_support_duration_side(self, progression: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
+        dsd_1 = f"double_support_duration_1_{side}"
+        dsd_2 = f"double_support_duration_2_{side}"
+        columns = [dsd_1, dsd_2]
+        durations = DataFrame(index=progression.data_table.index, columns=columns)
+        for cycle_number in progression.data_table.index.to_series():
+
+            id_foot_off_contra = progression.event_frames.loc[cycle_number]['Foot_Off_Contra']
+            time_foot_off_contra = (id_foot_off_contra + 1) / self._frequency
+
+            id_heel_strike_contra = progression.event_frames.loc[cycle_number]['Foot_Strike_Contra']
+            time_heel_strike_contra = (id_heel_strike_contra + 1) / self._frequency
+
+            id_toe_off = progression.event_frames.loc[cycle_number]['Foot_Off']
+            time_toe_off = (id_toe_off + 1) / self._frequency
+
+            durations.loc[cycle_number][dsd_1] = time_foot_off_contra
+            durations.loc[cycle_number][dsd_2] = time_toe_off - time_heel_strike_contra
+        return durations
+
+    def _calculate_single_support_duration(self) -> DataFrame:
+        # subject.
+        right_heel_y_right = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_heel,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+        left_heel_y_left = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_heel,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+
+        left = self._calculate_single_support_duration_side(left_heel_y_left, "left")
+        right = self._calculate_single_support_duration_side(right_heel_y_right, "right")
+
+        return concat([left, right], axis=1)
+
+    def _calculate_single_support_duration_side(self, progression: gaitalytics.utils.BasicCyclePoint, side: str) -> DataFrame:
+        ssd = f"single_support_duration_{side}"
+        columns = [ssd]
+        durations = DataFrame(index=progression.data_table.index, columns=columns)
+        for cycle_number in progression.data_table.index.to_series():
+
+            id_foot_off_contra = progression.event_frames.loc[cycle_number]['Foot_Off_Contra']
+            time_foot_off_contra = (id_foot_off_contra + 1) / self._frequency
+
+            id_heel_strike_contra = progression.event_frames.loc[cycle_number]['Foot_Strike_Contra']
+            time_heel_strike_contra = (id_heel_strike_contra + 1) / self._frequency
+
+            durations.loc[cycle_number][ssd] = time_heel_strike_contra - time_foot_off_contra
+        return durations
+
+
+
+
+
+
 
     def _calculate_step_height(self, subject: gaitalytics.utils.SubjectMeasures) -> DataFrame:
         right_heel_z = self._data_list[
