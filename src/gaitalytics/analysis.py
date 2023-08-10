@@ -175,7 +175,9 @@ class CMosAnalysis(AbstractCycleAnalysis):
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
-            return self._configs.MARKER_MAPPING.cmos.name in key
+            useful = self._configs.MARKER_MAPPING.right_cmos.name in key
+            useful = self._configs.MARKER_MAPPING.left_cmos.name in key or useful
+            return useful
         return False
 
     def _do_analysis(self, data: DataFrame) -> DataFrame:
@@ -192,10 +194,39 @@ class CMosAnalysis(AbstractCycleAnalysis):
 class MosAnalysis(AbstractAnalysis):
 
     def analyse(self, **kwargs) -> DataFrame:
-        # TODO MOS
+        left_cmos_ap = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+        left_cmos_ml = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.left_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.LEFT)]
+
+        right_cmos_ap = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.y,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+        right_cmos_ml = self._data_list[
+            gaitalytics.utils.ConfigProvider.define_key(self._configs.MARKER_MAPPING.right_cmos,
+                                                        gaitalytics.utils.PointDataType.Marker,
+                                                        gaitalytics.utils.AxesNames.x,
+                                                        gaitalytics.utils.GaitEventContext.RIGHT)]
+
+        left_ap = self._extract_mos_frames(left_cmos_ap, "left", "ap")
+        left_ml = self._extract_mos_frames(left_cmos_ml, "left", "ml")
+        right_ap = self._extract_mos_frames(right_cmos_ap, "right", "ap")
+        right_ml = self._extract_mos_frames(right_cmos_ml, "right", "ml")
+        result = left_ap.merge(left_ml, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
+        result = result.merge(right_ap, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
+        result = result.merge(right_ml, on=gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER)
 
 
-        return DataFrame()
+        result['metric'] = "Mos"
+        return result.pivot(columns="metric")
 
     @staticmethod
     def _extract_mos_frames(cmos: gaitalytics.utils.BasicCyclePoint.CYCLE_NUMBER, side, direction):
