@@ -7,7 +7,7 @@ from scipy import signal
 
 import gaitalytics.utils
 import logging
-# test
+
 logger = logging.getLogger(__name__)
 class AbstractAnalysis(ABC):
     def __init__(self, data_list: Dict[str, gaitalytics.utils.BasicCyclePoint],
