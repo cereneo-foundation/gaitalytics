@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import logging
 import os
+import sys
 from typing import Dict, List
 
 from pandas import DataFrame
@@ -11,6 +13,13 @@ import gaitalytics.cycle
 import gaitalytics.events
 import gaitalytics.modelling
 import gaitalytics.utils
+
+logging.basicConfig(level=logging.DEBUG,
+                    format='%(asctime)s %(levelname)s %(name)s - %(message)s',
+                    datefmt='%d-%b-%y %H:%M:%S',
+                    handlers=[logging.StreamHandler(sys.stdout)])
+
+logger = logging.getLogger(__name__)
 
 # constants
 CYCLE_METHOD_HEEL_STRIKE = "HS"
@@ -41,13 +50,14 @@ ANALYSIS_LIST = (ANALYSIS_MOMENTS,
                  ANALYSIS_FORCES,
                  ANALYSIS_SPATIO_TEMP,
                  ANALYSIS_TOE_CLEARANCE,
-                 ANALYSIS_CMOS,
-                 ANALYSIS_MOS)
+                 ANALYSIS_CMOS)
 
 MODELLING_COM = "com"
 MODELLING_CMOS = "cmos"
+MODELLING_XCOM = "xcom"
 MODELLING_LIST = [MODELLING_COM,
-                  MODELLING_CMOS]
+                  MODELLING_CMOS,
+                  MODELLING_XCOM]
 
 
 def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
@@ -61,6 +71,7 @@ def analyse_data(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint],
     :param methode: list of methods
     :return: results of analysis
     """
+    logger.info("analyse_data")
     if not all(item in ANALYSIS_LIST for item in methode):
         raise KeyError(f"{methode} are not a valid anomaly checker")
 
@@ -105,6 +116,7 @@ def check_gait_event(c3d_file_path: str,
     :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
        "spacing" api.GAIT_EVENT_CHECKER_SPACING
     """
+    logger.info("check_gait_event")
     if not os.path.isfile(c3d_file_path):
         raise FileExistsError(f"{c3d_file_path} does not exists")
     if not os.path.isdir(output_path):
@@ -144,6 +156,7 @@ def detect_gait_events(c3d_file_path: str,
     :param anomaly_checker: list of anomaly checkers, "context" api.GAIT_EVENT_CHECKER_CONTEXT,
         "spacing" api.GAIT_EVENT_CHECKER_SPACING
     """
+    logger.info("detect_gait_events")
     if not os.path.isfile(c3d_file_path):
         raise FileExistsError(f"{c3d_file_path} does not exists")
     if not os.path.isdir(output_path):
@@ -180,6 +193,7 @@ def _get_anomaly_checker(anomaly_checker: List[str]) -> gaitalytics.events.Abstr
     :param anomaly_checker: list of checker name
     :return: checker object
     """
+    logger.info("_get_anomaly_checker")
     checker = None
     if GAIT_EVENT_CHECKER_CONTEXT in anomaly_checker:
         checker = gaitalytics.events.ContextPatternChecker()
@@ -198,6 +212,7 @@ def extract_cycles_buffered(buffer_output_path: str,
     :param configs: configs from marker and model mapping
     :return: object containing normalised and full length data lists
     """
+    logger.info("extract_cycles_buffered")
     if not os.path.isdir(buffer_output_path):
         raise FileExistsError(f"{buffer_output_path} does not exists")
 
@@ -224,6 +239,7 @@ def extract_cycles(c3d_file_path: str,
         "spacing" api.GAIT_EVENT_CHECKER_SPACING
     :return: extracted gait cycles
     """
+    logger.info("extract_cycles")
     # check params for validity
     if not os.path.isfile(c3d_file_path):
         raise FileExistsError(f"{c3d_file_path} does not exists")
@@ -275,7 +291,7 @@ def normalise_cycles(c3d_file_path: str,
     :param buffer_output_path: if buffering needed path to folder
     :return: normalised gait cycles
     """
-
+    logger.info("normalise_cycles")
     # check params for validity
     if method not in NORMALISE_METHODE_LIST:
         raise KeyError(f"{method} is not a valid methode")
@@ -312,6 +328,7 @@ def model_data(c3d_file_path: str,
     :param methode: methode to detect events
     :keyword belt_speed: belt speed
     """
+    logger.info("model_data")
     if not methode in MODELLING_LIST:
         raise KeyError(f"{methode} is not a valid modelling methode")
     methods: List[gaitalytics.modelling.BaseOutputModeller] = []
@@ -319,14 +336,13 @@ def model_data(c3d_file_path: str,
     subject = gaitalytics.utils.extract_subject(acq)
     if methode == MODELLING_CMOS:
         methods.append(gaitalytics.modelling.COMModeller(configs))
-        methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.LEFT,
-                                                          configs,
-                                                          subject.left_leg_length,
+        methods.append(gaitalytics.modelling.XCOMModeller(configs))
+        methods.append(gaitalytics.modelling.CMoSModeller(configs,
                                                           **kwargs))
-        methods.append(gaitalytics.modelling.CMoSModeller(gaitalytics.utils.GaitEventContext.RIGHT,
-                                                          configs,
-                                                          subject.right_leg_length,
-                                                          **kwargs))
+
+    elif methode == MODELLING_XCOM:
+        methods.append(gaitalytics.modelling.COMModeller(configs))
+        methods.append(gaitalytics.modelling.XCOMModeller(configs))
     elif methode == MODELLING_COM:
         methods.append(gaitalytics.modelling.COMModeller(configs))
 
@@ -339,6 +355,7 @@ def model_data(c3d_file_path: str,
 
 
 def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint], dir_path: str, prefix: str):
+    logger.info("_cycle_points_to_csv")
     subject_saved = False
     for key in cycle_data:
         cycle_data[key].to_csv(dir_path, prefix)
