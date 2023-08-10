@@ -267,15 +267,15 @@ class SpatioTemporalAnalysis(AbstractAnalysis):
         step_width = self._calculate_step_width(subject)
         limb_circumduction = self._calculate_limb_circumduction()
 
-        double_stance_duration = self._calculate_double_support_duration()
-        single_stance_duration = self._calculate_single_support_duration()
+        double_support_duration = self._calculate_double_support_duration()
+        single_support_duration = self._calculate_single_support_duration()
 
         result = step_length.merge(durations, on="cycle_number")
         result = result.merge(step_height, on="cycle_number")
         result = result.merge(step_width, on="cycle_number")
         result = result.merge(limb_circumduction, on="cycle_number")
-        result = result.merge(double_stance_duration, on ="cycle_number")
-        result = result.merge(single_stance_duration, on ="cycle_number")
+        result = result.merge(double_support_duration, on ="cycle_number")
+        result = result.merge(single_support_duration, on ="cycle_number")
         result['metric'] = "Spatiotemporal"
         return result.pivot(columns="metric")
 
