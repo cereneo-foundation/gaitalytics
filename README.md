@@ -109,5 +109,4 @@ model_mapping:
 Please take the resources in
 the [example folder](https://github.com/cereneo-foundation/gaitalytics/tree/94bbc73072535d7f1e53ea935b6145194b137f09/examples)
 for advice.
-Léa
 ###
