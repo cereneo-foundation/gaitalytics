@@ -37,18 +37,30 @@ offering high configurability.
 
 ### Analysis
 
-| Methode        | Description                                                                                                                                        | options                                                                          |
-|----------------|----------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
-| angles         | min, max, mean, sd, amplitude,<br/>min velocity, max velocity, sd velocity                                                                         | by_phase = True : If metrics should be calculated by standing and swinging phase |
-| forces         | min, max, mean, sd, amplitude                                                                                                                      | by_phase = True : If metrics should be calculated by standing and swinging phase |
-| moments        | min, max, mean, sd, amplitude                                                                                                                      | by_phase = True : If metrics should be calculated by standing and swinging phase |
-| powers         | min, max, mean, sd, amplitude                                                                                                                      | by_phase = True : If metrics should be calculated by standing and swinging phase |
-| cmos           | min, max, mean, sd, amplitude                                                                                                                      | by_phase = True : If metrics should be calculated by standing and swinging phase |
-| mos            | HS mos, TO mos, HS contra mos,<br/>TO contra mos for both sides                                                                                    | -                                                                                |
-| toe_clearance  | minimal toe clearance, <br/>percent swing phase when min toe clearance happened,<br/>toe clearance HS,                                             |
-| spatiotemporal | step_length,stride length, cycle duration,<br/>step duration percent, swing duration percent, stance duration percent,<br/>step height, step width |
+| Methode        | Description                                                                                                                                                                                            | options                                                                          |
+|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------|
+| angles         | min, max, mean, sd, amplitude,<br/>min velocity, max velocity, sd velocity                                                                                                                             | by_phase = True : If metrics should be calculated by standing and swinging phase |
+| forces         | min, max, mean, sd, amplitude                                                                                                                                                                          | by_phase = True : If metrics should be calculated by standing and swinging phase |
+| moments        | min, max, mean, sd, amplitude                                                                                                                                                                          | by_phase = True : If metrics should be calculated by standing and swinging phase |
+| powers         | min, max, mean, sd, amplitude                                                                                                                                                                          | by_phase = True : If metrics should be calculated by standing and swinging phase |
+| cmos           | min, max, mean, sd, amplitude                                                                                                                                                                          | by_phase = True : If metrics should be calculated by standing and swinging phase |
+| mos            | HS mos, TO mos, HS contra mos,<br/>TO contra mos for both sides                                                                                                                                        | -                                                                                |
+| toe_clearance  | minimal toe clearance, <br/>percent swing phase when min toe clearance happened,<br/>toe clearance HS,                                                                                                 |
+| spatiotemporal | step_length,stride length, cycle duration,<br/>step duration percent, swing duration percent, stance duration percent,<br/>step height, step width, limb circumduction, single/double support duration |
 
 
+
+| Method                  | Definition                                                                                                                                         |
+|-------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------|
+| limb circumduction      | maximum lateral excursion of the foot during the swing phase with respect to the position of the foot during the preceding stance phase [1]        |
+| double support duration | duration of the stance phase when the two feet are in contact with the ground. Both initial and terminal double support duration were computed [2] |
+| single support duration | duration during which one foot is in contact with the ground while the other foot is in the swing phase [2]                                        |
+
+References
+
+[1] Michael D. Lewek et al. (2012), "The influence of mechanically and physiologically imposed stiff-knee gait patterns on the energy cost of walking", vol. 93, no.1, pp. 123-128. Publisher: Archives of Physical Medicine and Rehabilitation.
+
+[2] A. Gouelle and F. Mégrot (2017), "Interpreting spatiotemporal parameters, symmetry, and variability in clinical gait analysis", Handbook of Human Motion pp. 1-20, Publisher: Springer International Publishing.
 
 ## Usage
 
