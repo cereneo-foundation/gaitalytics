@@ -14,7 +14,7 @@ def main():
         os.mkdir(buffered_path)
         cycle_data = api.extract_cycles(file_path, configs, buffer_output_path=buffered_path)
     else:
-        cycle_data = api.extract_cycles_buffered(buffered_path,configs).get_raw_cycle_points()
+        cycle_data = api.extract_cycles_buffered(buffered_path, configs).get_raw_cycle_points()
     api.normalise_cycles(file_path, cycle_data, buffer_output_path=buffered_path)
 
 

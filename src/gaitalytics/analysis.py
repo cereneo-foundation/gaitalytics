@@ -175,8 +175,7 @@ class CMosAnalysis(AbstractCycleAnalysis):
 
     def _filter_keys(self, key: str) -> bool:
         if super()._filter_keys(key):
-            useful = self._configs.MARKER_MAPPING.right_cmos.name in key
-            useful = self._configs.MARKER_MAPPING.left_cmos.name in key or useful
+            useful = self._configs.MARKER_MAPPING.cmos.name in key
             return useful
         return False
 
