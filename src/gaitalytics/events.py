@@ -25,12 +25,15 @@ class AbstractGaitEventDetector(ABC):
                       event_label: gaitalytics.utils.GaitEventLabel,
                       event_context: gaitalytics.utils.GaitEventContext):
         frequency = acq.GetPointFrequency()
+        start_frame = acq.GetMetaData().GetChild("TRIAL").GetChild("ACTUAL_START_FIELD").GetInfo().ToInt()[0] - 1
+        start_time = start_frame / frequency
+
         event = btkEvent()
         event.SetLabel(event_label.value)
-        # event.SetFrame(int(frame))
+     #   event.SetFrame(int(frame + start_frame))
         event.SetId(gaitalytics.utils.GaitEventLabel.get_type_id(event_label.value))
         event.SetContext(event_context.value)
-        event.SetTime(float((frame - 1) / frequency))
+        event.SetTime(float(((frame - 1) / frequency) + start_time))
         return event
 
 
@@ -124,7 +127,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         color1, color2, color3 = plt.cm.viridis([0, .5, .9])
         p1 = host.plot(diff_short, color=color1, label="diff")
         extremes, foo = signal.find_peaks(diff_short)
-        host.plot( extremes, diff_short[extremes], "x")
+        host.plot(extremes, diff_short[extremes], "x")
         p2 = ax2.plot(foot_short, color=color2, label="foot")
         p3 = ax3.plot(sacrum_short, color=color3, label="sacrum")
 

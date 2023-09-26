@@ -61,12 +61,14 @@ class SubjectMeasures(yaml.YAMLObject):
     yaml_tag = u'!subject'
     yaml_loader = yaml.SafeLoader
 
-    def __init__(self, body_mass: float, body_height: float, left_leg_length: float, right_leg_length: float, subject :str):
+    def __init__(self, body_mass: float, body_height: float, left_leg_length: float, right_leg_length: float,
+                 subject: str, start_frame: int):
         self.body_mass = body_mass
         self.body_height = body_height
         self.left_leg_length = left_leg_length
         self.right_leg_length = right_leg_length
         self.subject = subject
+        self.start_frame = start_frame
 
     def to_file(self, path_out: str):
         with open(f"{path_out}/subject.yml", "w") as f:
@@ -85,7 +87,8 @@ def extract_subject(acq: btkAcquisition) -> SubjectMeasures:
     left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
     right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
     name = acq.GetMetaData().GetChild("SUBJECTS").GetChild("NAMES").GetInfo().ToString()[0].strip()
-    subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length, name)
+    start_frame = acq.GetMetaData().GetChild("TRIAL").GetChild("ACTUAL_START_FIELD").GetInfo().ToInt()[0]
+    subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length, name, start_frame)
     return subject
 
 

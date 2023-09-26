@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 from statistics import mean
 
 import btk
@@ -71,14 +69,14 @@ def is_progression_axes_flip(left_heel, left_toe):
     return 0 < mean(left_toe[gaitalytics.utils.AxesNames.y.value] - left_heel[gaitalytics.utils.AxesNames.y.value])
 
 
-def correct_points_frame_by_frame(acq_trial: btk.btkAcquisition):
-    frame_size = acq_trial.GetPointFrameNumber()
-    correction = get_fastest_point_by_frame(acq_trial, 1)
-    for frame_number in range(1, frame_size):
-        if (frame_number + 2) < frame_size:
-            correction_new = get_fastest_point_by_frame(acq_trial, frame_number + 1)
-        correct_points_in_frame(acq_trial, frame_number, correction)
-        correction += correction_new
+# def correct_points_frame_by_frame(acq_trial: btk.btkAcquisition):
+#     frame_size = acq_trial.GetPointFrameNumber()
+#     correction = get_fastest_point_by_frame(acq_trial, 1)
+#     for frame_number in range(1, frame_size):
+#         if (frame_number + 2) < frame_size:
+#             correction_new = get_fastest_point_by_frame(acq_trial, frame_number + 1)
+#         correct_points_in_frame(acq_trial, frame_number, correction)
+#         correction += correction_new
 
 
 def correct_points_in_frame(acq_trial: btk.btkAcquisition, frame_number: int, correction: float):
