@@ -1,0 +1,34 @@
+from setuptools import setup, find_packages
+from pathlib import Path
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
+setup(
+    name="gaitalytics",
+    version="0.1.5beta",
+    author="André Böni",
+    author_email="andre.boeni@cereneo.foundation",
+    url="https://github.com/cereneo-foundation/gaitalytics",
+    description="Library to analyse gait data captured with a mocap system",
+    long_description="file: README.md",
+    long_description_content_type="text/markdown",
+    keywords="gait, analysis, c3d, mocap",
+    license="MIT",
+    python_requires="==3.8.*",
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
+    packages = find_packages(where="src"),
+    package_dir={"": "src"},
+    setup_requires=['pytest-runner', 'flake8'],
+    tests_require=['pytest'],
+    install_requires=[
+        "pandas",
+        "pyyaml",
+        "matplotlib",
+        "numpy",
+        "scipy"]
+)

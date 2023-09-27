@@ -89,6 +89,12 @@ class CycleDataExtractor:
         for point_index in range(0, acq.GetPointNumber()):
             cycle_counts_left = len(cycles.left_cycles.values())
             cycle_counts_right = len(cycles.right_cycles.values())
+            cycle_counts = 0
+            if cycle_counts_left > cycle_counts_right:
+                cycle_counts = cycle_counts_right
+            else:
+                cycle_counts = cycle_counts_left
+
             longest_cycle_left = cycles.get_longest_cycle_length(gaitalytics.utils.GaitEventContext.LEFT)
             longest_cycle_right = cycles.get_longest_cycle_length(gaitalytics.utils.GaitEventContext.RIGHT)
 
@@ -100,10 +106,10 @@ class CycleDataExtractor:
                 translated_label = self._configs.get_translated_label(label, data_type)
                 if translated_label is not None:
                     direction = gaitalytics.utils.AxesNames(direction_index)
-                    left = self._create_point_cycle(cycle_counts_left, longest_cycle_left, translated_label,
+                    left = self._create_point_cycle(cycle_counts, longest_cycle_left, translated_label,
                                                     direction, data_type, gaitalytics.utils.GaitEventContext.LEFT,
                                                     subject)
-                    right = self._create_point_cycle(cycle_counts_right, longest_cycle_right, translated_label,
+                    right = self._create_point_cycle(cycle_counts, longest_cycle_right, translated_label,
                                                      direction, data_type,
                                                      gaitalytics.utils.GaitEventContext.RIGHT,
                                                      subject)

@@ -179,16 +179,14 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
     This class detects gait events from Force Plate signals
     """
 
-    def __init__(self, mapped_force_plate: dict = FORCE_PLATE_SIDE_MAPPING_CAREN,
-                 force_gait_event_threshold: int = 150):
+    def __init__(self, **kwargs):
         """
         Initializes Object
         :param mapped_force_plate: Dictionary with name of force plate and index
         :param force_gait_event_threshold: threshold in newton to define gait event
         """
-
-        self._mapped_force_plate = mapped_force_plate
-        self._weight_threshold = force_gait_event_threshold
+        self._mapped_force_plate = kwargs.get("mapped_force_plate", FORCE_PLATE_SIDE_MAPPING_CAREN)
+        self._weight_threshold = kwargs.get("force_gait_event_threshold", 150)
 
     def detect_events(self, acq: btkAcquisition, **kwargs):
         """
