@@ -145,3 +145,6 @@ dmypy.json
 /out/
 
 /.pypirc
+/raw/
+/norm/
+/spatio_temp/
