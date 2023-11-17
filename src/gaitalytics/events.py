@@ -170,6 +170,12 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
 
         extremes, foo = signal.find_peaks(data, height=[0, 1], distance=min_distance)
 
+        # add offset
+        if event_label == gaitalytics.utils.GaitEventLabel.FOOT_STRIKE:
+            extremes = extremes + self._foot_strike_offset
+        elif event_label == gaitalytics.utils.GaitEventLabel.FOOT_OFF:
+            extremes = extremes + self._foot_off_offset
+
         for frame in extremes:
             acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
 

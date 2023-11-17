@@ -6,7 +6,7 @@ long_description = (this_directory / "README.md").read_text()
 
 setup(
     name="gaitalytics",
-    version="0.1.5beta",
+    version="0.1.7beta",
     author="André Böni",
     author_email="andre.boeni@cereneo.foundation",
     url="https://github.com/cereneo-foundation/gaitalytics",
@@ -23,8 +23,6 @@ setup(
     ],
     packages = find_packages(where="src"),
     package_dir={"": "src"},
-    setup_requires=['pytest-runner', 'flake8'],
-    tests_require=['pytest'],
     install_requires=[
         "pandas",
         "pyyaml",
