@@ -12,7 +12,7 @@ from matplotlib.figure import Figure
 from pandas import DataFrame
 
 import gaitalytics.utils
-import gaitalytics.c3d
+import gaitalytics.files
 
 
 

@@ -6,7 +6,7 @@ from typing import List, Dict
 
 import numpy as np
 import yaml
-from btk import btkAcquisition, btkEvent
+from btk import btkEvent
 from pandas import DataFrame, read_csv
 
 FILENAME_DELIMITER = "-"
@@ -79,17 +79,6 @@ class SubjectMeasures(yaml.YAMLObject):
         with open(file_path, 'r') as f:
             measures = yaml.safe_load(f)
             return measures
-
-
-def extract_subject(acq: btkAcquisition) -> SubjectMeasures:
-    body_mass = acq.GetMetaData().GetChild("PROCESSING").GetChild("Bodymass").GetInfo().ToDouble()[0]
-    body_height = acq.GetMetaData().GetChild("PROCESSING").GetChild("Height").GetInfo().ToDouble()[0]
-    left_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("LLegLength").GetInfo().ToDouble()[0]
-    right_leg_length = acq.GetMetaData().GetChild("PROCESSING").GetChild("RLegLength").GetInfo().ToDouble()[0]
-    name = acq.GetMetaData().GetChild("SUBJECTS").GetChild("NAMES").GetInfo().ToString()[0].strip()
-    start_frame = acq.GetMetaData().GetChild("TRIAL").GetChild("ACTUAL_START_FIELD").GetInfo().ToInt()[0]
-    subject = SubjectMeasures(body_mass, body_height, left_leg_length, right_leg_length, name, start_frame)
-    return subject
 
 
 class PointDataType(Enum):
@@ -424,3 +413,187 @@ class BufferedCyclePoint(BasicCyclePoint):
     def to_csv(self, path: str, prefix: str):
         self._load_file()
         super().to_csv(path, prefix)
+
+
+class Point:
+    """
+    Class representing a point with various attributes.
+
+    Attributes:
+        description (str): A description of the point.
+        frame_number (int): The frame number associated with the point.
+        label (str): The label of the point.
+        residual (float): A residual value associated with the point.
+        residuals (List[float]): A list of residual values.
+        timestamp (float): The timestamp of the point.
+        type (PointDataType): The type of the point, as defined by PointDataType.
+        values (List[float]): The values of the point.
+    """
+
+    def __init__(self) -> None:
+        """Initialize a new Point instance with default None values for all attributes."""
+        self._frame_number = None
+        self._label = None
+        self._residuals = None
+        self._type = None
+        self._values = None
+
+    @property
+    def label(self) -> str:
+        return self._label
+
+    @label.setter
+    def label(self, value: str) -> None:
+        if not isinstance(value, str):
+            raise TypeError("Label must be a string")
+        self._label = value
+
+    @property
+    def residuals(self) -> List[float]:
+        return self._residuals
+
+    @residuals.setter
+    def residuals(self, value: List[float]) -> None:
+        self._residuals = value
+
+    @property
+    def type(self) -> PointDataType:
+        return self._type
+
+    @type.setter
+    def type(self, value: PointDataType) -> None:
+        # Replace PointDataType with the actual type check if needed
+        self._type = value
+
+    @property
+    def values(self) -> np.ndarray:
+        return self._values
+
+    @values.setter
+    def values(self, value: np.ndarray) -> None:
+        self._values = value
+
+
+class GaitEvent:
+    """
+    Abstract class representing a gait event.
+
+    Attributes:
+        time (list[float], tuple[float]): The time of the gait event.
+        context (str): The context of the gait event.
+        label (str): The label of the gait event.
+        description (str): A description of the gait event.
+        subject (str): The subject related to the gait event.
+        icon_id (float): An identifier for an icon associated with the gait event.
+        generic_flag (int): An identifier for a generic flag associated with the event.
+    """
+
+    def __init__(self, actual_start: int, frame_frequency: int):
+        """Initialize a new GaitEvent instance with None values for all attributes."""
+        self._time = 0
+        self._frame = 0
+        self._context = ""
+        self._label = ""
+        self._description = ""
+        self._subject = ""
+        self._icon_id = 0
+        self._generic_flag = 0
+        self._freq = frame_frequency
+        self._file_start = actual_start
+
+    @property
+    def time(self) -> float:
+        """Get or set the time of the gait event in seconds."""
+        return self._time
+
+    @time.setter
+    def time(self, value: float):
+        if isinstance(value, float):
+            self._time = value
+            self._frame = int(round(value * self._freq))
+        else:
+            raise TypeError("Time must be a float")
+
+    @property
+    def frame(self) -> int:
+        """Get or set the frame of the gait event """
+        return self._frame
+
+    @frame.setter
+    def frame(self, value: int):
+        if isinstance(value, int):
+            self._frame = value
+            self._time = value / self._freq
+        else:
+            raise TypeError("Frame must be an int")
+
+    @property
+    def context(self) -> str:
+        """Get or set the context of the gait event. Must be a string"""
+        return self._context
+
+    @context.setter
+    def context(self, value: str):
+        if isinstance(value, str):
+            self._context = value
+        else:
+            raise TypeError("Context must be a string")
+
+    @property
+    def label(self) -> str:
+        """Get or set the label of the gait event. Must be a string"""
+        return self._label
+
+    @label.setter
+    def label(self, value: str):
+        if isinstance(value, str):
+            self._label = value
+        else:
+            raise TypeError("Label must be a string")
+
+    @property
+    def description(self) -> str:
+        """Get or set the description of the gait event. Must be a string """
+        return self._description
+
+    @description.setter
+    def description(self, value: str):
+        if isinstance(value, str):
+            self._description = value
+        else:
+            raise TypeError("Description must be a string")
+
+    @property
+    def subject(self) -> str:
+        """Get or set the subject of the gait event. Must be a string"""
+        return self._subject
+
+    @subject.setter
+    def subject(self, value: str):
+        if isinstance(value, str):
+            self._subject = value
+        else:
+            raise TypeError("Subject must be a string")
+
+    @property
+    def icon_id(self) -> int:
+        """Get or set the icon ID of the gait event. Must be a float"""
+        return self._icon_id
+
+    @icon_id.setter
+    def icon_id(self, value: int):
+        if isinstance(value, int):
+            self._icon_id = value
+        else:
+            raise TypeError("Icon ID must be a float")
+
+    @property
+    def generic_flag(self) -> int:
+        return self._generic_flag
+
+    @generic_flag.setter
+    def generic_flag(self, value: int):
+        if isinstance(value, int):
+            self._generic_flag = value
+        else:
+            raise TypeError("GenericFlag must be a int")

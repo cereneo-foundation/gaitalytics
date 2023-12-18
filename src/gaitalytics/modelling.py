@@ -2,10 +2,10 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 import scipy as sc
-from btk import btkAcquisition, btkPoint
 from matplotlib import pyplot as plt
 
 import gaitalytics.utils
+import gaitalytics.files
 
 
 class BaseOutputModeller(ABC):
@@ -14,15 +14,16 @@ class BaseOutputModeller(ABC):
         self._label = label
         self._type = point_type
 
-    def create_point(self, acq: btkAcquisition, **kwargs):
-        result = self._calculate_point(acq, **kwargs)
-        point = btkPoint(self._type.value)
-        point.SetValues(result)
-        point.SetLabel(self._label)
-        acq.AppendPoint(point)
+    def create_point(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
+        result = self._calculate_point(file_handler, **kwargs)
+        point = gaitalytics.utils.Point()
+        point.type = self._type
+        point.values = result
+        point.label = self._label
+        file_handler.add_point(point)
 
     @abstractmethod
-    def _calculate_point(self, acq: btkAcquisition, **kwargs) -> np.ndarray:
+    def _calculate_point(self, file_handler: gaitalytics.files.FileHandler, **kwargs) -> np.ndarray:
         pass
 
 
@@ -32,11 +33,11 @@ class COMModeller(BaseOutputModeller):
         super().__init__(configs.MARKER_MAPPING.com.value, gaitalytics.utils.PointDataType.Marker)
         self._configs = configs
 
-    def _calculate_point(self, acq: btkAcquisition, **kwargs):
-        l_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.left_back_hip.value).GetValues()
-        r_hip_b = acq.GetPoint(self._configs.MARKER_MAPPING.right_back_hip.value).GetValues()
-        l_hip_f = acq.GetPoint(self._configs.MARKER_MAPPING.left_front_hip.value).GetValues()
-        r_hip_f = acq.GetPoint(self._configs.MARKER_MAPPING.right_front_hip.value).GetValues()
+    def _calculate_point(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
+        l_hip_b = file_handler.get_point(self._configs.MARKER_MAPPING.left_back_hip.value).values
+        r_hip_b = file_handler.get_point(self._configs.MARKER_MAPPING.right_back_hip.value).values
+        l_hip_f = file_handler.get_point(self._configs.MARKER_MAPPING.left_front_hip.value).values
+        r_hip_f = file_handler.get_point(self._configs.MARKER_MAPPING.right_front_hip.value).values
         return (l_hip_b + r_hip_b + l_hip_f + r_hip_f) / 4
 
 
@@ -45,8 +46,8 @@ class XCOMModeller(BaseOutputModeller):
         super().__init__(configs.MARKER_MAPPING.xcom.value, gaitalytics.utils.PointDataType.Marker)
         self._configs = configs
 
-    def _calculate_point(self, acq: btkAcquisition, **kwargs):
-        com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
+    def _calculate_point(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
+        com = file_handler.get_point(self._configs.MARKER_MAPPING.com.value).values
         belt_speed = kwargs.get("belt_speed", 1)
         dominant_leg_length = kwargs.get("dominant_leg_length", 1)
         return self._calculate_xcom(belt_speed, com, dominant_leg_length)
@@ -93,17 +94,17 @@ class CMoSModeller(BaseOutputModeller):
         self._configs = configs
         super().__init__(configs.MARKER_MAPPING.cmos.value, gaitalytics.utils.PointDataType.Marker)
 
-    def _calculate_point(self, acq: btkAcquisition, **kwargs) -> np.ndarray:
-        x_com = acq.GetPoint(self._configs.MARKER_MAPPING.xcom.value).GetValues()
+    def _calculate_point(self, file_handler: gaitalytics.files.FileHandler, **kwargs) -> np.ndarray:
+        x_com = file_handler.get_point(self._configs.MARKER_MAPPING.xcom.value).values
 
-        lat_malleoli_left = acq.GetPoint(self._configs.MARKER_MAPPING.left_lat_malleoli.value).GetValues()
-        lat_malleoli_right = acq.GetPoint(self._configs.MARKER_MAPPING.right_lat_malleoli.value).GetValues()
-        med_malleoli_left = acq.GetPoint(self._configs.MARKER_MAPPING.left_med_malleoli.value).GetValues()
-        med_malleoli_right = acq.GetPoint(self._configs.MARKER_MAPPING.right_med_malleoli.value).GetValues()
-        heel_left = acq.GetPoint(self._configs.MARKER_MAPPING.left_heel.value).GetValues()
-        heel_right = acq.GetPoint(self._configs.MARKER_MAPPING.right_heel.value).GetValues()
-        foot_left = acq.GetPoint(self._configs.MARKER_MAPPING.left_meta_2.value).GetValues()
-        foot_right = acq.GetPoint(self._configs.MARKER_MAPPING.right_meta_2.value).GetValues()
+        lat_malleoli_left = file_handler.get_point(self._configs.MARKER_MAPPING.left_lat_malleoli.value).values
+        lat_malleoli_right = file_handler.get_point(self._configs.MARKER_MAPPING.right_lat_malleoli.value).values
+        med_malleoli_left = file_handler.get_point(self._configs.MARKER_MAPPING.left_med_malleoli.value).values
+        med_malleoli_right = file_handler.get_point(self._configs.MARKER_MAPPING.right_med_malleoli.value).values
+        heel_left = file_handler.get_point(self._configs.MARKER_MAPPING.left_heel.value).values
+        heel_right = file_handler.get_point(self._configs.MARKER_MAPPING.right_heel.value).values
+        foot_left = file_handler.get_point(self._configs.MARKER_MAPPING.left_meta_2.value).values
+        foot_right = file_handler.get_point(self._configs.MARKER_MAPPING.right_meta_2.value).values
 
         return self._calculate_cMoS(x_com,
                                     lat_malleoli_left,
@@ -114,7 +115,7 @@ class CMoSModeller(BaseOutputModeller):
                                     foot_right,
                                     heel_left,
                                     heel_right,
-                                    acq,
+                                    file_handler,
                                     **kwargs)
 
     def _calculate_cMoS(self,
@@ -127,7 +128,7 @@ class CMoSModeller(BaseOutputModeller):
                         foot_right: np.ndarray,
                         heel_left: np.ndarray,
                         heel_right: np.ndarray,
-                        acq: btkAcquisition,
+                        file_handler: gaitalytics.files.FileHandler,
                         **kwargs) -> np.ndarray:
         def mos_non_event(x_com_v, frame_index, side):
             return [0, 0, 0]
@@ -169,26 +170,26 @@ class CMoSModeller(BaseOutputModeller):
         show_plot = kwargs.get("show_plot", False)
         mos = np.zeros((len(x_com), 3))
         event_i = 0
-        next_event = acq.GetEvent(event_i)
+        next_event = file_handler.get_event(event_i)
         current_context = None
         mos_function = mos_non_event
         for frame_i in range(len(x_com)):
             if frame_i == 1420:
                 print(frame_i)
 
-            if frame_i == next_event.GetFrame():
-                current_context = gaitalytics.utils.GaitEventContext(next_event.GetContext())
-                if next_event.GetLabel() == gaitalytics.utils.GaitEventLabel.FOOT_STRIKE.value:
+            if frame_i == next_event.frame:
+                current_context = gaitalytics.utils.GaitEventContext(next_event.context)
+                if next_event.label == gaitalytics.utils.GaitEventLabel.FOOT_STRIKE.value:
                     mos_function = mos_double_support
                 else:
                     mos_function = mos_single_stance
                 event_i += 1
-                if event_i < acq.GetEventNumber():
-                    next_event = acq.GetEvent(event_i)
+                if event_i < file_handler.get_events_size():
+                    next_event = file_handler.get_event(event_i)
             mos[frame_i] = mos_function(x_com, frame_i, current_context)
         mos = mos
         if show_plot:
-            self._show(mos, x_com, acq)
+            self._show(mos, x_com, file_handler)
 
         return mos
 
@@ -198,8 +199,8 @@ class CMoSModeller(BaseOutputModeller):
         plus_diff = plus_boundary - x_com
         return min([minus_diff, plus_diff])
 
-    def _show(self, mos, x_com, acq):
-        com = acq.GetPoint(self._configs.MARKER_MAPPING.com.value).GetValues()
+    def _show(self, mos, x_com, file_handler):
+        com = file_handler.get_point(self._configs.MARKER_MAPPING.com.value).values
         fig, axs = plt.subplots(2, 1, figsize=(8, 6))
         (ax1, ax2) = axs  # Unpack the subplots axes
         x_com = x_com

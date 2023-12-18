@@ -1,4 +1,4 @@
-from gaitalytics import emg, c3d
+from gaitalytics import emg, files
 
 # This is an example pipeline #
 ###############################

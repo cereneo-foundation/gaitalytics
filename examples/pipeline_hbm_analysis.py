@@ -14,9 +14,7 @@ def main():
     loaded_cycles = api.extract_cycles_buffered(buffered_path, configs)
     cycle_data = loaded_cycles.get_raw_cycle_points()
 
-    results = api.analyse_data(cycle_data, configs, methode=[api.ANALYSIS_SPATIO_TEMP,
-                                                             api.ANALYSIS_TOE_CLEARANCE,
-                                                             api.ANALYSIS_CMOS])
+    results = api.analyse_data(cycle_data, configs)
 
     if not os.path.exists(out_path):
         os.mkdir(out_path)

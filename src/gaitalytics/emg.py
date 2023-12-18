@@ -1,7 +1,7 @@
 from btk import btkAcquisition
 from scipy import signal
 
-from . import c3d, events
+from . import files, events
 
 
 class EMGCoherenceAnalysis:

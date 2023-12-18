@@ -7,11 +7,11 @@ from enum import Enum
 from typing import Dict, List
 
 import numpy as np
-from btk import btkAcquisition
 from pandas import DataFrame
 
 import gaitalytics.events
 import gaitalytics.utils
+import gaitalytics.files
 
 
 # Cycle Builder
@@ -20,18 +20,18 @@ class CycleBuilder(ABC):
     def __init__(self, event_anomaly_checker: gaitalytics.events.AbstractEventAnomalyChecker):
         self.eventAnomalyChecker = event_anomaly_checker
 
-    def build_cycles(self, aqc: btkAcquisition) -> gaitalytics.utils.GaitCycleList:
-        if aqc.GetEventNumber() < 1:
+    def build_cycles(self, file_handler: gaitalytics.files.FileHandler) -> gaitalytics.utils.GaitCycleList:
+        if file_handler.get_events_size() < 1:
             raise AttributeError("No Events in File")
         else:
-            [detected, detail_tuple] = self.eventAnomalyChecker.check_events(aqc)
+            [detected, detail_tuple] = self.eventAnomalyChecker.check_events(file_handler)
             if detected:
                 raise RuntimeError(detail_tuple)
 
-        return self._build(aqc)
+        return self._build(file_handler)
 
     @abstractmethod
-    def _build(self, acq: btkAcquisition) -> gaitalytics.utils.GaitCycleList:
+    def _build(self, file_handler: gaitalytics.files.FileHandler) -> gaitalytics.utils.GaitCycleList:
         pass
 
 
@@ -42,23 +42,26 @@ class EventCycleBuilder(CycleBuilder):
         super().__init__(event_anomaly_checker)
         self.event_label = event.value
 
-    def _build(self, acq: btkAcquisition) -> gaitalytics.utils.GaitCycleList:
+    def _build(self, file_handler: gaitalytics.files.FileHandler) -> gaitalytics.utils.GaitCycleList:
         gait_cycles = gaitalytics.utils.GaitCycleList()
         numbers = {gaitalytics.utils.GaitEventContext.LEFT.value: 0,
                    gaitalytics.utils.GaitEventContext.RIGHT.value: 0}
-        for event_index in range(0, acq.GetEventNumber()):
-            start_event = acq.GetEvent(event_index)
-            context = start_event.GetContext()
+        for event_index in range(0, file_handler.get_events_size()):
+            start_event = file_handler.get_event(event_index)
+            context = start_event.context
 
-            label = start_event.GetLabel()
+            label = start_event.label
             if label == self.event_label:
                 try:
-                    [end_event, unused_events] = gaitalytics.events.find_next_event(acq, label, context, event_index)
+                    [end_event, unused_events] = gaitalytics.events.find_next_event(file_handler,
+                                                                                    label,
+                                                                                    context,
+                                                                                    event_index)
                     if end_event is not None:
                         numbers[context] = numbers[context] + 1
                         cycle = gaitalytics.utils.GaitCycle(numbers[context],
                                                             gaitalytics.utils.GaitEventContext(context),
-                                                            start_event.GetFrame(), end_event.GetFrame(),
+                                                            start_event.frame, end_event.frame,
                                                             unused_events)
                         gait_cycles.add_cycle(cycle)
                 except IndexError as err:
@@ -83,10 +86,10 @@ class CycleDataExtractor:
 
     def extract_data(self,
                      cycles: gaitalytics.utils.GaitCycleList,
-                     acq: btkAcquisition) -> Dict[str, gaitalytics.utils.BasicCyclePoint]:
-        subject = gaitalytics.utils.extract_subject(acq)
+                     file_handler: gaitalytics.files.FileHandler) -> Dict[str, gaitalytics.utils.BasicCyclePoint]:
+        subject = file_handler.get_subject_measures()
         data_list: Dict[str, gaitalytics.utils.BasicCyclePoint] = {}
-        for point_index in range(0, acq.GetPointNumber()):
+        for point_index in range(0, file_handler.get_points_size()):
             cycle_counts_left = len(cycles.left_cycles.values())
             cycle_counts_right = len(cycles.right_cycles.values())
             cycle_counts = 0
@@ -98,11 +101,11 @@ class CycleDataExtractor:
             longest_cycle_left = cycles.get_longest_cycle_length(gaitalytics.utils.GaitEventContext.LEFT)
             longest_cycle_right = cycles.get_longest_cycle_length(gaitalytics.utils.GaitEventContext.RIGHT)
 
-            point = acq.GetPoint(point_index)
+            point = file_handler.get_point(point_index)
 
-            for direction_index in range(0, len(point.GetValues()[0])):
-                label = point.GetLabel()
-                data_type = gaitalytics.utils.PointDataType(point.GetType())
+            for direction_index in range(0, len(point.values[0])):
+                label = point.label
+                data_type = point.type
                 translated_label = self._configs.get_translated_label(label, data_type)
                 if translated_label is not None:
                     direction = gaitalytics.utils.AxesNames(direction_index)
@@ -117,10 +120,10 @@ class CycleDataExtractor:
                     for cycle_number in range(1, cycles.get_number_of_cycles() + 1):
                         if len(cycles.right_cycles) + 1 > cycle_number:
                             self._extract_cycle(right, cycles.right_cycles[cycle_number],
-                                                point.GetValues()[:, direction_index])
+                                                point.values[:, direction_index])
                         if len(cycles.left_cycles) + 1 > cycle_number:
                             self._extract_cycle(left, cycles.left_cycles[cycle_number],
-                                                point.GetValues()[:, direction_index])
+                                                point.values[:, direction_index])
 
                     key_left = gaitalytics.utils.ConfigProvider.define_key(translated_label, data_type, direction,
                                                                            gaitalytics.utils.GaitEventContext.LEFT)

@@ -8,7 +8,7 @@ from typing import Dict, List
 from pandas import DataFrame
 
 import gaitalytics.analysis
-import gaitalytics.c3d
+import gaitalytics.files
 import gaitalytics.cycle
 import gaitalytics.events
 import gaitalytics.modelling
@@ -124,10 +124,10 @@ def check_gait_event(c3d_file_path: str,
     if not all(item in GAIT_EVENT_CHECKER_LIST for item in anomaly_checker):
         raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
     # read c3d
-    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
+    motion_file = gaitalytics.files.BtkFileHandler(c3d_file_path)
     # get anomaly detection
     checker = _get_anomaly_checker(anomaly_checker)
-    detected, anomalies = checker.check_events(acq_trial)
+    detected, anomalies = checker.check_events(motion_file)
 
     # write anomalies to file
     if detected:
@@ -167,7 +167,7 @@ def detect_gait_events(c3d_file_path: str,
         raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
 
     # read c3d
-    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
+    motion_file = gaitalytics.files.BtkFileHandler(c3d_file_path)
 
     # define output name
     filename = os.path.basename(c3d_file_path).replace(".3.c3d", ".4.c3d")
@@ -178,10 +178,11 @@ def detect_gait_events(c3d_file_path: str,
     elif methode == GAIT_EVENT_METHODE_MARKER:
         methode = gaitalytics.events.ZenisGaitEventDetector(configs, **kwargs)
 
-    methode.detect_events(acq_trial, **kwargs)
+    methode.detect_events(motion_file, **kwargs)
 
     # write events c3d
-    gaitalytics.c3d.write_btk(acq_trial, out_path)
+    motion_file.write_file(out_path)
+
 
     check_gait_event(out_path, output_path)
 
@@ -252,7 +253,7 @@ def extract_cycles(c3d_file_path: str,
         raise KeyError(f"{anomaly_checker} are not a valid anomaly checker")
 
     # read c3d
-    acq_trial = gaitalytics.c3d.read_btk(c3d_file_path)
+    motion_file = gaitalytics.c3d.BtkFileHandler(c3d_file_path)
 
     # get anomaly detection
     checker = _get_anomaly_checker(anomaly_checker)
@@ -265,10 +266,10 @@ def extract_cycles(c3d_file_path: str,
         cycle_builder = gaitalytics.cycle.HeelStrikeToHeelStrikeCycleBuilder(checker)
 
     # get cycles
-    cycles = cycle_builder.build_cycles(acq_trial)
+    cycles = cycle_builder.build_cycles(motion_file.aqc)
 
     # extract cycles
-    cycle_data = gaitalytics.cycle.CycleDataExtractor(configs).extract_data(cycles, acq_trial)
+    cycle_data = gaitalytics.cycle.CycleDataExtractor(configs).extract_data(cycles, motion_file.aqc)
 
     # buffer cycles
     if buffer_output_path:
@@ -332,8 +333,8 @@ def model_data(c3d_file_path: str,
     if not methode in MODELLING_LIST:
         raise KeyError(f"{methode} is not a valid modelling methode")
     methods: List[gaitalytics.modelling.BaseOutputModeller] = []
-    acq = gaitalytics.c3d.read_btk(c3d_file_path)
-    subject = gaitalytics.utils.extract_subject(acq)
+    motion_file = gaitalytics.files.BtkFileHandler(c3d_file_path)
+    subject = motion_file.get_subject_measures()
     if methode == MODELLING_CMOS:
         methods.append(gaitalytics.modelling.COMModeller(configs))
         methods.append(gaitalytics.modelling.XCOMModeller(configs))
@@ -347,11 +348,11 @@ def model_data(c3d_file_path: str,
         methods.append(gaitalytics.modelling.COMModeller(configs))
 
     for methode in methods:
-        methode.create_point(acq, **kwargs)
+        methode.create_point(motion_file, **kwargs)
     filename = os.path.basename(c3d_file_path)
     filename = filename.replace(".4.c3d", ".5.c3d")
     output_path = os.path.join(output_path, filename)
-    gaitalytics.c3d.write_btk(acq, output_path)
+    motion_file.write_file(output_path)
 
 
 def _cycle_points_to_csv(cycle_data: Dict[str, gaitalytics.utils.BasicCyclePoint], dir_path: str, prefix: str):

@@ -3,11 +3,11 @@ from types import MappingProxyType
 from typing import List
 
 import numpy as np
-from btk import btkAcquisition, btkEvent, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
+from btk import btkAcquisition, btkForcePlatformsExtractor, btkGroundReactionWrenchFilter
 from matplotlib import pyplot as plt
 from scipy import signal
 
-import gaitalytics.c3d
+import gaitalytics.files
 import gaitalytics.utils
 
 FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
@@ -17,23 +17,21 @@ FORCE_PLATE_SIDE_MAPPING_CAREN = MappingProxyType({"Left": 0, "Right": 1})
 class AbstractGaitEventDetector(ABC):
 
     @abstractmethod
-    def detect_events(self, acq: btkAcquisition, **kwargs):
+    def detect_events(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
         pass
 
     @staticmethod
-    def _create_event(acq, frame: int,
+    def _create_event(file_handler: gaitalytics.files.FileHandler,
+                      frame: int,
                       event_label: gaitalytics.utils.GaitEventLabel,
                       event_context: gaitalytics.utils.GaitEventContext):
-        frequency = acq.GetPointFrequency()
-        start_frame = acq.GetMetaData().GetChild("TRIAL").GetChild("ACTUAL_START_FIELD").GetInfo().ToInt()[0] - 1
-        start_time = start_frame / frequency
+        start_frame = file_handler.get_actual_start_frame()
 
-        event = btkEvent()
-        event.SetLabel(event_label.value)
-     #   event.SetFrame(int(frame + start_frame))
-        event.SetId(gaitalytics.utils.GaitEventLabel.get_type_id(event_label.value))
-        event.SetContext(event_context.value)
-        event.SetTime(float(((frame - 1) / frequency) + start_time))
+        event = gaitalytics.utils.GaitEvent(file_handler.get_actual_start_frame(), file_handler.get_point_frequency())
+        event.label = event_label.value
+        event.frame = int(frame + start_frame)
+        event.icon_id = gaitalytics.utils.GaitEventLabel.get_type_id(event_label.value)
+        event.context = event_context.value
         return event
 
 
@@ -53,27 +51,27 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
         self._foot_strike_offset = kwargs.get("foot_strike_offset", 0)
         self._foot_off_offset = kwargs.get("foot_off_offset", 0)
 
-    def detect_events(self, acq: btkAcquisition, **kwargs):
+    def detect_events(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
         """detects zeni gait events and stores it in to the acquisition
 
-        :param acq: loaded and filtered acquisition
+        :param file_handler: loaded and filtered acquisition
         :param min_distance: minimum frames between same event
         :param show_plot: plots of zenis shown
         """
         min_distance = kwargs.get("min_distance", 100)
         show_plot = kwargs.get("show_plot", False)
 
-        right_heel = acq.GetPoint(self._config.MARKER_MAPPING.right_heel.value).GetValues()[:,
+        right_heel = file_handler.get_point(self._config.MARKER_MAPPING.right_heel.value).values[:,
                      gaitalytics.utils.AxesNames.y.value]
-        left_heel = acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues()[:,
+        left_heel = file_handler.get_point(self._config.MARKER_MAPPING.left_heel.value).values[:,
                     gaitalytics.utils.AxesNames.y.value]
-        right_toe = acq.GetPoint(self._config.MARKER_MAPPING.right_meta_2.value).GetValues()[:,
+        right_toe = file_handler.get_point(self._config.MARKER_MAPPING.right_meta_2.value).values[:,
                     gaitalytics.utils.AxesNames.y.value]
-        left_toe = acq.GetPoint(self._config.MARKER_MAPPING.left_meta_2.value).GetValues()[:,
+        left_toe = file_handler.get_point(self._config.MARKER_MAPPING.left_meta_2.value).values[:,
                    gaitalytics.utils.AxesNames.y.value]
-        right_hip = acq.GetPoint(self._config.MARKER_MAPPING.right_back_hip.value).GetValues()[:,
+        right_hip = file_handler.get_point(self._config.MARKER_MAPPING.right_back_hip.value).values[:,
                     gaitalytics.utils.AxesNames.y.value]
-        left_hip = acq.GetPoint(self._config.MARKER_MAPPING.left_back_hip.value).GetValues()[:,
+        left_hip = file_handler.get_point(self._config.MARKER_MAPPING.left_back_hip.value).values[:,
                    gaitalytics.utils.AxesNames.y.value]
         '''
         left_heel, left_toe, right_heel, right_toe, right_hip, left_hip = self._move_to_plus(left_heel,
@@ -98,13 +96,13 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
                               left_heel,
                               sacrum, f"{base_title}_left_heel")
 
-        self._create_events(acq, left_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
+        self._create_events(file_handler, left_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
                             gaitalytics.utils.GaitEventContext.LEFT, min_distance, show_plot)
-        self._create_events(acq, right_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
+        self._create_events(file_handler, right_diff_toe, gaitalytics.utils.GaitEventLabel.FOOT_OFF,
                             gaitalytics.utils.GaitEventContext.RIGHT, min_distance, show_plot)
-        self._create_events(acq, left_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
+        self._create_events(file_handler, left_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
                             gaitalytics.utils.GaitEventContext.LEFT, min_distance, show_plot)
-        self._create_events(acq, right_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
+        self._create_events(file_handler, right_diff_heel, gaitalytics.utils.GaitEventLabel.FOOT_STRIKE,
                             gaitalytics.utils.GaitEventContext.RIGHT, min_distance, show_plot)
 
     @staticmethod
@@ -156,14 +154,16 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
 
     #   gaitalytics.c3d.sort_events(acq)
 
-    def _create_events(self, acq, diff, event_label: gaitalytics.utils.GaitEventLabel,
+    def _create_events(self, file_handler: gaitalytics.files.FileHandler,
+                       diff,
+                       event_label: gaitalytics.utils.GaitEventLabel,
                        event_context: gaitalytics.utils.GaitEventContext,
                        min_distance: int = 100,
                        show_plot: bool = False):
         data = diff
-        if gaitalytics.c3d.is_progression_axes_flip(
-                acq.GetPoint(self._config.MARKER_MAPPING.left_heel.value).GetValues(),
-                acq.GetPoint(self._config.MARKER_MAPPING.left_meta_5.value).GetValues()):
+        if gaitalytics.files.is_progression_axes_flip(
+                file_handler.get_point(self._config.MARKER_MAPPING.left_heel.value).values,
+                file_handler.get_point(self._config.MARKER_MAPPING.left_meta_5.value).values):
             data = data * -1
 
         data = gaitalytics.utils.min_max_norm(data)
@@ -177,7 +177,7 @@ class ZenisGaitEventDetector(AbstractGaitEventDetector):
             extremes = extremes + self._foot_off_offset
 
         for frame in extremes:
-            acq.AppendEvent(self._create_event(acq, frame, event_label, event_context))
+            file_handler.add_event(self._create_event(file_handler, frame, event_label, event_context))
 
 
 class ForcePlateEventDetection(AbstractGaitEventDetector):
@@ -194,17 +194,18 @@ class ForcePlateEventDetection(AbstractGaitEventDetector):
         self._mapped_force_plate = kwargs.get("mapped_force_plate", FORCE_PLATE_SIDE_MAPPING_CAREN)
         self._weight_threshold = kwargs.get("force_gait_event_threshold", 150)
 
-    def detect_events(self, acq: btkAcquisition, **kwargs):
+    def detect_events(self, file_handler: gaitalytics.files.FileHandler, **kwargs):
         """
         Detect force plate gait events with peak detection
         :param acq: loaded and filtered acquisition
         """
+        if isinstance(file_handler, gaitalytics.files.BtkFileHandler):
 
-        for context in gaitalytics.utils.GaitEventContext:
-            force_down_sample = force_plate_down_sample(acq, self._mapped_force_plate[context.value])
-            detection = detect_onset(force_down_sample, threshold=self._weight_threshold)
-            sequence = self._detect_gait_event_type(force_down_sample, detection)
-            self._store_force_plate_events(acq, context, sequence)
+            for context in gaitalytics.utils.GaitEventContext:
+                force_down_sample = force_plate_down_sample(file_handler.aqc, self._mapped_force_plate[context.value])
+                detection = detect_onset(force_down_sample, threshold=self._weight_threshold)
+                sequence = self._detect_gait_event_type(force_down_sample, detection)
+                self._store_force_plate_events(file_handler.aqc, context, sequence)
 
     def _store_force_plate_events(self, btk_acq, context, sequence):
         for elem in sequence:
@@ -268,24 +269,24 @@ class AbstractEventAnomalyChecker(ABC):
         """
         self.child = event_checker
 
-    def check_events(self, acq_walk: btkAcquisition) -> [bool, list]:
+    def check_events(self, file_handler: gaitalytics.files.FileHandler) -> [bool, list]:
         """
         Calls event anomaly checker of subclass and its children in sequences
-        :param acq_walk: Acquisition with predefined events
+        :param file_handler: Acquisition with predefined events
         """
-        [anomaly_detected, abnormal_event_frames] = self._check_events(acq_walk)
+        [anomaly_detected, abnormal_event_frames] = self._check_events(file_handler)
         if self.child is not None:
-            [child_anomaly_detected, child_abnormal_event_frames] = self.child.check_events(acq_walk)
+            [child_anomaly_detected, child_abnormal_event_frames] = self.child.check_events(file_handler)
 
             abnormal_event_frames.extend(child_abnormal_event_frames)
             anomaly_detected = child_anomaly_detected | anomaly_detected
         return anomaly_detected, abnormal_event_frames
 
     @abstractmethod
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
+    def _check_events(self, file_handler: gaitalytics.files.FileHandler) -> [bool, List[GaitEventAnomaly]]:
         """
         Implementation of event checker
-        :param acq_walk: Acquisition with added Events
+        :param file_handler: Acquisition with added Events
         :return: flag is anomalies found, list of anomalies
         """
         pass
@@ -296,27 +297,27 @@ class ContextPatternChecker(AbstractEventAnomalyChecker):
     Checks if events are alternating between Heel_Strike and Foot_Off per context
     """
 
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
+    def _check_events(self, file_handler: gaitalytics.files.FileHandler) -> [bool, List[GaitEventAnomaly]]:
         """
         kick off the checker
-        :param acq_walk: Acquisition with added Events
+        :param file_handler: Acquisition with added Events
         :return: flag is anomalies found, list of anomalies
         """
         abnormal_event_frames = []
         anomaly_detected = False
 
-        gaitalytics.c3d.sort_events(acq_walk)
+        file_handler.sort_events()
 
-        for current_event_index in range(0, acq_walk.GetEventNumber()):
-            current_event = acq_walk.GetEvent(current_event_index)
-            context = current_event.GetContext()
-            for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
-                next_event = acq_walk.GetEvent(next_event_index)
-                if next_event.GetContext() == context:
-                    if current_event.GetLabel() == next_event.GetLabel():
+        for current_event_index in range(0, file_handler.get_events_size()):
+            current_event = file_handler.get_event(current_event_index)
+            context = current_event.context
+            for next_event_index in range(current_event_index + 1, file_handler.get_events_size()):
+                next_event = file_handler.get_event(next_event_index)
+                if next_event.context == context:
+                    if current_event.label == next_event.label:
                         anomaly_detected = True
-                        anomaly = GaitEventAnomaly(current_event.GetFrame(),
-                                                   next_event.GetFrame(), context,
+                        anomaly = GaitEventAnomaly(current_event.frame,
+                                                   next_event.frame, context,
                                                    f"Event sequence off")
                         abnormal_event_frames.append(anomaly)
 
@@ -331,18 +332,18 @@ class EventSpacingChecker(AbstractEventAnomalyChecker):
         super().__init__(event_checker)
         self._frame_threshold = frame_threshold
 
-    def _check_events(self, acq_walk: btkAcquisition) -> [bool, List[GaitEventAnomaly]]:
+    def _check_events(self, file_handler: gaitalytics.files.FileHandler) -> [bool, List[GaitEventAnomaly]]:
         anomaly_detected = False
         abnormal_event_frames = []
-        for current_event_index in range(0, acq_walk.GetEventNumber()):
-            current_event = acq_walk.GetEvent(current_event_index)
-            context = current_event.GetContext()
-            for next_event_index in range(current_event_index + 1, acq_walk.GetEventNumber()):
-                next_event = acq_walk.GetEvent(next_event_index)
-                if next_event.GetContext() == context:
-                    if next_event.GetFrame() - current_event.GetFrame() < self._frame_threshold:
-                        anomaly = GaitEventAnomaly(current_event.GetFrame(),
-                                                   next_event.GetFrame(), context,
+        for current_event_index in range(0, file_handler.get_events_size()):
+            current_event = file_handler.get_event(current_event_index)
+            context = current_event.context
+            for next_event_index in range(current_event_index + 1, file_handler.get_events_size()):
+                next_event = file_handler.get_event(next_event_index)
+                if next_event.context == context:
+                    if next_event.frame - current_event.frame < self._frame_threshold:
+                        anomaly = GaitEventAnomaly(current_event.frame,
+                                                   next_event.frame, context,
                                                    f"Spacing smaller than {self._frame_threshold}")
                         abnormal_event_frames.append(anomaly)
                         anomaly_detected = True
@@ -351,13 +352,14 @@ class EventSpacingChecker(AbstractEventAnomalyChecker):
 
 
 # utils
-def find_next_event(acq: btkAcquisition, label: str, context, start_index: int) -> [btkEvent, List[btkEvent]]:
-    if acq.GetEventNumber() >= start_index + 1:
-        unused_events: List[btkEvent] = []
-        for event_index in range(start_index + 1, acq.GetEventNumber()):
-            event = acq.GetEvent(event_index)
-            if event.GetContext() == context:
-                if event.GetLabel() == label:
+def find_next_event(file_handler: gaitalytics.files.FileHandler, label: str, context, start_index: int) -> \
+        [gaitalytics.utils.GaitEvent, List[gaitalytics.utils.GaitEvent]]:
+    if file_handler.get_events_size() >= start_index + 1:
+        unused_events: List[gaitalytics.utils.GaitEvent] = []
+        for event_index in range(start_index + 1, file_handler.get_events_size()):
+            event = file_handler.get_event(event_index)
+            if event.context == context:
+                if event.label == label:
                     return [event, unused_events]
 
             unused_events.append(event)
